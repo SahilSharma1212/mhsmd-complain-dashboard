@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Role } from '@/app/types'
 import { FaGoogle } from 'react-icons/fa'
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
@@ -12,7 +12,6 @@ export default function SignInPage() {
         try {
             const provider = new GoogleAuthProvider()
             const result = await signInWithPopup(auth, provider)
-
             const user = result.user
 
             console.log("User:", user)
