@@ -1,3 +1,10 @@
 export interface Role {
-    role: "SP" | "THANA HEAD"
+    role: "SP" | "TI"
+}
+
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    role: Role["role"];
 }

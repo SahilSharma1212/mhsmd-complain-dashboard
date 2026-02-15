@@ -1,7 +1,47 @@
-import React from 'react'
-
+'use client'
+import axios from 'axios'
+import toast from 'react-hot-toast'
+import { IoMenu } from 'react-icons/io5'
+import { MdOutlineLogout } from 'react-icons/md'
+import { useRouter } from 'next/navigation'
 export default function Home() {
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+
+      const response = await axios.get("/api/user/logout");
+
+      if (response.status === 200) {
+        toast.success("Logout successful");
+        router.push("/sign-in");
+      }
+
+    } catch (error) {
+      toast.error("Logout failed");
+    }
+  }
+
   return (
-    <div className='bg-white text-black'>page</div>
+    <div className='p-3 flex flex-col gap-4 items-center justify-start'>
+      <nav className='flex bg-blue-500 text-white p-2 w-full rounded-md justify-between items-center px-4'>
+        <p className='text-2xl font-semibold'>Complain Dashboard</p>
+
+        <div className='flex gap-2 items-center text-base'>
+
+          <button
+            onClick={handleLogout}
+            className='flex p-1 text-base items-center justify-center gap-2 border border-white rounded-md px-2 cursor-pointer hover:bg-white/10'
+          >
+            Logout <MdOutlineLogout />
+          </button>
+          <button
+            className='flex p-1 text-base items-center justify-center gap-2 border border-white rounded-md px-2 cursor-pointer hover:bg-white/10'
+          >
+            Menu <IoMenu />
+          </button>
+        </div>
+      </nav>
+    </div>
   )
 }
