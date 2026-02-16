@@ -37,11 +37,6 @@ export default function Home() {
           >
             <span className='max-[400px]:hidden'>Logout</span> <MdOutlineLogout />
           </button>
-          <button
-            className='flex p-1 text-base items-center justify-center gap-2 border border-white rounded-md px-2 cursor-pointer hover:bg-white/10'
-          >
-            <span className='max-[400px]:hidden'>Menu</span> <IoMenu />
-          </button>
         </div>
       </nav>
       {/* <TIPage /> */}
