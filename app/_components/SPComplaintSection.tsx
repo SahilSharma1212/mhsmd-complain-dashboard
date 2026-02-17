@@ -1,6 +1,6 @@
 'use client'
 import { IoMdSearch } from 'react-icons/io'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Complaint, Thana } from '../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -145,8 +145,48 @@ export default function SPComplaintSection() {
         "PENDING": { bg: "#0000ff20", text: "#0000ff" },
         "FIR": { bg: "#ff5e0020", text: "#ff5e00" },
         "NON FIR": { bg: "#7a00b320", text: "#7a00b3" },
-        "FILE": { bg: "#99999920", text: "#999999" },
+        "FILE": { bg: "#99999920", text: "#000" },
         "NO CONTACT": { bg: "#ff000020", text: "#ff0000" },
+    }
+
+    const [activeComplaintId, setActiveComplaintId] = useState<string | null>(null);
+    const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+    const popupRef = useRef<HTMLDivElement>(null);
+
+    // Close popup on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+                setActiveComplaintId(null);
+            }
+        };
+        if (activeComplaintId) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [activeComplaintId]);
+
+    const handleStatusChange = async (id: string, status: string) => {
+        if (updatingStatusId) return; // prevent duplicate calls
+        setUpdatingStatusId(id);
+        try {
+            const response = await axios.patch("/api/complaint", { id, status });
+            if (response.data.success) {
+                toast.success("Status updated successfully");
+                if (complaints) {
+                    const updatedComplaints = complaints.map((c) =>
+                        c.id === id ? { ...c, current_status: status } : c
+                    );
+                    setComplaints(updatedComplaints);
+                }
+                setActiveComplaintId(null);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update status");
+        } finally {
+            setUpdatingStatusId(null);
+        }
     }
 
     const tabs = [
@@ -224,7 +264,7 @@ export default function SPComplaintSection() {
                             Complaints Table
                             <button onClick={() => fetchComplaints()} className='cursor-pointer border p-1 rounded-md hover:bg-blue-500/10 border-blue-500'><FcRefresh size={20} /></button>
                         </h1>
-                        <div className='overflow-x-auto w-full'>
+                        <div className='overflow-visible w-full'>
 
 
                             <table className='w-full text-left border-collapse'>
@@ -247,14 +287,44 @@ export default function SPComplaintSection() {
                                             <td className='p-3 text-sm text-gray-700'>{complaint.role_addressed_to}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.subject}</td>
                                             <td className='p-3 text-sm text-center'>
-                                                <div
-                                                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                                                    style={{
-                                                        color: complaintStatusColors[complaint.current_status]?.text,
-                                                        backgroundColor: complaintStatusColors[complaint.current_status]?.bg,
-                                                    }}
-                                                >
-                                                    {complaint.current_status}
+                                                <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="relative inline-block">
+                                                    <button
+                                                        onClick={() => setActiveComplaintId(activeComplaintId === complaint.id ? null : complaint.id || null)}
+                                                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                                                        style={{
+                                                            color: complaintStatusColors[complaint.current_status]?.text,
+                                                            backgroundColor: complaintStatusColors[complaint.current_status]?.bg,
+                                                        }}
+                                                    >
+                                                        {updatingStatusId === complaint.id ? (
+                                                            <span className="flex items-center gap-1">
+                                                                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                                </svg>
+                                                                Updating…
+                                                            </span>
+                                                        ) : complaint.current_status}
+
+                                                        {activeComplaintId === complaint.id && (
+                                                            <div className='absolute bottom-full left-1/2 -translate-x-1/2 m-2 p-2 flex flex-col items-center justify-center gap-1 bg-white/30 backdrop-blur-2xl shadow-lg rounded-md border border-gray-100 z-50 w-30'>
+                                                                {Object.keys(complaintStatusColors).map((status) => (
+                                                                    <button
+                                                                        key={status}
+                                                                        disabled={updatingStatusId !== null}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleStatusChange(complaint.id!, status);
+                                                                        }}
+                                                                        className='w-full px-3 py-2 text-xs hover:bg-gray-50 rounded-md transition-colors text-center'
+                                                                        style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg, borderRadius: '20px' }}
+                                                                    >
+                                                                        {status}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
