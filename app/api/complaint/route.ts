@@ -137,23 +137,21 @@ export async function GET(request: NextRequest) {
     );
 }
 
-
 export async function PATCH(request: NextRequest) {
     const body = await request.json();
-    const id = Number(body.id);
-    const status = body.status;
+    const { id, status } = body;
 
-    if (!id || isNaN(id)) {
+    // Validate id — works for both uuid strings and numeric ids
+    if (!id) {
         return NextResponse.json(
-            { message: "Invalid id", success: false },
+            { message: "id is required", success: false },
             { status: 400 }
         );
     }
 
-
-    if (!id || !status) {
+    if (!status) {
         return NextResponse.json(
-            { message: "id and status are required", success: false },
+            { message: "status is required", success: false },
             { status: 400 }
         );
     }
@@ -167,7 +165,6 @@ export async function PATCH(request: NextRequest) {
     }
 
     let user: User;
-
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
         user = decoded as User;
@@ -186,17 +183,15 @@ export async function PATCH(request: NextRequest) {
     }
 
     /* ---------------- Fetch complaint first ---------------- */
-    console.log(`Attempting to fetch complaint with ID: ${id}`);
     const { data: complaint, error: fetchError } = await supabase
         .from("complaints")
         .select("id, allocated_thana")
-        .eq("id", id)
+        .eq("id", id)  // pass id as-is without Number()
         .maybeSingle();
 
-    console.log("Fetch result:", { complaint, fetchError });
+    console.log("Fetch result:", { complaint, fetchError, id, typeofId: typeof id });
 
     if (fetchError || !complaint) {
-        console.log("Error or no complaint found:", fetchError);
         return NextResponse.json(
             { message: "Complaint not found", success: false },
             { status: 404 }
@@ -205,7 +200,6 @@ export async function PATCH(request: NextRequest) {
 
     /* ---------------- Role-based ownership check ---------------- */
     if (user.role === "TI" && complaint.allocated_thana !== user.thana) {
-        console.log("ownership conflicts")
         return NextResponse.json(
             { message: "You cannot update complaints outside your thana", success: false },
             { status: 403 }
@@ -220,7 +214,6 @@ export async function PATCH(request: NextRequest) {
             .single();
 
         if (thanaError || !thana || thana.designated_sp !== user.name) {
-            console.log(thanaError);
             return NextResponse.json(
                 { message: "You are not authorised for this complaint", success: false },
                 { status: 403 }
@@ -239,7 +232,6 @@ export async function PATCH(request: NextRequest) {
         .eq("id", id);
 
     if (error) {
-        console.log(error);
         return NextResponse.json(
             { message: error.message, success: false },
             { status: 500 }
