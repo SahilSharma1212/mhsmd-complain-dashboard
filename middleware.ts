@@ -5,24 +5,25 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
     const token = request.cookies.get('token')?.value
 
-    /* ---------- 1. Prevent logged-in users from visiting /sign-in ---------- */
-    if (pathname.startsWith('/sign-in') && token) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return NextResponse.redirect(url)
-    }
-
-    /* ---------- 2. Exclude static & public paths ---------- */
+    /* ---------- 1. Allow public routes ---------- */
     if (
         pathname.startsWith('/_next') ||
         pathname.startsWith('/api') ||
         pathname.startsWith('/static') ||
-        pathname.includes('.')
+        pathname.includes('.') ||
+        pathname === '/sign-in'
     ) {
+        // But prevent logged-in users from visiting /sign-in
+        if (pathname === '/sign-in' && token) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/'
+            return NextResponse.redirect(url)
+        }
+
         return NextResponse.next()
     }
 
-    /* ---------- 3. Protect private routes ---------- */
+    /* ---------- 2. Protect private routes ---------- */
     if (!token) {
         const url = request.nextUrl.clone()
         url.pathname = '/sign-in'
@@ -33,7 +34,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico).*)',
-    ],
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 }

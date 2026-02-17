@@ -147,10 +147,12 @@ export default function SPComplaintSection() {
         "NON FIR": { bg: "#7a00b320", text: "#7a00b3" },
         "FILE": { bg: "#99999920", text: "#000" },
         "NO CONTACT": { bg: "#ff000020", text: "#ff0000" },
+        "SOLVED": { bg: "#00ff0020", text: "#007d21" },
     }
 
     const [activeComplaintId, setActiveComplaintId] = useState<string | null>(null);
     const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+    const [popupPosition, setPopupPosition] = useState<{ top: number; left: number } | null>(null);
     const popupRef = useRef<HTMLDivElement>(null);
 
     // Close popup on outside click
@@ -158,6 +160,7 @@ export default function SPComplaintSection() {
         const handleClickOutside = (e: MouseEvent) => {
             if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
                 setActiveComplaintId(null);
+                setPopupPosition(null);
             }
         };
         if (activeComplaintId) {
@@ -180,6 +183,7 @@ export default function SPComplaintSection() {
                     setComplaints(updatedComplaints);
                 }
                 setActiveComplaintId(null);
+                setPopupPosition(null);
             }
         } catch (error) {
             console.error(error);
@@ -196,63 +200,65 @@ export default function SPComplaintSection() {
     ];
     return (
         <div className='bg-white p-2 rounded-lg w-full border shadow border-gray-200 flex flex-col gap-2 items-start'>
-            <div className="relative flex border-b w-full">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors duration-200`}
+            {user?.role === "SP" && (
+                <div className="relative flex border-b w-full">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex-1 py-3 text-sm font-medium transition-colors duration-200`}
+                            style={{
+                                color: activeTab === tab.id ? tab.color : "#000000",
+                            }}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+
+                    {/* Active Indicator */}
+                    <div
+                        className={`absolute bottom-0 h-[2px] bg-blue-600 transition-all duration-300`}
                         style={{
-                            color: activeTab === tab.id ? tab.color : "#000000",
+                            width: "33.33%",
+                            left:
+                                activeTab === "manage"
+                                    ? "0%"
+                                    : activeTab === "register"
+                                        ? "33.33%"
+                                        : "66.66%",
+                            backgroundColor:
+                                activeTab === "manage"
+                                    ? "#dd00ff"
+                                    : activeTab === "register"
+                                        ? "#0000ff"
+                                        : "#00ff00",
                         }}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-
-                {/* Active Indicator */}
-                <div
-                    className={`absolute bottom-0 h-[2px] bg-blue-600 transition-all duration-300`}
-                    style={{
-                        width: "33.33%",
-                        left:
-                            activeTab === "manage"
-                                ? "0%"
-                                : activeTab === "register"
-                                    ? "33.33%"
-                                    : "66.66%",
-                        backgroundColor:
-                            activeTab === "manage"
-                                ? "#dd00ff"
-                                : activeTab === "register"
-                                    ? "#0000ff"
-                                    : "#00ff00",
-                    }}
-                />
-                <div
-                    className={`absolute bottom-0 h-full w-full transition-all duration-300`}
-                    style={{
-                        width: "33.33%",
-                        left:
-                            activeTab === "manage"
-                                ? "0%"
-                                : activeTab === "register"
-                                    ? "33.33%"
-                                    : "66.66%",
-                        backgroundColor:
-                            activeTab === "manage"
-                                ? "#dd00ff05"
-                                : activeTab === "register"
-                                    ? "#0000ff05"
-                                    : "#00ff0005",
-                    }}
-                />
-            </div>
-
+                    />
+                    <div
+                        className={`absolute bottom-0 h-full w-full transition-all duration-300`}
+                        style={{
+                            width: "33.33%",
+                            left:
+                                activeTab === "manage"
+                                    ? "0%"
+                                    : activeTab === "register"
+                                        ? "33.33%"
+                                        : "66.66%",
+                            backgroundColor:
+                                activeTab === "manage"
+                                    ? "#dd00ff05"
+                                    : activeTab === "register"
+                                        ? "#0000ff05"
+                                        : "#00ff0005",
+                        }}
+                    />
+                </div>
+            )
+            }
 
             {/* COMPLAINTS TABLE */}
             {
-                activeTab === "manage" && (
+                (activeTab === "manage" || user?.role === "TI" || user?.role === "SP") && (
                     <div className='w-full px-3'>
                         <form action="" className='py-3'>
                             <div className='flex'>
@@ -264,10 +270,8 @@ export default function SPComplaintSection() {
                             Complaints Table
                             <button onClick={() => fetchComplaints()} className='cursor-pointer border p-1 rounded-md hover:bg-blue-500/10 border-blue-500'><FcRefresh size={20} /></button>
                         </h1>
-                        <div className='overflow-visible w-full'>
-
-
-                            <table className='w-full text-left border-collapse'>
+                        <div className='overflow-x-auto w-full'>
+                            <table className='w-full min-w-[700px] text-left border-collapse'>
                                 <thead>
                                     <tr className='bg-gray-50 border-b border-gray-200'>
                                         <th className='p-3 text-sm font-semibold text-gray-600'>Complaint ID</th>
@@ -287,10 +291,19 @@ export default function SPComplaintSection() {
                                             <td className='p-3 text-sm text-gray-700'>{complaint.role_addressed_to}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.subject}</td>
                                             <td className='p-3 text-sm text-center'>
-                                                <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="relative inline-block">
-                                                    <button
-                                                        onClick={() => setActiveComplaintId(activeComplaintId === complaint.id ? null : complaint.id || null)}
-                                                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                                                <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="inline-block">
+                                                    <div
+                                                        onClick={(e) => {
+                                                            if (activeComplaintId === complaint.id) {
+                                                                setActiveComplaintId(null);
+                                                                setPopupPosition(null);
+                                                            } else {
+                                                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                                setPopupPosition({ top: rect.top, left: rect.left + rect.width / 2 });
+                                                                setActiveComplaintId(complaint.id || null);
+                                                            }
+                                                        }}
+                                                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
                                                         style={{
                                                             color: complaintStatusColors[complaint.current_status]?.text,
                                                             backgroundColor: complaintStatusColors[complaint.current_status]?.bg,
@@ -305,26 +318,29 @@ export default function SPComplaintSection() {
                                                                 Updating…
                                                             </span>
                                                         ) : complaint.current_status}
+                                                    </div>
 
-                                                        {activeComplaintId === complaint.id && (
-                                                            <div className='absolute bottom-full left-1/2 -translate-x-1/2 m-2 p-2 flex flex-col items-center justify-center gap-1 bg-white/30 backdrop-blur-2xl shadow-lg rounded-md border border-gray-100 z-50 w-30'>
-                                                                {Object.keys(complaintStatusColors).map((status) => (
-                                                                    <button
-                                                                        key={status}
-                                                                        disabled={updatingStatusId !== null}
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleStatusChange(complaint.id!, status);
-                                                                        }}
-                                                                        className='w-full px-3 py-2 text-xs hover:bg-gray-50 rounded-md transition-colors text-center'
-                                                                        style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg, borderRadius: '20px' }}
-                                                                    >
-                                                                        {status}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </button>
+                                                    {activeComplaintId === complaint.id && popupPosition && (
+                                                        <div
+                                                            className='fixed p-2 flex flex-col items-center justify-center gap-1 bg-white/30 backdrop-blur-2xl shadow-lg rounded-md border border-gray-100 z-50 w-30'
+                                                            style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}
+                                                        >
+                                                            {Object.keys(complaintStatusColors).map((status) => (
+                                                                <button
+                                                                    key={status}
+                                                                    disabled={updatingStatusId !== null}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleStatusChange(complaint.id!, status);
+                                                                    }}
+                                                                    className='w-full px-3 py-2 text-xs hover:bg-gray-50 rounded-md transition-colors text-center'
+                                                                    style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg, borderRadius: '20px' }}
+                                                                >
+                                                                    {status}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -337,7 +353,7 @@ export default function SPComplaintSection() {
             }
 
             {/* REGISTER COMPLAINTS TABLE */}
-            {
+            {user?.role === "SP" &&
                 activeTab === "register" && (
                     <div className='w-full px-3'>
                         <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4 w-full mt-5'>
@@ -418,7 +434,7 @@ export default function SPComplaintSection() {
             }
 
             {/* ADMIN ACTIONS */}
-            {
+            {user?.role === "SP" &&
                 activeTab === "admin" && (
                     <div className='w-full px-3'>
 
