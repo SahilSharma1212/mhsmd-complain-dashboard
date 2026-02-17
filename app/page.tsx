@@ -10,7 +10,7 @@ import DetailsSection from './_components/DetailsSection'
 
 export default function Home() {
   const router = useRouter()
-  const { user, setUser, thana, setThana } = useUserStore();
+  const { user, setUser, thana, setThana, complaints, setComplaints } = useUserStore();
 
   const fetchUserDetails = async () => {
     if (!user) {
@@ -42,9 +42,28 @@ export default function Home() {
     }
   }
 
+  const fetchComplaints = async () => {
+    if (!complaints) {
+      try {
+        const response = await axios.get("/api/complaint");
+        if (response.data && response.data.success) {
+          const complaintData = response.data.data;
+          if (Array.isArray(complaintData)) {
+            setComplaints(complaintData);
+          } else {
+            setComplaints([complaintData]);
+          }
+        }
+      } catch (error) {
+        toast.error("Failed to fetch user details");
+      }
+    }
+  }
+
   useEffect(() => {
     fetchUserDetails();
     fetchThanaDetails();
+    fetchComplaints();
   }, []);
 
   const handleLogout = async () => {

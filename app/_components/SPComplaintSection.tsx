@@ -5,9 +5,12 @@ import { Complaint, Thana } from '../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
+import { FcRefresh } from 'react-icons/fc';
 export default function SPComplaintSection() {
     const [activeTab, setActiveTab] = useState("manage");
     const [loading, setLoading] = useState(false);
+    const [addThanaLoading, setAddThanaLoading] = useState(false);
+    const [allocateThanaLoading, setAllocateThanaLoading] = useState(false);
     const [complaintDetails, setComplaintDetails] = useState<Complaint>({
         role_addressed_to: "",
         recipient_address: "",
@@ -19,7 +22,6 @@ export default function SPComplaintSection() {
         allocated_thana: "",
         submitted_by: "",
     });
-    const [addThanaLoading, setAddThanaLoading] = useState(false);
     const [addThanaDetails, setAddThanaDetails] = useState({
         name: "",
         pin_code: "",
@@ -28,12 +30,37 @@ export default function SPComplaintSection() {
     })
 
     const [thanaAdminInfo, setThanaAdminInfo] = useState({
+        thana: "",
         name: "",
-        pin_code: "",
-        city: "",
+        email: "",
         contact_number: "",
     })
-    const { thana } = useUserStore();
+    const { thana, user, complaints, setComplaints } = useUserStore();
+
+    const allocateThanaTI = async () => {
+        setAllocateThanaLoading(true);
+        if (!thanaAdminInfo.name || !thanaAdminInfo.email || !thanaAdminInfo.contact_number || !thanaAdminInfo.thana) {
+            toast.error("Please fill all the fields");
+            setAllocateThanaLoading(false);
+            return;
+        }
+        try {
+            const response = await axios.post("/api/thana/allocate-ti", thanaAdminInfo);
+            if (response.data.success) {
+                toast.success("Thana allocated successfully");
+                setThanaAdminInfo({
+                    name: "",
+                    email: "",
+                    contact_number: "",
+                    thana: "",
+                });
+            }
+        } catch (error) {
+            toast.error("Failed to allocate thana");
+        } finally {
+            setAllocateThanaLoading(false);
+        }
+    }
 
     const addThana = async () => {
         setAddThanaLoading(true);
@@ -61,12 +88,20 @@ export default function SPComplaintSection() {
 
     const submitComplaint = async () => {
         setLoading(true);
-        if (!complaintDetails.role_addressed_to || !complaintDetails.recipient_address || !complaintDetails.subject || !complaintDetails.date || !complaintDetails.current_status || !complaintDetails.name_of_complainer || !complaintDetails.complainer_contact_number || !complaintDetails.allocated_thana || !complaintDetails.submitted_by) {
+
+        const finalComplaint = {
+            ...complaintDetails,
+            current_status: "Pending",
+            submitted_by: user?.name,
+        }
+
+        if (!finalComplaint.role_addressed_to || !finalComplaint.recipient_address || !finalComplaint.subject || !finalComplaint.date || !finalComplaint.current_status || !finalComplaint.name_of_complainer || !finalComplaint.complainer_contact_number || !finalComplaint.allocated_thana || !finalComplaint.submitted_by) {
             toast.error("Please fill all the fields");
+            setLoading(false);
             return;
         }
         try {
-            const response = await axios.post("/api/complaint", complaintDetails);
+            const response = await axios.post("/api/complaint", finalComplaint);
             if (response.data.success) {
                 toast.success("Complaint submitted successfully");
                 setComplaintDetails({
@@ -86,6 +121,32 @@ export default function SPComplaintSection() {
         } finally {
             setLoading(false);
         }
+    }
+
+    const fetchComplaints = async () => {
+        if (!complaints) {
+            try {
+                const response = await axios.get("/api/complaint");
+                if (response.data && response.data.success) {
+                    const complaintData = response.data.data;
+                    if (Array.isArray(complaintData)) {
+                        setComplaints(complaintData);
+                    } else {
+                        setComplaints([complaintData]);
+                    }
+                }
+            } catch (error) {
+                toast.error("Failed to fetch user details");
+            }
+        }
+    }
+
+    const complaintStatusColors: Record<string, { bg: string, text: string }> = {
+        "PENDING": { bg: "#0000ff20", text: "#0000ff" },
+        "FIR": { bg: "#ff5e0020", text: "#ff5e00" },
+        "NON FIR": { bg: "#7a00b320", text: "#7a00b3" },
+        "FILE": { bg: "#99999920", text: "#999999" },
+        "NO CONTACT": { bg: "#ff000020", text: "#ff0000" },
     }
 
     const tabs = [
@@ -159,7 +220,10 @@ export default function SPComplaintSection() {
                                 <button className='bg-blue-500 text-white p-2 rounded-md rounded-l-none border border-blue-500'><IoMdSearch size={20} /></button>
                             </div>
                         </form>
-                        <h1 className='text-xl font-semibold text-gray-600 py-3'>Complaints Table</h1>
+                        <h1 className='text-xl font-semibold text-gray-600 py-3 flex items-center justify-start gap-3'>
+                            Complaints Table
+                            <button onClick={() => fetchComplaints()} className='cursor-pointer border p-1 rounded-md hover:bg-blue-500/10 border-blue-500'><FcRefresh size={20} /></button>
+                        </h1>
                         <div className='overflow-x-auto w-full'>
 
 
@@ -175,26 +239,23 @@ export default function SPComplaintSection() {
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-100'>
-                                    {[
-                                        { id: 'CMP-101', name: 'Rajesh Kumar', contact: '+91 98765 43210', addressedTo: 'SP', subject: 'Noise Disturbance', date: '2023-10-25', status: 'No Contact', color: 'bg-red-100 text-red-800' },
-                                        { id: 'CMP-102', name: 'Anita Sharma', contact: '+91 87654 32109', addressedTo: 'TI', subject: 'Water Leakage', date: '2023-10-24', status: 'NON FIR', color: 'bg-yellow-100 text-yellow-800' },
-                                        { id: 'CMP-103', name: 'Rajesh Kumar', contact: '+91 98765 43210', addressedTo: 'SP', subject: 'Noise Disturbance', date: '2023-10-25', status: 'FIR', color: 'bg-orange-100 text-orange-800' },
-                                        { id: 'CMP-104', name: 'Anita Sharma', contact: '+91 87654 32109', addressedTo: 'TI', subject: 'Water Leakage', date: '2023-10-24', status: 'FILE', color: 'bg-blue-100 text-blue-800' },
-                                        { id: 'CMP-105', name: 'Rajesh Kumar', contact: '+91 98765 43210', addressedTo: 'SP', subject: 'Noise Disturbance', date: '2023-10-25', status: 'No Contact', color: 'bg-red-100 text-red-800' },
-                                        { id: 'CMP-106', name: 'Anita Sharma', contact: '+91 87654 32109', addressedTo: 'TI', subject: 'Water Leakage', date: '2023-10-24', status: 'NON FIR', color: 'bg-yellow-100 text-yellow-800' },
-                                        { id: 'CMP-107', name: 'Rajesh Kumar', contact: '+91 98765 43210', addressedTo: 'SP', subject: 'Noise Disturbance', date: '2023-10-25', status: 'FIR', color: 'bg-orange-100 text-orange-800' },
-                                        { id: 'CMP-108', name: 'Anita Sharma', contact: '+91 87654 32109', addressedTo: 'TI', subject: 'Water Leakage', date: '2023-10-24', status: 'FILE', color: 'bg-blue-100 text-blue-800' },
-                                    ].map((complaint) => (
+                                    {complaints?.map((complaint) => (
                                         <tr key={complaint.id} className='hover:bg-gray-50 cursor-pointer transition-colors'>
                                             <td className='p-3 text-sm text-gray-700 font-medium'>{complaint.id}</td>
-                                            <td className='p-3 text-sm text-gray-700 font-medium'>{complaint.name}</td>
+                                            <td className='p-3 text-sm text-gray-700 font-medium'>{complaint.name_of_complainer}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.date}</td>
-                                            <td className='p-3 text-sm text-gray-700'>{complaint.addressedTo}</td>
+                                            <td className='p-3 text-sm text-gray-700'>{complaint.role_addressed_to}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.subject}</td>
                                             <td className='p-3 text-sm text-center'>
-                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${complaint.color}`}>
-                                                    {complaint.status}
-                                                </span>
+                                                <div
+                                                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                                                    style={{
+                                                        color: complaintStatusColors[complaint.current_status]?.text,
+                                                        backgroundColor: complaintStatusColors[complaint.current_status]?.bg,
+                                                    }}
+                                                >
+                                                    {complaint.current_status}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -253,7 +314,10 @@ export default function SPComplaintSection() {
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Mobile No. of Complainer</label>
-                                <input placeholder="Enter 10-digit mobile number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                <input
+                                    value={complaintDetails.complainer_contact_number}
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, complainer_contact_number: e.target.value })}
+                                    placeholder="Enter 10-digit mobile number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
 
                             <div className="flex flex-col items-start gap-2 justify-center">
@@ -336,27 +400,40 @@ export default function SPComplaintSection() {
                                     <label htmlFor="name" className='text-gray-600'>Select Thana</label>
                                     <select
                                         id="name"
+                                        value={thanaAdminInfo.thana}
+                                        onChange={(e) => setThanaAdminInfo({ ...thanaAdminInfo, thana: e.target.value })}
                                         className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none'
                                     >
                                         <option value="">Select Thana</option>
-                                        <option value="">Select Thana</option>
-                                        <option value="">Select Thana</option>
-                                        <option value="">Select Thana</option>
+                                        {thana?.map((th, index) => (
+                                            <option key={index} value={th?.name}>
+                                                {th?.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className='flex flex-col items-start gap-2 justify-center w-full'>
                                     <label htmlFor="name" className='text-gray-600'>Name</label>
-                                    <input placeholder="Enter TI Name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                    <input
+                                        value={thanaAdminInfo.name}
+                                        onChange={(e) => setThanaAdminInfo({ ...thanaAdminInfo, name: e.target.value })}
+                                        placeholder="Enter TI Name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
                                 <div className='flex flex-col items-start gap-2 justify-center w-full'>
                                     <label htmlFor="name" className='text-gray-600'>Contact No.</label>
-                                    <input placeholder="Enter Contact Number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                    <input
+                                        value={thanaAdminInfo.contact_number}
+                                        onChange={(e) => setThanaAdminInfo({ ...thanaAdminInfo, contact_number: e.target.value })}
+                                        placeholder="Enter Contact Number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
                                 <div className='flex flex-col items-start gap-2 justify-center w-full'>
                                     <label htmlFor="name" className='text-gray-600'>Email</label>
-                                    <input placeholder="Enter Email Address" type="email" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                    <input
+                                        value={thanaAdminInfo.email}
+                                        onChange={(e) => setThanaAdminInfo({ ...thanaAdminInfo, email: e.target.value })}
+                                        placeholder="Enter Email Address" type="email" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
-                                <button className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer'>Submit</button>
+                                <button onClick={allocateThanaTI} disabled={allocateThanaLoading} className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer'>{allocateThanaLoading ? "Allocating..." : "Submit"}</button>
                             </div>
                         </div>
                     </div>

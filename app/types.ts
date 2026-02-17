@@ -13,6 +13,7 @@ export interface User {
 }
 
 export interface Complaint {
+    id?: string;
     role_addressed_to: string;
     recipient_address: string;
     subject: string;
