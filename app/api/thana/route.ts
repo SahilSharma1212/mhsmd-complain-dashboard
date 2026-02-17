@@ -2,6 +2,15 @@ import supabase from "@/app/_config/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { User } from "@/app/types";
+import { z } from "zod";
+
+// ─── Zod schema ───
+const thanaPostSchema = z.object({
+    name: z.string().min(1),
+    pin_code: z.string().min(1),
+    city: z.string().min(1),
+    contact_number: z.string().min(10),
+});
 
 export async function GET(request: NextRequest) {
     const token = request.cookies.get("token")?.value;
@@ -72,33 +81,48 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const { name, contact_number, pin_code, city } = await request.json();
 
-    if (!name || !contact_number || !pin_code || !city) {
-        return NextResponse.json({
-            message: "All fields are required",
-            success: false,
-        });
-    }
-
+    // 1. Authenticate via JWT cookie
     const token = request.cookies.get("token")?.value;
     if (!token) {
-        return NextResponse.json({
-            message: "Unauthorised Access",
-            success: false,
-        });
+        return NextResponse.json(
+            { message: "Unauthorised Access", success: false },
+            { status: 401 }
+        );
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-
-    const decodedToken = decoded as User;
-
-    if (decodedToken.role === "TI") {
-        return NextResponse.json({
-            message: "Unauthorised Access",
-            success: false,
-        });
+    let decodedToken: User;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+        decodedToken = decoded as User;
+    } catch {
+        return NextResponse.json(
+            { message: "Invalid or expired token", success: false },
+            { status: 401 }
+        );
     }
+
+    // 2. Role check — only SP can create thanas
+    if (decodedToken.role !== "SP") {
+        return NextResponse.json(
+            { message: "Forbidden", success: false },
+            { status: 403 }
+        );
+    }
+
+    // 3. Validate request body with Zod
+    const body = await request.json();
+    const parsed = thanaPostSchema.safeParse(body);
+
+    if (!parsed.success) {
+        return NextResponse.json(
+            { message: "Validation failed", errors: parsed.error.flatten().fieldErrors, success: false },
+            { status: 400 }
+        );
+    }
+
+    const { name, contact_number, pin_code, city } = parsed.data;
+
     const { data, error } = await supabase
         .from("thana").insert({
             name,

@@ -92,11 +92,9 @@ export default function SPComplaintSection() {
 
         const finalComplaint = {
             ...complaintDetails,
-            current_status: "Pending",
-            submitted_by: user?.name,
         }
 
-        if (!finalComplaint.role_addressed_to || !finalComplaint.recipient_address || !finalComplaint.subject || !finalComplaint.date || !finalComplaint.current_status || !finalComplaint.name_of_complainer || !finalComplaint.complainer_contact_number || !finalComplaint.allocated_thana || !finalComplaint.submitted_by) {
+        if (!finalComplaint.role_addressed_to || !finalComplaint.recipient_address || !finalComplaint.subject || !finalComplaint.date || !finalComplaint.name_of_complainer || !finalComplaint.complainer_contact_number || !finalComplaint.allocated_thana) {
             toast.error("Please fill all the fields");
             setLoading(false);
             return;

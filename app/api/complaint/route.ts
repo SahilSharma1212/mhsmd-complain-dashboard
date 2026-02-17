@@ -2,37 +2,81 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { User } from "@/app/types";
 import supabase from "@/app/_config/supabase";
+import { z } from "zod";
+
+// ─── Zod schemas ───
+const complaintPostSchema = z.object({
+    role_addressed_to: z.enum(["SP", "TI"]),
+    recipient_address: z.string().min(1),
+    subject: z.string().min(1),
+    date: z.string().min(1),
+    name_of_complainer: z.string().min(1),
+    complainer_contact_number: z.string().min(10),
+    allocated_thana: z.string().min(1),
+});
+
+const complaintPatchSchema = z.object({
+    id: z.string().min(1),
+    status: z.enum(["PENDING", "FIR", "NON FIR", "FILE", "NO CONTACT", "SOLVED"]),
+});
 
 export async function POST(request: NextRequest) {
 
-    const { role_addressed_to, recipient_address, subject, date, name_of_complainer, complainer_contact_number, allocated_thana } = await request.json();
-
-    if (!role_addressed_to || !recipient_address || !subject || !date || !name_of_complainer || !complainer_contact_number || !allocated_thana) {
-        return NextResponse.json({
-            message: "All fields are required",
-            success: false,
-        });
-    }
-
+    // 1. Authenticate via JWT cookie
     const token = request.cookies.get("token")?.value;
     if (!token) {
-        return NextResponse.json({
-            message: "Unauthorised Access",
-            success: false,
-        });
+        return NextResponse.json(
+            { message: "Unauthorised Access", success: false },
+            { status: 401 }
+        );
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-
-    const decodedToken = decoded as User;
+    let decodedToken: User;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+        decodedToken = decoded as User;
+    } catch {
+        return NextResponse.json(
+            { message: "Invalid or expired token", success: false },
+            { status: 401 }
+        );
+    }
 
     if (decodedToken.role === "TI") {
-        return NextResponse.json({
-            message: "Unauthorised Access",
-            success: false,
-        });
+        return NextResponse.json(
+            { message: "Unauthorised Access", success: false },
+            { status: 403 }
+        );
     }
 
+    // 2. Validate request body with Zod
+    const body = await request.json();
+    const parsed = complaintPostSchema.safeParse(body);
+
+    if (!parsed.success) {
+        return NextResponse.json(
+            { message: "Validation failed", errors: parsed.error.flatten().fieldErrors, success: false },
+            { status: 400 }
+        );
+    }
+
+    const { role_addressed_to, recipient_address, subject, date, name_of_complainer, complainer_contact_number, allocated_thana } = parsed.data;
+
+    // 3. Verify that allocated_thana actually exists in the database
+    const { data: thanaRecord, error: thanaError } = await supabase
+        .from("thana")
+        .select("name")
+        .eq("name", allocated_thana)
+        .single();
+
+    if (thanaError || !thanaRecord) {
+        return NextResponse.json(
+            { message: "Invalid thana", success: false },
+            { status: 400 }
+        );
+    }
+
+    // 4. Insert complaint — submitted_by and current_status are set SERVER-SIDE only
     const { data, error } = await supabase
         .from("complaints")
         .insert({
@@ -44,14 +88,14 @@ export async function POST(request: NextRequest) {
             name_of_complainer,
             complainer_contact_number,
             allocated_thana,
-            submitted_by: "SP"
+            submitted_by: decodedToken.name,
         });
 
     if (error) {
-        return NextResponse.json({
-            message: "Error in adding complaint",
-            success: false,
-        });
+        return NextResponse.json(
+            { message: "Error in adding complaint", success: false },
+            { status: 500 }
+        );
     }
 
     return NextResponse.json({
@@ -137,24 +181,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-    const body = await request.json();
-    const { id, status } = body;
 
-    // Validate id — works for both uuid strings and numeric ids
-    if (!id) {
-        return NextResponse.json(
-            { message: "id is required", success: false },
-            { status: 400 }
-        );
-    }
-
-    if (!status) {
-        return NextResponse.json(
-            { message: "status is required", success: false },
-            { status: 400 }
-        );
-    }
-
+    // 1. Authenticate via JWT cookie
     const token = request.cookies.get("token")?.value;
     if (!token) {
         return NextResponse.json(
@@ -174,21 +202,33 @@ export async function PATCH(request: NextRequest) {
         );
     }
 
-    if (user.role !== "TI" && user.role !== "SP") {
+    // 2. Role check — only SP can change status
+    if (user.role !== "SP") {
         return NextResponse.json(
             { message: "Forbidden", success: false },
             { status: 403 }
         );
     }
 
+    // 3. Validate request body with Zod
+    const body = await request.json();
+    const parsed = complaintPatchSchema.safeParse(body);
+
+    if (!parsed.success) {
+        return NextResponse.json(
+            { message: "Validation failed", errors: parsed.error.flatten().fieldErrors, success: false },
+            { status: 400 }
+        );
+    }
+
+    const { id, status } = parsed.data;
+
     /* ---------------- Fetch complaint first ---------------- */
     const { data: complaint, error: fetchError } = await supabase
         .from("complaints")
         .select("id, allocated_thana")
-        .eq("id", id)  // pass id as-is without Number()
+        .eq("id", id)
         .maybeSingle();
-
-    console.log("Fetch result:", { complaint, fetchError, id, typeofId: typeof id });
 
     if (fetchError || !complaint) {
         return NextResponse.json(
@@ -197,27 +237,18 @@ export async function PATCH(request: NextRequest) {
         );
     }
 
-    /* ---------------- Role-based ownership check ---------------- */
-    if (user.role === "TI" && complaint.allocated_thana !== user.thana) {
+    /* ---------------- SP ownership check ---------------- */
+    const { data: thana, error: thanaError } = await supabase
+        .from("thana")
+        .select("designated_sp")
+        .eq("name", complaint.allocated_thana)
+        .single();
+
+    if (thanaError || !thana || thana.designated_sp !== user.name) {
         return NextResponse.json(
-            { message: "You cannot update complaints outside your thana", success: false },
+            { message: "You are not authorised for this complaint", success: false },
             { status: 403 }
         );
-    }
-
-    if (user.role === "SP") {
-        const { data: thana, error: thanaError } = await supabase
-            .from("thana")
-            .select("designated_sp")
-            .eq("name", complaint.allocated_thana)
-            .single();
-
-        if (thanaError || !thana || thana.designated_sp !== user.name) {
-            return NextResponse.json(
-                { message: "You are not authorised for this complaint", success: false },
-                { status: 403 }
-            );
-        }
     }
 
     /* ---------------- Update ---------------- */

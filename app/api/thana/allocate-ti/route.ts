@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { User } from "@/app/types";
 import supabase from "@/app/_config/supabase";
+import { z } from "zod";
+
+// ─── Zod schema ───
+const allocateTiSchema = z.object({
+    thana: z.string().min(1),
+    name: z.string().min(1),
+    email: z.string().email(),
+    contact_number: z.string().min(10),
+});
 
 export async function POST(request: NextRequest) {
     if (!process.env.JWT_SECRET) {
@@ -12,15 +21,7 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    const { thana, name, contact_number, email } = await request.json();
-
-    if (!thana || !name || !contact_number || !email) {
-        return NextResponse.json(
-            { message: "All fields are required", success: false },
-            { status: 400 }
-        );
-    }
-
+    // 1. Authenticate via JWT cookie
     const token = request.cookies.get("token")?.value;
     if (!token) {
         return NextResponse.json(
@@ -40,7 +41,28 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 1. Check if the given thana exists
+    // 2. Role check — only SP can allocate TI
+    if (decodedToken.role !== "SP") {
+        return NextResponse.json(
+            { message: "Forbidden", success: false },
+            { status: 403 }
+        );
+    }
+
+    // 3. Validate request body with Zod
+    const body = await request.json();
+    const parsed = allocateTiSchema.safeParse(body);
+
+    if (!parsed.success) {
+        return NextResponse.json(
+            { message: "Validation failed", errors: parsed.error.flatten().fieldErrors, success: false },
+            { status: 400 }
+        );
+    }
+
+    const { thana, name, contact_number, email } = parsed.data;
+
+    // 4. Check if the given thana exists
     const { data: thanaData, error: thanaError } = await supabase
         .from("thana")
         .select("designated_sp")
@@ -54,7 +76,7 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 2. Check if the SP is authorised for this thana
+    // 5. Check if the SP is authorised for this thana
     if (thanaData.designated_sp !== decodedToken.name) {
         return NextResponse.json(
             { message: "You are not authorised to allocate admin in this thana", success: false },
@@ -62,7 +84,7 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 3. Upsert user — avoids race condition and keeps contact_number fresh
+    // 6. Upsert user — avoids race condition and keeps contact_number fresh
     const { error: userError } = await supabase
         .from("users")
         .upsert(
@@ -78,7 +100,7 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 4. Update thana table
+    // 7. Update thana table
     const { error: thanaUpdateError } = await supabase
         .from("thana")
         .update({ ti: name })
