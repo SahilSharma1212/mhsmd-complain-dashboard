@@ -16,7 +16,7 @@ const complaintPostSchema = z.object({
 });
 
 const complaintPatchSchema = z.object({
-    id: z.string().min(1),
+    id: z.coerce.string().min(1),
     status: z.enum(["PENDING", "FIR", "NON FIR", "FILE", "NO CONTACT", "SOLVED"]),
 });
 
