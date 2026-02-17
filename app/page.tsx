@@ -1,13 +1,51 @@
 'use client'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { IoMenu } from 'react-icons/io5'
 import { MdOutlineLogout } from 'react-icons/md'
 import { useRouter } from 'next/navigation'
-import TIPage from './_components/TIPage'
+import { useEffect } from 'react'
 import SPPage from './_components/SPPage'
+import { useUserStore } from './_store/userStore'
+import DetailsSection from './_components/DetailsSection'
+
 export default function Home() {
   const router = useRouter()
+  const { user, setUser, thana, setThana } = useUserStore();
+
+  const fetchUserDetails = async () => {
+    if (!user) {
+      try {
+        const response = await axios.get("/api/user");
+        if (response.data) {
+          setUser(response.data);
+        }
+      } catch (error) {
+        toast.error("Failed to fetch user details");
+      }
+    }
+  }
+  const fetchThanaDetails = async () => {
+    if (!thana) {
+      try {
+        const response = await axios.get("/api/thana");
+        if (response.data && response.data.success) {
+          const thanaData = response.data.data;
+          if (Array.isArray(thanaData)) {
+            setThana(thanaData);
+          } else {
+            setThana([thanaData]);
+          }
+        }
+      } catch (error) {
+        toast.error("Failed to fetch user details");
+      }
+    }
+  }
+
+  useEffect(() => {
+    fetchUserDetails();
+    fetchThanaDetails();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -40,6 +78,7 @@ export default function Home() {
         </div>
       </nav>
       {/* <TIPage /> */}
+      <DetailsSection />
       <SPPage />
     </div>
   )

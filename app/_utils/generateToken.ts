@@ -6,15 +6,17 @@ export const generateToken = (
     id: string,
     name: string,
     role: Role["role"],
+    phone: string,
     email: string,
+    thana: string,
     res: NextResponse
 ) => {
-    if (!role || !name || !id) {
+    if (!role || !name || !id || !phone || !email || !thana) {
         throw new Error("Invalid user data");
     }
 
     const token = jwt.sign(
-        { id, name, role, email },
+        { id, name, role, phone, email, thana },
         process.env.JWT_SECRET!,
         { expiresIn: "30d" }
     );

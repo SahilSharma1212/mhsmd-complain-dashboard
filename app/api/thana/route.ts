@@ -93,23 +93,36 @@ export async function POST(request: NextRequest) {
 
     const decodedToken = decoded as User;
 
+    if (decodedToken.role === "TI") {
+        return NextResponse.json({
+            message: "Unauthorised Access",
+            success: false,
+        });
+    }
     const { data, error } = await supabase
-        .from("thana")
-        .insert([name, contact_number, pin_code, city, { designated_sp: decodedToken.name }]);
+        .from("thana").insert({
+            name,
+            contact_number,
+            pin_code,
+            city,
+            ti: "NOT ALLOCATED",
+            designated_sp: decodedToken.name
+        });
+
 
     if (error) {
         console.log(error);
         return NextResponse.json({
             message: "Error creating thana",
             success: false,
-        });
+        }, { status: 500 });
     }
 
     return NextResponse.json({
         message: "Thana created successfully",
         success: true,
         data,
-    });
+    }, { status: 201 });
 
 
 }

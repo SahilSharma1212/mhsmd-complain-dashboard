@@ -14,9 +14,11 @@ export async function GET(req: NextRequest) {
             name: string;
             role: Role["role"];
             email: string;
+            phone: string;
+            thana: string;
         };
 
-        return NextResponse.json({ id: decodedToken.id, name: decodedToken.name, role: decodedToken.role, email: decodedToken.email }, { status: 200 });
+        return NextResponse.json({ id: decodedToken.id, name: decodedToken.name, role: decodedToken.role, email: decodedToken.email, phone: decodedToken.phone, thana: decodedToken.thana }, { status: 200 });
     } catch (error) {
         console.log(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

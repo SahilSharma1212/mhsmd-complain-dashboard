@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
         if (!email || !role) {
             return NextResponse.json({ error: "Email and role are required" }, { status: 400 });
         }
-        const { data, error } = await supabase.from("users").select("id, name, email, role").eq("email", email).eq("role", role).single();
+        const { data, error } = await supabase.from("users").select("id, name, email, role, phone, thana").eq("email", email).eq("role", role).single();
         console.log(data, error);
 
         if (error) {
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
         }
 
         const res = NextResponse.json(data, { status: 200 });
-        generateToken(data.id, data.name, data.role, data.email, res);
+        generateToken(data.id, data.name, data.role, data.phone, data.email, data.thana, res);
 
         return res;
     } catch (error) {

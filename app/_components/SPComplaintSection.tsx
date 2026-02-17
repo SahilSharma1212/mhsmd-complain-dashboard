@@ -1,9 +1,92 @@
 'use client'
 import { IoMdSearch } from 'react-icons/io'
 import { useState } from 'react'
-
+import { Complaint, Thana } from '../types';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import { useUserStore } from '../_store/userStore';
 export default function SPComplaintSection() {
     const [activeTab, setActiveTab] = useState("manage");
+    const [loading, setLoading] = useState(false);
+    const [complaintDetails, setComplaintDetails] = useState<Complaint>({
+        role_addressed_to: "",
+        recipient_address: "",
+        subject: "",
+        date: "",
+        current_status: "",
+        name_of_complainer: "",
+        complainer_contact_number: "",
+        allocated_thana: "",
+        submitted_by: "",
+    });
+    const [addThanaLoading, setAddThanaLoading] = useState(false);
+    const [addThanaDetails, setAddThanaDetails] = useState({
+        name: "",
+        pin_code: "",
+        city: "",
+        contact_number: "",
+    })
+
+    const [thanaAdminInfo, setThanaAdminInfo] = useState({
+        name: "",
+        pin_code: "",
+        city: "",
+        contact_number: "",
+    })
+    const { thana } = useUserStore();
+
+    const addThana = async () => {
+        setAddThanaLoading(true);
+        if (!addThanaDetails.name || !addThanaDetails.pin_code || !addThanaDetails.city || !addThanaDetails.contact_number) {
+            toast.error("Please fill all the fields");
+            return;
+        }
+        try {
+            const response = await axios.post("/api/thana", addThanaDetails);
+            if (response.data.success) {
+                toast.success("Thana added successfully");
+                setAddThanaDetails({
+                    name: "",
+                    pin_code: "",
+                    city: "",
+                    contact_number: "",
+                });
+            }
+        } catch (error) {
+            toast.error("Failed to add thana");
+        } finally {
+            setAddThanaLoading(false);
+        }
+    }
+
+    const submitComplaint = async () => {
+        setLoading(true);
+        if (!complaintDetails.role_addressed_to || !complaintDetails.recipient_address || !complaintDetails.subject || !complaintDetails.date || !complaintDetails.current_status || !complaintDetails.name_of_complainer || !complaintDetails.complainer_contact_number || !complaintDetails.allocated_thana || !complaintDetails.submitted_by) {
+            toast.error("Please fill all the fields");
+            return;
+        }
+        try {
+            const response = await axios.post("/api/complaint", complaintDetails);
+            if (response.data.success) {
+                toast.success("Complaint submitted successfully");
+                setComplaintDetails({
+                    role_addressed_to: "",
+                    recipient_address: "",
+                    subject: "",
+                    date: "",
+                    current_status: "",
+                    name_of_complainer: "",
+                    complainer_contact_number: "",
+                    allocated_thana: "",
+                    submitted_by: "",
+                });
+            }
+        } catch (error) {
+            toast.error("Failed to submit complaint");
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const tabs = [
         { id: "manage", label: "Manage Complaints", color: "#7a00b3" },
@@ -129,23 +212,44 @@ export default function SPComplaintSection() {
                         <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4 w-full mt-5'>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Addressed to:</label>
-                                <input placeholder="Enter recipient's name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                <select
+                                    value={complaintDetails.role_addressed_to}
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, role_addressed_to: e.target.value })}
+                                    id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' >
+                                    <option value="">-- Select Recipient --</option>
+                                    <option value="SP">SP</option>
+                                    <option value="TI">TI</option>
+                                </select>
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Recipient Address</label>
-                                <input placeholder="Enter recipient's address" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                <input
+                                    value={complaintDetails.recipient_address}
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, recipient_address: e.target.value })}
+                                    placeholder="Enter recipient's address" type="text"
+                                    id="name"
+                                    className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Subject</label>
-                                <input placeholder="Enter complaint subject" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                <input
+                                    value={complaintDetails.subject}
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, subject: e.target.value })}
+                                    placeholder="Enter complaint subject" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Date</label>
-                                <input placeholder="DD/MM/YYYY" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                <input
+                                    type='date'
+                                    value={complaintDetails.date}
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, date: e.target.value })} id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Name of Complainer</label>
-                                <input placeholder="Enter full name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                <input
+                                    value={complaintDetails.name_of_complainer}
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, name_of_complainer: e.target.value })}
+                                    placeholder="Enter full name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Mobile No. of Complainer</label>
@@ -154,11 +258,25 @@ export default function SPComplaintSection() {
 
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Allocate to Thana</label>
-                                <input placeholder="Enter Thana name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                <select
+                                    value={complaintDetails.allocated_thana}
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, allocated_thana: e.target.value })}
+                                    id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' >
+
+                                    <option value="">-- Select Thana --</option>
+                                    {
+                                        thana?.map((th: Thana, index: number) => (
+                                            <option key={index} value={th.name}>{th.name}</option>
+                                        ))
+                                    }
+                                </select>
                             </div>
                             <div className='w-full relative bottom-0'>
 
-                                <button className='w-full absolute h-10 bottom-0 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer'>Submit</button>
+                                <button
+                                    onClick={submitComplaint}
+                                    disabled={loading}
+                                    className='w-full absolute h-10 bottom-0 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer'>{loading ? "Submitting..." : "Submit"}</button>
                             </div>
                         </div>
                     </div>
@@ -171,28 +289,45 @@ export default function SPComplaintSection() {
                     <div className='w-full px-3'>
 
                         <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4 w-full mt-5'>
+
+                            {/* ADD THANA */}
                             <div className='flex flex-col items-start justify-start gap-3 border-gray-300 border bg-white shadow-lg p-3 rounded-lg'>
                                 <h1 className='text-lg font-semibold text-gray-600 text-center'>Add a Thana</h1>
                                 <div className='flex flex-col items-start gap-2 justify-center w-full mt-3'>
                                     <label htmlFor="name" className='text-gray-600'>Thana Name</label>
-                                    <input placeholder="Enter Thana Name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                    <input
+                                        value={addThanaDetails.name}
+                                        onChange={(e) => setAddThanaDetails({ ...addThanaDetails, name: e.target.value })}
+                                        placeholder="Enter Thana Name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                                 </div>
 
                                 <div className='flex flex-col items-start gap-2 justify-center w-full'>
                                     <label htmlFor="name" className='text-gray-600'>Thana Contact No.</label>
-                                    <input placeholder="Enter Contact Number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                    <input
+                                        value={addThanaDetails.contact_number}
+                                        onChange={(e) => setAddThanaDetails({ ...addThanaDetails, contact_number: e.target.value })}
+                                        placeholder="Enter Contact Number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
 
                                 <div className='flex flex-col items-start gap-2 justify-center w-full'>
                                     <label htmlFor="name" className='text-gray-600'>City</label>
-                                    <input placeholder="Enter City" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                    <input
+                                        value={addThanaDetails.city}
+                                        onChange={(e) => setAddThanaDetails({ ...addThanaDetails, city: e.target.value })}
+                                        placeholder="Enter City" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
 
                                 <div className='flex flex-col items-start gap-2 justify-center w-full'>
                                     <label htmlFor="name" className='text-gray-600'>Pin Code</label>
-                                    <input placeholder="Enter Pin Code" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                    <input
+                                        value={addThanaDetails.pin_code}
+                                        onChange={(e) => setAddThanaDetails({ ...addThanaDetails, pin_code: e.target.value })}
+                                        placeholder="Enter Pin Code" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
-                                <button className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none bg-green-500 text-white hover:bg-green-600 transition-colors cursor-pointer'>Add Thana</button>
+                                <button
+                                    onClick={addThana}
+                                    disabled={addThanaLoading}
+                                    className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none bg-green-500 text-white hover:bg-green-600 transition-colors cursor-pointer'>{addThanaLoading ? "Adding..." : "Add Thana"}</button>
                             </div>
 
                             <div className='flex flex-col items-start justify-start gap-3 border-gray-300 border bg-white shadow-lg p-3 rounded-lg'>
