@@ -96,7 +96,6 @@ export default function Home() {
           </button>
         </div>
       </nav>
-      {/* <TIPage /> */}
       <DetailsSection />
       <SPPage />
     </div>

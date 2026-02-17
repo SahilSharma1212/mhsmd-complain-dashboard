@@ -7,6 +7,7 @@ import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
 import { FcRefresh } from 'react-icons/fc';
 export default function SPComplaintSection() {
+
     const [activeTab, setActiveTab] = useState("manage");
     const [loading, setLoading] = useState(false);
     const [addThanaLoading, setAddThanaLoading] = useState(false);
@@ -201,7 +202,7 @@ export default function SPComplaintSection() {
     return (
         <div className='bg-white p-2 rounded-lg w-full border shadow border-gray-200 flex flex-col gap-2 items-start'>
             {user?.role === "SP" && (
-                <div className="relative flex border-b w-full">
+                <div className="relative flex border-b border-gray-300 w-full">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
@@ -258,7 +259,7 @@ export default function SPComplaintSection() {
 
             {/* COMPLAINTS TABLE */}
             {
-                (activeTab === "manage" || user?.role === "TI" || user?.role === "SP") && (
+                (activeTab === "manage") && (
                     <div className='w-full px-3'>
                         <form action="" className='py-3'>
                             <div className='flex'>
@@ -353,8 +354,8 @@ export default function SPComplaintSection() {
             }
 
             {/* REGISTER COMPLAINTS TABLE */}
-            {user?.role === "SP" &&
-                activeTab === "register" && (
+            {
+                activeTab === "register" && user?.role === "SP" && (
                     <div className='w-full px-3'>
                         <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4 w-full mt-5'>
                             <div className="flex flex-col items-start gap-2 justify-center">
@@ -435,7 +436,7 @@ export default function SPComplaintSection() {
 
             {/* ADMIN ACTIONS */}
             {user?.role === "SP" &&
-                activeTab === "admin" && (
+                activeTab === "admin" && user?.role === "SP" && (
                     <div className='w-full px-3'>
 
                         <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4 w-full mt-5'>
