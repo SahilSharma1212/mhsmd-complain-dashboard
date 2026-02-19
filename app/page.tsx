@@ -4,9 +4,9 @@ import toast from 'react-hot-toast'
 import { MdOutlineLogout } from 'react-icons/md'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import SPPage from './_components/SPPage'
 import { useUserStore } from './_store/userStore'
 import DetailsSection from './_components/DetailsSection'
+import SPComplaintSection from './_components/SPComplaintSection'
 
 export default function Home() {
   const router = useRouter()
@@ -42,28 +42,9 @@ export default function Home() {
     }
   }
 
-  const fetchComplaints = async () => {
-    if (!complaints) {
-      try {
-        const response = await axios.get("/api/complaint");
-        if (response.data && response.data.success) {
-          const complaintData = response.data.data;
-          if (Array.isArray(complaintData)) {
-            setComplaints(complaintData);
-          } else {
-            setComplaints([complaintData]);
-          }
-        }
-      } catch (error) {
-        toast.error("Failed to fetch user details");
-      }
-    }
-  }
-
   useEffect(() => {
     fetchUserDetails();
     fetchThanaDetails();
-    fetchComplaints();
   }, []);
 
   const handleLogout = async () => {
@@ -82,7 +63,7 @@ export default function Home() {
   }
 
   return (
-    <div className='p-3 flex flex-col gap-4 items-center justify-start'>
+    <div className='p-3 flex flex-col gap-3 items-center justify-start'>
       <nav className='flex bg-blue-500 text-white p-2 w-full rounded-md justify-between items-center px-4'>
         <p className='text-2xl font-semibold'><span className='max-sm:hidden'>Complain</span> <span className=''>Dashboard</span></p>
 
@@ -97,7 +78,7 @@ export default function Home() {
         </div>
       </nav>
       <DetailsSection />
-      <SPPage />
+      <SPComplaintSection />
     </div>
   )
 }

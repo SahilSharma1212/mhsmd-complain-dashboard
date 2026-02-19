@@ -1,11 +1,12 @@
 'use client'
 import { IoMdSearch } from 'react-icons/io'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Complaint, Thana } from '../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
 import { FcRefresh } from 'react-icons/fc';
+import { MdNavigateNext, MdNavigateBefore, MdDeleteOutline } from 'react-icons/md';
 export default function SPComplaintSection() {
 
     const [activeTab, setActiveTab] = useState("manage");
@@ -37,6 +38,15 @@ export default function SPComplaintSection() {
         contact_number: "",
     })
     const { thana, user, complaints, setComplaints } = useUserStore();
+
+    // ─── Search & Pagination state ───
+    const [filterAttribute, setFilterAttribute] = useState("");
+    const [filterValue, setFilterValue] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const pageSize = 20;
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
     const allocateThanaTI = async () => {
         setAllocateThanaLoading(true);
@@ -122,23 +132,73 @@ export default function SPComplaintSection() {
         }
     }
 
-    const fetchComplaints = async () => {
-        if (!complaints) {
-            try {
-                const response = await axios.get("/api/complaint");
-                if (response.data && response.data.success) {
-                    const complaintData = response.data.data;
-                    if (Array.isArray(complaintData)) {
-                        setComplaints(complaintData);
-                    } else {
-                        setComplaints([complaintData]);
-                    }
-                }
-            } catch (error) {
-                toast.error("Failed to fetch user details");
+    const fetchComplaints = useCallback(async (page = 1, filter = "", value = "") => {
+        setSearchLoading(true);
+        try {
+            const params = new URLSearchParams();
+            params.set("page", String(page));
+            if (filter && value) {
+                params.set("filter", filter);
+                params.set("value", value);
             }
+            const response = await axios.get(`/api/complaint?${params.toString()}`);
+            if (response.data && response.data.success) {
+                const complaintData = response.data.data;
+                if (Array.isArray(complaintData)) {
+                    setComplaints(complaintData);
+                } else {
+                    setComplaints([complaintData]);
+                }
+                setTotalCount(response.data.totalCount ?? 0);
+                setCurrentPage(page);
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const statusCode = error.response?.status;
+                if (statusCode === 401) {
+                    toast.error("Session expired. Please log in again.");
+                } else {
+                    toast.error("Failed to fetch complaints. Please try again.");
+                }
+            } else {
+                toast.error("Network error. Check your connection.");
+            }
+            console.error(error);
+        } finally {
+            setSearchLoading(false);
         }
-    }
+    }, [setComplaints]);
+
+    // Initial load
+    useEffect(() => {
+        fetchComplaints(1);
+    }, [fetchComplaints]);
+
+    // Reset filterValue when changing filterAttribute
+    useEffect(() => {
+        setFilterValue("");
+    }, [filterAttribute]);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (filterAttribute && !filterValue) {
+            toast.error("Please enter a value for the selected filter");
+            return;
+        }
+        fetchComplaints(1, filterAttribute, filterValue);
+    };
+
+    const handlePageChange = (page: number) => {
+        if (page < 1 || page > totalPages) return;
+        fetchComplaints(page, filterAttribute, filterValue);
+    };
+
+    const handleRefresh = () => {
+        setFilterAttribute("");
+        setFilterValue("");
+        setCurrentPage(1);
+        fetchComplaints(1);
+    };
 
     const complaintStatusColors: Record<string, { bg: string, text: string }> = {
         "PENDING": { bg: "#0000ff20", text: "#0000ff" },
@@ -153,6 +213,9 @@ export default function SPComplaintSection() {
     const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
     const [popupPosition, setPopupPosition] = useState<{ top: number; left: number } | null>(null);
     const popupRef = useRef<HTMLDivElement>(null);
+
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     // Close popup on outside click
     useEffect(() => {
@@ -169,12 +232,12 @@ export default function SPComplaintSection() {
     }, [activeComplaintId]);
 
     const handleStatusChange = async (id: string, status: string) => {
-        if (updatingStatusId) return; // prevent duplicate calls
+        if (updatingStatusId) return;
         setUpdatingStatusId(id);
         try {
             const response = await axios.patch("/api/complaint", { id, status });
             if (response.data.success) {
-                toast.success("Status updated successfully");
+                toast.success("Status updated");
                 if (complaints) {
                     const updatedComplaints = complaints.map((c) =>
                         c.id === id ? { ...c, current_status: status } : c
@@ -185,10 +248,54 @@ export default function SPComplaintSection() {
                 setPopupPosition(null);
             }
         } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const statusCode = error.response?.status;
+                const message = error.response?.data?.message;
+
+                if (statusCode === 401) {
+                    toast.error("Session expired. Please log in again.");
+                } else if (statusCode === 403) {
+                    toast.error(
+                        message === "You are not authorised for this complaint"
+                            ? "You don't have access to this complaint."
+                            : "Action not allowed."
+                    );
+                } else if (statusCode === 404) {
+                    toast.error("Complaint not found.");
+                } else if (statusCode === 400) {
+                    toast.error("Invalid request. Check the status value.");
+                } else {
+                    toast.error("Something went wrong. Try again.");
+                }
+            } else {
+                toast.error("Network error. Check your connection.");
+            }
             console.error(error);
-            toast.error("Failed to update status");
         } finally {
             setUpdatingStatusId(null);
+        }
+    }
+
+    const handleDeleteComplaint = async (id: string) => {
+        setDeletingId(id);
+        try {
+            const response = await axios.delete(`/api/complaint?id=${id}`);
+            if (response.data.success) {
+                toast.success("Complaint deleted successfully");
+                if (complaints) {
+                    setComplaints(complaints.filter((c) => c.id !== id));
+                }
+                setShowDeleteConfirm(null);
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                toast.error(error.response?.data?.message || "Failed to delete complaint");
+            } else {
+                toast.error("Failed to delete complaint");
+            }
+            console.error(error);
+        } finally {
+            setDeletingId(null);
         }
     }
 
@@ -198,7 +305,7 @@ export default function SPComplaintSection() {
         { id: "admin", label: "Admin Actions", color: "#06a600" },
     ];
     return (
-        <div className='bg-white p-2 rounded-lg w-full border shadow border-gray-200 flex flex-col gap-2 items-start'>
+        <div className='bg-white p-2 rounded-lg w-full flex flex-col gap-2 items-start'>
             {user?.role === "SP" && (
                 <div className="relative flex border-b border-gray-300 w-full">
                     {tabs.map((tab) => (
@@ -259,15 +366,79 @@ export default function SPComplaintSection() {
             {
                 (activeTab === "manage") && (
                     <div className='w-full px-3'>
-                        <form action="" className='py-3'>
-                            <div className='flex'>
-                                <input type="text" className='p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' placeholder='Search' />
-                                <button className='bg-blue-500 text-white p-2 rounded-md rounded-l-none border border-blue-500'><IoMdSearch size={20} /></button>
+                        <form onSubmit={handleSearch} className='py-3 flex flex-wrap items-end justify-start gap-3'>
+                            <div className='flex flex-col gap-1'>
+                                <label className='text-xs font-medium text-gray-500'>Filter By</label>
+                                <select
+                                    value={filterAttribute}
+                                    onChange={(e) => setFilterAttribute(e.target.value)}
+                                    className='p-2 rounded-md border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
+                                >
+                                    <option value="">-- Select Filter --</option>
+                                    <option value="current_status">Status</option>
+                                    <option value="name_of_complainer">Name of Complainer</option>
+                                    <option value="role_addressed_to">Addressed To</option>
+                                </select>
+                            </div>
+
+                            <div className='flex flex-col gap-1'>
+                                <label className='text-xs font-medium text-gray-500'>Value</label>
+                                <div className='flex'>
+                                    {filterAttribute === "current_status" ? (
+                                        <select
+                                            value={filterValue}
+                                            onChange={(e) => setFilterValue(e.target.value)}
+                                            className='p-2 rounded-md rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
+                                        >
+                                            <option value="">-- Select Status --</option>
+                                            <option value="PENDING">PENDING</option>
+                                            <option value="FIR">FIR</option>
+                                            <option value="NON FIR">NON FIR</option>
+                                            <option value="NO CONTACT">NO CONTACT</option>
+                                            <option value="FILE">FILE</option>
+                                            <option value="SOLVED">SOLVED</option>
+                                        </select>
+                                    ) : filterAttribute === "role_addressed_to" ? (
+                                        <select
+                                            value={filterValue}
+                                            onChange={(e) => setFilterValue(e.target.value)}
+                                            className='p-2 rounded-md rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
+                                        >
+                                            <option value="">-- Select Role --</option>
+                                            <option value="SP">SP</option>
+                                            <option value="TI">TI</option>
+                                        </select>
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            value={filterValue}
+                                            onChange={(e) => setFilterValue(e.target.value)}
+                                            className='p-2 rounded-md rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
+                                            placeholder={filterAttribute ? 'Type to search...' : 'Select a filter first'}
+                                            disabled={!filterAttribute}
+                                        />
+                                    )}
+                                    <button
+                                        type="submit"
+                                        disabled={searchLoading}
+                                        className='bg-blue-500 text-white p-2 rounded-md rounded-l-none border border-blue-500 hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-50'
+                                    >
+                                        {searchLoading ? (
+                                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                        ) : (
+                                            <IoMdSearch size={20} />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </form>
                         <h1 className='text-xl font-semibold text-gray-600 py-3 flex items-center justify-start gap-3'>
                             Complaints Table
-                            <button onClick={() => fetchComplaints()} className='cursor-pointer border p-1 rounded-md hover:bg-blue-500/10 border-blue-500'><FcRefresh size={20} /></button>
+                            <span className='text-sm font-normal text-gray-400'>({totalCount} total)</span>
+                            <button onClick={handleRefresh} className='cursor-pointer border p-1 rounded-md hover:bg-blue-500/10 border-blue-500'><FcRefresh size={20} /></button>
                         </h1>
                         <div className='overflow-x-auto w-full'>
                             <table className='w-full min-w-[700px] text-left border-collapse'>
@@ -277,8 +448,10 @@ export default function SPComplaintSection() {
                                         <th className='p-3 text-sm font-semibold text-gray-600'>Name of the Complainer</th>
                                         <th className='p-3 text-sm font-semibold text-gray-600'>Complaint Date</th>
                                         <th className='p-3 text-sm font-semibold text-gray-600'>Addressed To</th>
+                                        <th className='p-3 text-sm font-semibold text-gray-600'>Thana</th>
                                         <th className='p-3 text-sm font-semibold text-gray-600'>Subject</th>
                                         <th className='p-3 text-sm font-semibold text-gray-600 text-center'>Complaint Status</th>
+                                        <th className='p-3 text-sm font-semibold text-gray-600 text-center'>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-100'>
@@ -288,6 +461,7 @@ export default function SPComplaintSection() {
                                             <td className='p-3 text-sm text-gray-700 font-medium'>{complaint.name_of_complainer}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.date}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.role_addressed_to}</td>
+                                            <td className='p-3 text-sm text-gray-700'>{complaint.allocated_thana}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.subject}</td>
                                             <td className='p-3 text-sm text-center'>
                                                 <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="inline-block">
@@ -342,11 +516,74 @@ export default function SPComplaintSection() {
                                                     )}
                                                 </div>
                                             </td>
+                                            <td className='p-3 text-sm text-center'>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowDeleteConfirm(complaint.id!);
+                                                    }}
+                                                    className='p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors'
+                                                    title="Delete Complaint"
+                                                >
+                                                    <MdDeleteOutline size={20} />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* ─── Pagination Controls ─── */}
+                        {totalPages > 1 && (
+                            <div className='flex items-center justify-center gap-2 py-4'>
+                                <button
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1 || searchLoading}
+                                    className='flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer'
+                                >
+                                    <MdNavigateBefore size={18} /> Prev
+                                </button>
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(p => {
+                                        // Show first, last, and pages around current
+                                        if (p === 1 || p === totalPages) return true;
+                                        if (Math.abs(p - currentPage) <= 1) return true;
+                                        return false;
+                                    })
+                                    .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                                        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                                        acc.push(p);
+                                        return acc;
+                                    }, [])
+                                    .map((item, idx) =>
+                                        typeof item === 'string' ? (
+                                            <span key={`ellipsis-${idx}`} className='px-2 text-gray-400'>…</span>
+                                        ) : (
+                                            <button
+                                                key={item}
+                                                onClick={() => handlePageChange(item)}
+                                                disabled={searchLoading}
+                                                className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-colors cursor-pointer ${currentPage === item
+                                                    ? 'bg-blue-500 text-white border-blue-500'
+                                                    : 'border-gray-300 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                {item}
+                                            </button>
+                                        )
+                                    )}
+
+                                <button
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages || searchLoading}
+                                    className='flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer'
+                                >
+                                    Next <MdNavigateNext size={18} />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )
             }
@@ -524,6 +761,40 @@ export default function SPComplaintSection() {
                     </div>
                 )
             }
+            {/* DELETE CONFIRMATION MODAL */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full border border-gray-100 scale-in-center">
+                        <h2 className="text-xl font-bold text-gray-800 mb-2">Delete Complaint?</h2>
+                        <p className="text-gray-600 mb-6">Are you sure you want to delete this complaint? This action cannot be undone.</p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowDeleteConfirm(null)}
+                                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleDeleteComplaint(showDeleteConfirm)}
+                                disabled={deletingId !== null}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2"
+                            >
+                                {deletingId ? (
+                                    <>
+                                        <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        Deleting...
+                                    </>
+                                ) : (
+                                    'Delete'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
