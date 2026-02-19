@@ -23,6 +23,8 @@ export interface Complaint {
     complainer_contact_number: string;
     allocated_thana: string;
     submitted_by: string;
+    description?: string;
+    docs_url?: string[];
 }
 
 export interface Thana {

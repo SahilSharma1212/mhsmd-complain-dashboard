@@ -5,7 +5,9 @@ export default function DetailsSection() {
         <div className='bg-white p-3 grid grid-cols-3 rounded-lg cursor-pointer w-full max-md:text-sm max-sm:text-xs max-md:grid-cols-2 max-sm:grid-cols-1 gap-3'>
             <div className='flex gap-2 py-1 w-full'>
                 <p className='font-semibold text-gray-500'>Name:</p>
-                <p className='font-semibold'>{user?.name}</p>
+                <p className='font-semibold'>{user?.name.split(" ")
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ")}</p>
             </div>
             <div className='flex gap-2 py-1 w-full'>
                 <p className='font-semibold text-gray-500'>Role:</p>
@@ -17,7 +19,9 @@ export default function DetailsSection() {
             </div>
             <div className='flex gap-2 py-1 w-full'>
                 <p className='font-semibold text-gray-500'>Thana:</p>
-                <p className='font-semibold'>{user?.thana}</p>
+                <p className='font-semibold'>{user?.thana.split(" ")
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ")}</p>
             </div>
             <div className='flex gap-2 py-1 w-full'>
                 <p className='font-semibold text-gray-500'>Email:</p>

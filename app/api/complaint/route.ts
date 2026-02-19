@@ -3,6 +3,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { User } from "@/app/types";
 import supabase from "@/app/_config/supabase";
 import { z } from "zod";
+import supabaseAdmin from "@/app/_config/supabaseAdmin";
 
 // ─── Zod schemas ───
 const complaintPostSchema = z.object({
@@ -13,6 +14,7 @@ const complaintPostSchema = z.object({
     name_of_complainer: z.string().min(1),
     complainer_contact_number: z.string().min(10),
     allocated_thana: z.string().min(1),
+    description: z.string().optional(),
 });
 
 const complaintPatchSchema = z.object({
@@ -21,7 +23,6 @@ const complaintPatchSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-
     // 1. Authenticate via JWT cookie
     const token = request.cookies.get("token")?.value;
     if (!token) {
@@ -49,20 +50,36 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 2. Validate request body with Zod
-    const body = await request.json();
-    const parsed = complaintPostSchema.safeParse(body);
-
-    if (!parsed.success) {
+    // 2. Parse FormData
+    let formData: FormData;
+    try {
+        formData = await request.formData();
+    } catch {
         return NextResponse.json(
-            { message: "Validation failed", errors: parsed.error.flatten().fieldErrors, success: false },
+            { message: "Invalid form data", success: false },
             { status: 400 }
         );
     }
 
-    const { role_addressed_to, recipient_address, subject, date, name_of_complainer, complainer_contact_number, allocated_thana } = parsed.data;
+    const role_addressed_to = formData.get("role_addressed_to") as string;
+    const recipient_address = formData.get("recipient_address") as string;
+    const subject = formData.get("subject") as string;
+    const date = formData.get("date") as string;
+    const name_of_complainer = formData.get("name_of_complainer") as string;
+    const complainer_contact_number = formData.get("complainer_contact_number") as string;
+    const allocated_thana = formData.get("allocated_thana") as string;
+    const description = formData.get("description") as string;
+    const files = formData.getAll("files") as File[];
 
-    // 3. Verify that allocated_thana actually exists in the database
+    // Validate essential fields
+    if (!role_addressed_to || !recipient_address || !subject || !date || !name_of_complainer || !complainer_contact_number || !allocated_thana) {
+        return NextResponse.json(
+            { message: "All fields are required", success: false },
+            { status: 400 }
+        );
+    }
+
+    // 3. Verify that allocated_thana actually exists
     const { data: thanaRecord, error: thanaError } = await supabase
         .from("thana")
         .select("name")
@@ -76,7 +93,62 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 4. Insert complaint — submitted_by and current_status are set SERVER-SIDE only
+    // 4. Handle File Uploads
+    const docs_url: string[] = [];
+
+    if (files && files.length > 0) {
+        for (const file of files) {
+            // Skip empty file slots (browser sometimes sends empty file entries)
+            if (!file || file.size === 0) continue;
+
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+            if (!allowedTypes.includes(file.type)) {
+                return NextResponse.json(
+                    { message: `Invalid file type: ${file.name}. Only images and PDFs are allowed.`, success: false },
+                    { status: 400 }
+                );
+            }
+
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                return NextResponse.json(
+                    { message: `File too large: ${file.name}. Max size is 10MB.`, success: false },
+                    { status: 400 }
+                );
+            }
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}.${fileExt}`;
+
+            // Convert File to Buffer for reliable upload
+            const arrayBuffer = await file.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            const { error: uploadError } = await supabaseAdmin.storage
+                .from("complain_docs")
+                .upload(fileName, buffer, {
+                    contentType: file.type,
+                    upsert: false,
+                });
+
+            if (uploadError) {
+                console.error("Upload error:", uploadError);
+                return NextResponse.json(
+                    { message: `File upload failed: ${uploadError.message}`, success: false },
+                    { status: 500 }
+                );
+            }
+
+            const { data: { publicUrl } } = supabaseAdmin.storage
+                .from("complain_docs")
+                .getPublicUrl(fileName);
+
+            docs_url.push(publicUrl);
+        }
+    }
+
+    // 5. Insert complaint
     const { data, error } = await supabase
         .from("complaints")
         .insert({
@@ -89,11 +161,13 @@ export async function POST(request: NextRequest) {
             complainer_contact_number,
             allocated_thana,
             submitted_by: decodedToken.name,
+            description,
+            docs_url: docs_url.length > 0 ? docs_url : null,
         });
 
     if (error) {
         return NextResponse.json(
-            { message: "Error in adding complaint", success: false },
+            { message: "Error in adding complaint", error: error.message, success: false },
             { status: 500 }
         );
     }
@@ -178,12 +252,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
         { message: "Complaints fetched successfully", success: true, data, totalCount: count },
         { status: 200 }
-    );
-
-    /* -------------- Fallback -------------- */
-    return NextResponse.json(
-        { message: "Role not authorised", success: false },
-        { status: 403 }
     );
 }
 

@@ -6,7 +6,8 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
 import { FcRefresh } from 'react-icons/fc';
-import { MdNavigateNext, MdNavigateBefore, MdDeleteOutline } from 'react-icons/md';
+import { MdNavigateNext, MdNavigateBefore, MdDeleteOutline, MdNote, MdAttachFile, MdClose, MdPictureAsPdf, MdImage } from 'react-icons/md';
+import { CgNotes } from 'react-icons/cg';
 export default function SPComplaintSection() {
 
     const [activeTab, setActiveTab] = useState("manage");
@@ -23,6 +24,7 @@ export default function SPComplaintSection() {
         complainer_contact_number: "",
         allocated_thana: "",
         submitted_by: "",
+        description: "",
     });
     const [addThanaDetails, setAddThanaDetails] = useState({
         name: "",
@@ -38,6 +40,8 @@ export default function SPComplaintSection() {
         contact_number: "",
     })
     const { thana, user, complaints, setComplaints } = useUserStore();
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // ─── Search & Pagination state ───
     const [filterAttribute, setFilterAttribute] = useState("");
@@ -100,17 +104,33 @@ export default function SPComplaintSection() {
     const submitComplaint = async () => {
         setLoading(true);
 
-        const finalComplaint = {
-            ...complaintDetails,
-        }
-
-        if (!finalComplaint.role_addressed_to || !finalComplaint.recipient_address || !finalComplaint.subject || !finalComplaint.date || !finalComplaint.name_of_complainer || !finalComplaint.complainer_contact_number || !finalComplaint.allocated_thana) {
-            toast.error("Please fill all the fields");
+        if (!complaintDetails.role_addressed_to || !complaintDetails.recipient_address || !complaintDetails.subject || !complaintDetails.date || !complaintDetails.name_of_complainer || !complaintDetails.complainer_contact_number || !complaintDetails.allocated_thana) {
+            toast.error("Please fill all the required fields");
             setLoading(false);
             return;
         }
+
         try {
-            const response = await axios.post("/api/complaint", finalComplaint);
+            const formData = new FormData();
+            // ✅ Fix — only lowercase specific fields, not enums
+            Object.entries(complaintDetails).forEach(([key, value]) => {
+                const enumFields = ['role_addressed_to', 'current_status'];
+                const processed = enumFields.includes(key)
+                    ? value.trim().toUpperCase()   // keep enums uppercase
+                    : value.trim().toLowerCase();
+                formData.append(key, processed);
+            });
+
+            selectedFiles.forEach((file) => {
+                formData.append("files", file);
+            });
+
+            const response = await axios.post("/api/complaint", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
             if (response.data.success) {
                 toast.success("Complaint submitted successfully");
                 setComplaintDetails({
@@ -123,14 +143,37 @@ export default function SPComplaintSection() {
                     complainer_contact_number: "",
                     allocated_thana: "",
                     submitted_by: "",
+                    description: "",
                 });
+                setSelectedFiles([]);
+                if (fileInputRef.current) fileInputRef.current.value = "";
             }
         } catch (error) {
-            toast.error("Failed to submit complaint");
+            if (axios.isAxiosError(error)) {
+                toast.error(error.response?.data?.message || "Failed to submit complaint");
+            } else {
+                toast.error("Failed to submit complaint");
+            }
         } finally {
             setLoading(false);
         }
     }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const newFiles = Array.from(e.target.files);
+            const validFiles = newFiles.filter(file => {
+                const isValid = file.type.startsWith('image/') || file.type === 'application/pdf';
+                if (!isValid) toast.error(`${file.name} is not a valid format (Image or PDF only)`);
+                return isValid;
+            });
+            setSelectedFiles(prev => [...prev, ...validFiles]);
+        }
+    };
+
+    const removeFile = (index: number) => {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    };
 
     const fetchComplaints = useCallback(async (page = 1, filter = "", value = "") => {
         setSearchLoading(true);
@@ -306,6 +349,8 @@ export default function SPComplaintSection() {
     ];
     return (
         <div className='bg-white p-2 rounded-lg w-full flex flex-col gap-2 items-start'>
+
+            {/* TABS SECTION FOR SP */}
             {user?.role === "SP" && (
                 <div className="relative flex border-b border-gray-300 w-full">
                     {tabs.map((tab) => (
@@ -366,6 +411,8 @@ export default function SPComplaintSection() {
             {
                 (activeTab === "manage") && (
                     <div className='w-full px-3'>
+
+                        {/* SEARCH FORM */}
                         <form onSubmit={handleSearch} className='py-3 flex flex-wrap items-end justify-start gap-3'>
                             <div className='flex flex-col gap-1'>
                                 <label className='text-xs font-medium text-gray-500'>Filter By</label>
@@ -435,6 +482,7 @@ export default function SPComplaintSection() {
                                 </div>
                             </div>
                         </form>
+
                         <h1 className='text-xl font-semibold text-gray-600 py-3 flex items-center justify-start gap-3'>
                             Complaints Table
                             <span className='text-sm font-normal text-gray-400'>({totalCount} total)</span>
@@ -450,8 +498,11 @@ export default function SPComplaintSection() {
                                         <th className='p-3 text-sm font-semibold text-gray-600'>Addressed To</th>
                                         <th className='p-3 text-sm font-semibold text-gray-600'>Thana</th>
                                         <th className='p-3 text-sm font-semibold text-gray-600'>Subject</th>
+                                        <th className='p-3 text-sm font-semibold text-gray-600'>Description</th>
+                                        <th className='p-3 text-sm font-semibold text-gray-600'>Documents</th>
                                         <th className='p-3 text-sm font-semibold text-gray-600 text-center'>Complaint Status</th>
                                         <th className='p-3 text-sm font-semibold text-gray-600 text-center'>Actions</th>
+                                        <th className='p-3 text-sm font-semibold text-gray-600 text-center'>Logs</th>
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-100'>
@@ -463,6 +514,28 @@ export default function SPComplaintSection() {
                                             <td className='p-3 text-sm text-gray-700'>{complaint.role_addressed_to}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.allocated_thana}</td>
                                             <td className='p-3 text-sm text-gray-700'>{complaint.subject}</td>
+                                            <td className='p-3 text-sm text-gray-500'>{complaint.description}</td>
+                                            <td className='p-3 text-sm text-gray-700'>
+                                                <div className="flex gap-2 flex-wrap max-w-[150px]">
+                                                    {complaint.docs_url && complaint.docs_url.length > 0 ? (
+                                                        complaint.docs_url.map((url, index) => (
+                                                            <a
+                                                                key={index}
+                                                                href={url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-full transition-colors flex items-center justify-center border border-transparent hover:border-blue-100"
+                                                                title={`View Document ${index + 1}`}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <MdAttachFile size={18} />
+                                                            </a>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-gray-400 text-xs italic">None</span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className='p-3 text-sm text-center'>
                                                 <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="inline-block">
                                                     <div
@@ -526,6 +599,14 @@ export default function SPComplaintSection() {
                                                     title="Delete Complaint"
                                                 >
                                                     <MdDeleteOutline size={20} />
+                                                </button>
+                                            </td>
+                                            <td className='p-3 text-sm text-center'>
+                                                <button
+                                                    className='p-2 text-blue-500 hover:bg-red-50 rounded-full transition-colors'
+                                                    title="Delete Complaint"
+                                                >
+                                                    <CgNotes size={20} />
                                                 </button>
                                             </td>
                                         </tr>
@@ -657,12 +738,81 @@ export default function SPComplaintSection() {
                                     }
                                 </select>
                             </div>
-                            <div className='w-full relative bottom-0'>
+                            <div className="flex flex-col items-start gap-2 justify-center col-span-3 max-lg:col-span-2 max-sm:col-span-1">
+                                <label htmlFor="description">Description (Optional)</label>
+                                <textarea
+                                    value={complaintDetails.description}
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, description: e.target.value })}
+                                    placeholder="Enter detailed description of the complaint"
+                                    id="description"
+                                    rows={4}
+                                    className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 focus:outline-none'
+                                />
+                            </div>
+                            <div className="flex flex-col items-start gap-2 justify-center col-span-3 max-lg:col-span-2 max-sm:col-span-1 pt-4 mt-2">
+                                <label className="font-semibold text-gray-700">Attachments (Optional)</label>
+                                <div className="flex flex-wrap gap-4 w-full">
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-all cursor-pointer font-medium"
+                                    >
+                                        <MdAttachFile size={20} />
+                                        Add Documents
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        multiple
+                                        accept=".pdf,image/*"
+                                        className="hidden"
+                                    />
+                                </div>
+
+                                {selectedFiles.length > 0 && (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 w-full mt-3">
+                                        {selectedFiles.map((file, index) => (
+                                            <div key={index} className="relative group flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                <div className="text-blue-500">
+                                                    {file.type === 'application/pdf' ? <MdPictureAsPdf size={24} /> : <MdImage size={24} />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-medium text-gray-700 truncate">{file.name}</p>
+                                                    <p className="text-[10px] text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeFile(index)}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <MdClose size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <p className="text-[10px] text-gray-400 mt-1">* Only images and PDF files are allowed.</p>
+                            </div>
+
+                            <div className='w-full'>
 
                                 <button
                                     onClick={submitComplaint}
                                     disabled={loading}
-                                    className='w-full absolute h-10 bottom-0 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer'>{loading ? "Submitting..." : "Submit"}</button>
+                                    className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer group flex items-center justify-center gap-2'
+                                >
+                                    {loading ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        "Submit Complaint"
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -763,7 +913,7 @@ export default function SPComplaintSection() {
             }
             {/* DELETE CONFIRMATION MODAL */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center p-4">
                     <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full border border-gray-100 scale-in-center">
                         <h2 className="text-xl font-bold text-gray-800 mb-2">Delete Complaint?</h2>
                         <p className="text-gray-600 mb-6">Are you sure you want to delete this complaint? This action cannot be undone.</p>
