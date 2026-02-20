@@ -8,7 +8,8 @@ import { useUserStore } from '../_store/userStore';
 import { FcRefresh } from 'react-icons/fc';
 import { MdNavigateNext, MdNavigateBefore, MdDeleteOutline, MdNote, MdAttachFile, MdClose, MdPictureAsPdf, MdImage } from 'react-icons/md';
 import { CgNotes } from 'react-icons/cg';
-export default function SPComplaintSection() {
+import Link from 'next/link';
+export default function ComplaintSection() {
 
     const [activeTab, setActiveTab] = useState("manage");
     const [loading, setLoading] = useState(false);
@@ -348,7 +349,7 @@ export default function SPComplaintSection() {
         { id: "admin", label: "Admin Actions", color: "#06a600" },
     ];
     return (
-        <div className='bg-white p-2 rounded-lg w-full flex flex-col gap-2 items-start'>
+        <div className='bg-white p-2 pt-0 rounded-lg w-full flex flex-col gap-2 items-start'>
 
             {/* TABS SECTION FOR SP */}
             {user?.role === "SP" && (
@@ -411,6 +412,12 @@ export default function SPComplaintSection() {
             {
                 (activeTab === "manage") && (
                     <div className='w-full px-3'>
+
+                        <h1 className='text-xl font-bold text-slate-900 tracking-tight py-3 flex items-center justify-start gap-3'>
+                            Complaints Table
+                            <span className='text-sm font-normal text-gray-400'>({totalCount} total)</span>
+                            <button onClick={handleRefresh} className='cursor-pointer border p-1 rounded-md hover:bg-blue-500/10 border-blue-500'><FcRefresh size={20} /></button>
+                        </h1>
 
                         {/* SEARCH FORM */}
                         <form onSubmit={handleSearch} className='py-3 flex flex-wrap items-end justify-start gap-3'>
@@ -483,26 +490,21 @@ export default function SPComplaintSection() {
                             </div>
                         </form>
 
-                        <h1 className='text-xl font-semibold text-gray-600 py-3 flex items-center justify-start gap-3'>
-                            Complaints Table
-                            <span className='text-sm font-normal text-gray-400'>({totalCount} total)</span>
-                            <button onClick={handleRefresh} className='cursor-pointer border p-1 rounded-md hover:bg-blue-500/10 border-blue-500'><FcRefresh size={20} /></button>
-                        </h1>
-                        <div className='overflow-x-auto w-full'>
-                            <table className='w-full min-w-[700px] text-left border-collapse'>
+                        <div className='overflow-x-auto w-full shadow-sm border border-slate-200'>
+                            <table className='w-full text-left border-collapse'>
                                 <thead>
-                                    <tr className='bg-gray-50 border-b border-gray-200'>
-                                        <th className='p-3 text-sm font-semibold text-gray-600'>Complaint ID</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600'>Name of the Complainer</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600'>Complaint Date</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600'>Addressed To</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600'>Thana</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600'>Subject</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600'>Description</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600'>Documents</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600 text-center'>Complaint Status</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600 text-center'>Actions</th>
-                                        <th className='p-3 text-sm font-semibold text-gray-600 text-center'>Logs</th>
+                                    <tr className='bg-slate-50/50 border-b border-slate-200'>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Complaint ID</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Name of the Complainer</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Complaint Date</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Addressed To</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Thana</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Subject</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Description</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Documents</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center'>Complaint Status</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center'>Actions</th>
+                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center'>Logs</th>
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-100'>
@@ -602,12 +604,13 @@ export default function SPComplaintSection() {
                                                 </button>
                                             </td>
                                             <td className='p-3 text-sm text-center'>
-                                                <button
+                                                <Link
+                                                    href={`/logs/${complaint.id}`}
                                                     className='p-2 text-blue-500 hover:bg-red-50 rounded-full transition-colors'
-                                                    title="Delete Complaint"
+                                                    title="Logs"
                                                 >
                                                     <CgNotes size={20} />
-                                                </button>
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))}
@@ -723,7 +726,7 @@ export default function SPComplaintSection() {
                                     placeholder="Enter 10-digit mobile number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
 
-                            <div className="flex flex-col items-start gap-2 justify-center">
+                            <div className="flex flex-col items-start gap-2 justify-start">
                                 <label htmlFor="name">Allocate to Thana</label>
                                 <select
                                     value={complaintDetails.allocated_thana}
@@ -738,7 +741,7 @@ export default function SPComplaintSection() {
                                     }
                                 </select>
                             </div>
-                            <div className="flex flex-col items-start gap-2 justify-center col-span-3 max-lg:col-span-2 max-sm:col-span-1">
+                            <div className="flex flex-col items-start gap-2 justify-center col-span-2 max-lg:col-span-2 max-sm:col-span-1">
                                 <label htmlFor="description">Description (Optional)</label>
                                 <textarea
                                     value={complaintDetails.description}
@@ -749,7 +752,7 @@ export default function SPComplaintSection() {
                                     className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 focus:outline-none'
                                 />
                             </div>
-                            <div className="flex flex-col items-start gap-2 justify-center col-span-3 max-lg:col-span-2 max-sm:col-span-1 pt-4 mt-2">
+                            <div className="flex flex-col items-start gap-2 justify-center col-span-3 max-lg:col-span-2 max-sm:col-span-1 border-t border-gray-300 pt-4 mt-2">
                                 <label className="font-semibold text-gray-700">Attachments (Optional)</label>
                                 <div className="flex flex-wrap gap-4 w-full">
                                     <button
@@ -827,7 +830,7 @@ export default function SPComplaintSection() {
                         <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4 w-full mt-5'>
 
                             {/* ADD THANA */}
-                            <div className='flex flex-col items-start justify-start gap-3 border-gray-300 border bg-white shadow-lg p-3 rounded-lg'>
+                            <div className='flex flex-col items-start justify-start gap-3 bg-white border border-gray-200 p-3 rounded-lg'>
                                 <h1 className='text-lg font-semibold text-gray-600 text-center'>Add a Thana</h1>
                                 <div className='flex flex-col items-start gap-2 justify-center w-full mt-3'>
                                     <label htmlFor="name" className='text-gray-600'>Thana Name</label>
@@ -865,8 +868,8 @@ export default function SPComplaintSection() {
                                     disabled={addThanaLoading}
                                     className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none bg-green-500 text-white hover:bg-green-600 transition-colors cursor-pointer'>{addThanaLoading ? "Adding..." : "Add Thana"}</button>
                             </div>
-
-                            <div className='flex flex-col items-start justify-start gap-3 border-gray-300 border bg-white shadow-lg p-3 rounded-lg'>
+                            {/* ALLOCATE TI */}
+                            <div className='flex flex-col items-start justify-start gap-3 border border-gray-200 bg-white p-3 rounded-lg'>
                                 <h1 className='text-lg font-semibold text-gray-600 text-center w-full'>Allocate TI</h1>
                                 <div className='flex flex-col items-start gap-2 justify-center w-full mt-3'>
                                     <label htmlFor="name" className='text-gray-600'>Select Thana</label>

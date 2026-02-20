@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     let formData: FormData;
     try {
         formData = await request.formData();
-    } catch {
+    } catch (error) {
+        console.log("error: ", error)
         return NextResponse.json(
             { message: "Invalid form data", success: false },
             { status: 400 }
@@ -163,7 +164,9 @@ export async function POST(request: NextRequest) {
             submitted_by: decodedToken.name,
             description,
             docs_url: docs_url.length > 0 ? docs_url : null,
-        });
+        })
+        .select()
+        .single();
 
     if (error) {
         return NextResponse.json(
@@ -172,9 +175,32 @@ export async function POST(request: NextRequest) {
         );
     }
 
+    // Now create a log for creating a complaint
+    const { data: logData, error: logError } = await supabase
+        .from("complaint_logs")
+        .insert({
+            complaint_id: data?.id,
+            action: "CREATED",
+            updated_by: decodedToken.name,
+            prev_status: "NONE",
+            current_status: "PENDING",
+            reason: "INITIALISATION"
+        })
+        .select()
+        .single();
+
+    if (logError) {
+        return NextResponse.json(
+            { message: "Error in creating log", error: logError.message, success: false },
+            { status: 500 }
+        );
+    }
+
     return NextResponse.json({
         message: "Complaint Submitted successfully",
         success: true,
+        logsUpdated: true,
+        logData,
         data,
     });
 }
@@ -293,7 +319,7 @@ export async function PATCH(request: NextRequest) {
     /* ---------------- Fetch complaint first ---------------- */
     const { data: complaint, error: fetchError } = await supabase
         .from("complaints")
-        .select("id, allocated_thana")
+        .select("id, allocated_thana, current_status")
         .eq("id", id)
         .maybeSingle();
 
@@ -312,7 +338,9 @@ export async function PATCH(request: NextRequest) {
             updated_by: user.name,
             updated_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .select("*")
+        .single();
 
     if (error) {
         return NextResponse.json(
@@ -320,8 +348,31 @@ export async function PATCH(request: NextRequest) {
             { status: 500 }
         );
     }
+
+    // Now create a log for creating a complaint
+    const { data: logData, error: logError } = await supabase
+        .from("complaint_logs")
+        .insert({
+            complaint_id: data?.id,
+            action: "UPDATED",
+            updated_by: user.name,
+            prev_status: complaint.current_status,
+            current_status: status,
+            reason: "UPDATED"
+        })
+        .select()
+        .single();
+
+    if (logError) {
+        return NextResponse.json(
+            { message: logError.message, success: false },
+            { status: 500 }
+        );
+    }
+
+    const logsUpdated = true;
     return NextResponse.json(
-        { message: "Complaint updated successfully", success: true, data },
+        { message: "Complaint updated successfully", success: true, data, logsUpdated, logData },
         { status: 200 }
     );
 }
