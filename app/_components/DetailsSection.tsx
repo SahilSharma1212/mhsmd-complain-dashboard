@@ -4,8 +4,7 @@ export default function DetailsSection() {
     const { user } = useUserStore();
     return (
         <>
-            <h1 className='text-3xl font-bold text-slate-900 tracking-tight bg-white p-3 border-b border-gray-300 flex items-center justify-start gap-2'><BiUser className='text-gray-600' />Profile</h1>
-            <div className='bg-white p-3 grid grid-cols-3 py-5 cursor-pointer w-full max-md:text-sm max-sm:text-xs max-md:grid-cols-2 max-sm:grid-cols-1 gap-3 border-b border-gray-300'>
+            <div className='bg-white p-3 grid grid-cols-3 py-5 cursor-pointer w-full max-md:text-sm max-sm:text-xs max-md:grid-cols-2 max-sm:grid-cols-1 gap-3 border-b border-gray-200'>
 
                 <div className='flex gap-2 py-1 w-full'>
                     <p className='font-semibold text-gray-500'>Name:</p>
@@ -23,9 +22,13 @@ export default function DetailsSection() {
                 </div>
                 <div className='flex gap-2 py-1 w-full'>
                     <p className='font-semibold text-gray-500'>Thana:</p>
-                    <p className='font-semibold'>{user?.thana.split(" ")
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(" ")}</p>
+                    <p className='font-semibold'>
+                        {
+                            user?.role === "SP" ? "Multiple In Control" : user?.thana.split(" ")
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(" ")
+                        }
+                    </p>
                 </div>
                 <div className='flex gap-2 py-1 w-full'>
                     <p className='font-semibold text-gray-500'>Email:</p>

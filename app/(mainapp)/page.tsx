@@ -46,7 +46,7 @@ export default function Home() {
 
     return (
         <>
-            <h1 className='text-3xl font-bold text-slate-900 tracking-tight bg-white p-3 border-b border-gray-300 flex items-center justify-start gap-3'><RiDashboardLine strokeWidth={0.05} className='text-gray-600' />Dashboard</h1>
+            <h1 className='text-2xl font-bold text-slate-900 tracking-tight bg-gray-50 p-3 border-b border-gray-200 flex items-center justify-start gap-3'><RiDashboardLine strokeWidth={0.05} className='text-gray-600' />Dashboard</h1>
             <ComplaintSection />
         </>
     )

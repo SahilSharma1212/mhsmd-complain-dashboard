@@ -99,10 +99,8 @@ export async function POST(request: NextRequest) {
 
     if (files && files.length > 0) {
         for (const file of files) {
-            // Skip empty file slots (browser sometimes sends empty file entries)
             if (!file || file.size === 0) continue;
 
-            // Validate file type
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
             if (!allowedTypes.includes(file.type)) {
                 return NextResponse.json(
@@ -111,7 +109,6 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            // Validate file size (10MB max)
             if (file.size > 10 * 1024 * 1024) {
                 return NextResponse.json(
                     { message: `File too large: ${file.name}. Max size is 10MB.`, success: false },
@@ -122,7 +119,6 @@ export async function POST(request: NextRequest) {
             const fileExt = file.name.split('.').pop();
             const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}.${fileExt}`;
 
-            // Convert File to Buffer for reliable upload
             const arrayBuffer = await file.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
 
@@ -149,7 +145,7 @@ export async function POST(request: NextRequest) {
         }
     }
 
-    // 5. Insert complaint
+    // 5. Insert complaint — uses "status" column in complaints table
     const { data, error } = await supabase
         .from("complaints")
         .insert({
@@ -157,7 +153,7 @@ export async function POST(request: NextRequest) {
             recipient_address,
             subject,
             date,
-            current_status: "PENDING",
+            status: "PENDING",             // ✅ complaints table column
             name_of_complainer,
             complainer_contact_number,
             allocated_thana,
@@ -169,21 +165,22 @@ export async function POST(request: NextRequest) {
         .single();
 
     if (error) {
+        console.log(error)
         return NextResponse.json(
             { message: "Error in adding complaint", error: error.message, success: false },
             { status: 500 }
         );
     }
 
-    // Now create a log for creating a complaint
+    // 6. Insert log — uses "prev_status" / "current_status" columns in complaint_logs table
     const { data: logData, error: logError } = await supabase
         .from("complaint_logs")
         .insert({
             complaint_id: data?.id,
             action: "CREATED",
             updated_by: decodedToken.name,
-            prev_status: "NONE",
-            current_status: "PENDING",
+            prev_status: "NONE",            // ✅ complaint_logs table column
+            current_status: "PENDING",      // ✅ complaint_logs table column
             reason: "INITIALISATION"
         })
         .select()
@@ -259,8 +256,8 @@ export async function GET(request: NextRequest) {
     if (filter && value) {
         if (filter === "name_of_complainer") {
             query = query.ilike("name_of_complainer", `%${value}%`);
-        } else if (filter === "current_status") {
-            query = query.eq("current_status", value);
+        } else if (filter === "status") {
+            query = query.eq("status", value);          // ✅ complaints table column
         } else if (filter === "role_addressed_to") {
             query = query.eq("role_addressed_to", value);
         }
@@ -303,7 +300,7 @@ export async function PATCH(request: NextRequest) {
         );
     }
 
-    // 3. Validate request body with Zod
+    // 2. Validate request body with Zod
     const body = await request.json();
     const parsed = complaintPatchSchema.safeParse(body);
 
@@ -316,25 +313,26 @@ export async function PATCH(request: NextRequest) {
 
     const { id, status } = parsed.data;
 
-    /* ---------------- Fetch complaint first ---------------- */
+    // 3. Fetch complaint — select "status" from complaints table
     const { data: complaint, error: fetchError } = await supabase
         .from("complaints")
-        .select("id, allocated_thana, current_status")
+        .select("id, allocated_thana, status")   // ✅ complaints table column
         .eq("id", id)
         .maybeSingle();
 
     if (fetchError || !complaint) {
+        console.log(fetchError)
         return NextResponse.json(
             { message: "Complaint not found", success: false },
             { status: 404 }
         );
     }
 
-    /* ---------------- Update ---------------- */
+    // 4. Update complaint — set "status" column
     const { data, error } = await supabase
         .from("complaints")
         .update({
-            current_status: status,
+            status: status,                 // ✅ complaints table column
             updated_by: user.name,
             updated_at: new Date().toISOString(),
         })
@@ -349,15 +347,15 @@ export async function PATCH(request: NextRequest) {
         );
     }
 
-    // Now create a log for creating a complaint
+    // 5. Insert log — uses "prev_status" / "current_status" columns in complaint_logs table
     const { data: logData, error: logError } = await supabase
         .from("complaint_logs")
         .insert({
             complaint_id: data?.id,
             action: "UPDATED",
             updated_by: user.name,
-            prev_status: complaint.current_status,
-            current_status: status,
+            prev_status: complaint.status,  // ✅ read from fetched complaint.status
+            current_status: status,         // ✅ complaint_logs table column
             reason: "UPDATED"
         })
         .select()
@@ -370,9 +368,8 @@ export async function PATCH(request: NextRequest) {
         );
     }
 
-    const logsUpdated = true;
     return NextResponse.json(
-        { message: "Complaint updated successfully", success: true, data, logsUpdated, logData },
+        { message: "Complaint updated successfully", success: true, data, logsUpdated: true, logData },
         { status: 200 }
     );
 }
@@ -407,10 +404,10 @@ export async function DELETE(request: NextRequest) {
         );
     }
 
-    /* ---------------- Fetch complaint to check ownership ---------------- */
+    // Fetch complaint — include "status" so we can log the prev_status
     const { data: complaint, error: fetchError } = await supabase
         .from("complaints")
-        .select("id, allocated_thana, role_addressed_to")
+        .select("id, allocated_thana, role_addressed_to, status")  // ✅ added "status"
         .eq("id", id)
         .maybeSingle();
 
@@ -428,7 +425,6 @@ export async function DELETE(request: NextRequest) {
             isAuthorised = true;
         }
     } else if (user.role === "SP") {
-        // For SP, they can delete if they are the designated SP for that thana
         const { data: thanaRecord } = await supabase
             .from("thana")
             .select("designated_sp")
@@ -447,7 +443,7 @@ export async function DELETE(request: NextRequest) {
         );
     }
 
-    /* ---------------- Delete ---------------- */
+    // Delete complaint
     const { error: deleteError } = await supabase
         .from("complaints")
         .delete()
@@ -460,8 +456,29 @@ export async function DELETE(request: NextRequest) {
         );
     }
 
+    // Insert log — uses "prev_status" / "current_status" columns in complaint_logs table
+    const { data: logData, error: logError } = await supabase
+        .from("complaint_logs")
+        .insert({
+            complaint_id: complaint.id,
+            action: "DELETED",
+            updated_by: user.name,
+            prev_status: complaint.status,  // ✅ read from fetched complaint.status
+            current_status: "DELETED",      // ✅ complaint_logs table column
+            reason: "DELETED"
+        })
+        .select()
+        .single();
+
+    if (logError) {
+        return NextResponse.json(
+            { message: logError.message, success: false },
+            { status: 500 }
+        );
+    }
+
     return NextResponse.json(
-        { message: "Complaint deleted successfully", success: true },
+        { message: "Complaint deleted successfully", success: true, logData },
         { status: 200 }
     );
 }

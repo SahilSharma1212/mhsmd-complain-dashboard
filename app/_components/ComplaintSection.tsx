@@ -20,7 +20,7 @@ export default function ComplaintSection() {
         recipient_address: "",
         subject: "",
         date: "",
-        current_status: "",
+        status: "",
         name_of_complainer: "",
         complainer_contact_number: "",
         allocated_thana: "",
@@ -115,7 +115,7 @@ export default function ComplaintSection() {
             const formData = new FormData();
             // ✅ Fix — only lowercase specific fields, not enums
             Object.entries(complaintDetails).forEach(([key, value]) => {
-                const enumFields = ['role_addressed_to', 'current_status'];
+                const enumFields = ['role_addressed_to', 'status'];
                 const processed = enumFields.includes(key)
                     ? value.trim().toUpperCase()   // keep enums uppercase
                     : value.trim().toLowerCase();
@@ -139,7 +139,7 @@ export default function ComplaintSection() {
                     recipient_address: "",
                     subject: "",
                     date: "",
-                    current_status: "",
+                    status: "",
                     name_of_complainer: "",
                     complainer_contact_number: "",
                     allocated_thana: "",
@@ -284,7 +284,7 @@ export default function ComplaintSection() {
                 toast.success("Status updated");
                 if (complaints) {
                     const updatedComplaints = complaints.map((c) =>
-                        c.id === id ? { ...c, current_status: status } : c
+                        c.id === id ? { ...c, status: status } : c
                     );
                     setComplaints(updatedComplaints);
                 }
@@ -353,12 +353,12 @@ export default function ComplaintSection() {
 
             {/* TABS SECTION FOR SP */}
             {user?.role === "SP" && (
-                <div className="relative flex border-b border-gray-300 w-full">
+                <div className="relative flex border-b py-2 border-gray-300 w-full">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 py-3 text-sm font-medium transition-colors duration-200`}
+                            className={`flex-1 py-3 text-sm font-semibold transition-colors duration-200`}
                             style={{
                                 color: activeTab === tab.id ? tab.color : "#000000",
                             }}
@@ -426,10 +426,10 @@ export default function ComplaintSection() {
                                 <select
                                     value={filterAttribute}
                                     onChange={(e) => setFilterAttribute(e.target.value)}
-                                    className='p-2 rounded-md border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
+                                    className='p-2 border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
                                 >
                                     <option value="">-- Select Filter --</option>
-                                    <option value="current_status">Status</option>
+                                    <option value="status">Status</option>
                                     <option value="name_of_complainer">Name of Complainer</option>
                                     <option value="role_addressed_to">Addressed To</option>
                                 </select>
@@ -438,11 +438,11 @@ export default function ComplaintSection() {
                             <div className='flex flex-col gap-1'>
                                 <label className='text-xs font-medium text-gray-500'>Value</label>
                                 <div className='flex'>
-                                    {filterAttribute === "current_status" ? (
+                                    {filterAttribute === "status" ? (
                                         <select
                                             value={filterValue}
                                             onChange={(e) => setFilterValue(e.target.value)}
-                                            className='p-2 rounded-md rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
+                                            className='p-2 rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
                                         >
                                             <option value="">-- Select Status --</option>
                                             <option value="PENDING">PENDING</option>
@@ -456,7 +456,7 @@ export default function ComplaintSection() {
                                         <select
                                             value={filterValue}
                                             onChange={(e) => setFilterValue(e.target.value)}
-                                            className='p-2 rounded-md rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
+                                            className='p-2 rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
                                         >
                                             <option value="">-- Select Role --</option>
                                             <option value="SP">SP</option>
@@ -467,7 +467,7 @@ export default function ComplaintSection() {
                                             type="text"
                                             value={filterValue}
                                             onChange={(e) => setFilterValue(e.target.value)}
-                                            className='p-2 rounded-md rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
+                                            className='p-2 rounded-r-none border border-gray-300 focus:border-gray-500 focus:outline-none text-sm min-w-[180px]'
                                             placeholder={filterAttribute ? 'Type to search...' : 'Select a filter first'}
                                             disabled={!filterAttribute}
                                         />
@@ -475,7 +475,7 @@ export default function ComplaintSection() {
                                     <button
                                         type="submit"
                                         disabled={searchLoading}
-                                        className='bg-blue-500 text-white p-2 rounded-md rounded-l-none border border-blue-500 hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-50'
+                                        className='bg-blue-500 text-white p-2 rounded-l-none border border-blue-500 hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-50'
                                     >
                                         {searchLoading ? (
                                             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -508,112 +508,136 @@ export default function ComplaintSection() {
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-100'>
-                                    {complaints?.map((complaint) => (
-                                        <tr key={complaint.id} className='hover:bg-gray-50 cursor-pointer transition-colors'>
-                                            <td className='p-3 text-sm text-gray-700 font-medium'>{complaint.id}</td>
-                                            <td className='p-3 text-sm text-gray-700 font-medium'>{complaint.name_of_complainer}</td>
-                                            <td className='p-3 text-sm text-gray-700'>{complaint.date}</td>
-                                            <td className='p-3 text-sm text-gray-700'>{complaint.role_addressed_to}</td>
-                                            <td className='p-3 text-sm text-gray-700'>{complaint.allocated_thana}</td>
-                                            <td className='p-3 text-sm text-gray-700'>{complaint.subject}</td>
-                                            <td className='p-3 text-sm text-gray-500'>{complaint.description}</td>
-                                            <td className='p-3 text-sm text-gray-700'>
-                                                <div className="flex gap-2 flex-wrap max-w-[150px]">
-                                                    {complaint.docs_url && complaint.docs_url.length > 0 ? (
-                                                        complaint.docs_url.map((url, index) => (
-                                                            <a
-                                                                key={index}
-                                                                href={url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-full transition-colors flex items-center justify-center border border-transparent hover:border-blue-100"
-                                                                title={`View Document ${index + 1}`}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <MdAttachFile size={18} />
-                                                            </a>
-                                                        ))
-                                                    ) : (
-                                                        <span className="text-gray-400 text-xs italic">None</span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className='p-3 text-sm text-center'>
-                                                <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="inline-block">
-                                                    <div
-                                                        onClick={(e) => {
-                                                            if (activeComplaintId === complaint.id) {
-                                                                setActiveComplaintId(null);
-                                                                setPopupPosition(null);
-                                                            } else {
-                                                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                                                setPopupPosition({ top: rect.top, left: rect.left + rect.width / 2 });
-                                                                setActiveComplaintId(complaint.id || null);
-                                                            }
-                                                        }}
-                                                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
-                                                        style={{
-                                                            color: complaintStatusColors[complaint.current_status]?.text,
-                                                            backgroundColor: complaintStatusColors[complaint.current_status]?.bg,
-                                                        }}
-                                                    >
-                                                        {updatingStatusId === complaint.id ? (
-                                                            <span className="flex items-center gap-1">
-                                                                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                                                </svg>
-                                                                Updating…
-                                                            </span>
-                                                        ) : complaint.current_status}
-                                                    </div>
-
-                                                    {activeComplaintId === complaint.id && popupPosition && (
-                                                        <div
-                                                            className='fixed p-2 flex flex-col items-center justify-center gap-1 bg-white/30 backdrop-blur-2xl shadow-lg rounded-md border border-gray-100 z-50 w-30'
-                                                            style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}
-                                                        >
-                                                            {Object.keys(complaintStatusColors).map((status) => (
-                                                                <button
-                                                                    key={status}
-                                                                    disabled={updatingStatusId !== null}
+                                    {
+                                        searchLoading ? (
+                                            Array.from({ length: 11 }).map((_, idx) => (
+                                                <tr key={idx} className="animate-pulse">
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-32"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-24"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-40"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-28"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
+                                                </tr>
+                                            ))
+                                        ) :
+                                            complaints?.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={10} className='text-center py-8 text-gray-500'>No complaints found</td>
+                                                </tr>
+                                            ) : (
+                                                complaints?.map((complaint) => (
+                                                    <tr key={complaint.id} className='hover:bg-gray-50 cursor-pointer transition-colors'>
+                                                        <td className='p-2 text-sm text-gray-700 font-medium'>{complaint.id}</td>
+                                                        <td className='p-2 text-sm text-gray-700 font-medium'>{complaint.name_of_complainer}</td>
+                                                        <td className='p-2 text-sm text-gray-700'>{complaint.date}</td>
+                                                        <td className='p-2 text-sm text-gray-700'>{complaint.role_addressed_to}</td>
+                                                        <td className='p-2 text-sm text-gray-700'>{complaint.allocated_thana}</td>
+                                                        <td className='p-2 text-sm text-gray-700'>{complaint.subject}</td>
+                                                        <td className='p-2 text-sm text-gray-500'>{complaint.description}</td>
+                                                        <td className='p-2 text-sm text-gray-700'>
+                                                            <div className="flex gap-2 flex-wrap max-w-[150px]">
+                                                                {complaint.docs_url && complaint.docs_url.length > 0 ? (
+                                                                    complaint.docs_url.map((url, index) => (
+                                                                        <a
+                                                                            key={index}
+                                                                            href={url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-full transition-colors flex items-center justify-center border border-transparent hover:border-blue-100"
+                                                                            title={`View Document ${index + 1}`}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        >
+                                                                            <MdAttachFile size={18} />
+                                                                        </a>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="text-gray-400 text-xs italic">None</span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className='p-2 text-sm text-center'>
+                                                            <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="inline-block">
+                                                                <div
                                                                     onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleStatusChange(complaint.id!, status);
+                                                                        if (activeComplaintId === complaint.id) {
+                                                                            setActiveComplaintId(null);
+                                                                            setPopupPosition(null);
+                                                                        } else {
+                                                                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                                            setPopupPosition({ top: rect.top, left: rect.left + rect.width / 2 });
+                                                                            setActiveComplaintId(complaint.id || null);
+                                                                        }
                                                                     }}
-                                                                    className='w-full px-3 py-2 text-xs hover:bg-gray-50 rounded-md transition-colors text-center'
-                                                                    style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg, borderRadius: '20px' }}
+                                                                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
+                                                                    style={{
+                                                                        color: complaintStatusColors[complaint.status]?.text,
+                                                                        backgroundColor: complaintStatusColors[complaint.status]?.bg,
+                                                                    }}
                                                                 >
-                                                                    {status}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className='p-3 text-sm text-center'>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setShowDeleteConfirm(complaint.id!);
-                                                    }}
-                                                    className='p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors'
-                                                    title="Delete Complaint"
-                                                >
-                                                    <MdDeleteOutline size={20} />
-                                                </button>
-                                            </td>
-                                            <td className='p-3 text-sm text-center'>
-                                                <Link
-                                                    href={`/logs/${complaint.id}`}
-                                                    className='p-2 text-blue-500 hover:bg-red-50 rounded-full transition-colors'
-                                                    title="Logs"
-                                                >
-                                                    <CgNotes size={20} />
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                                    {updatingStatusId === complaint.id ? (
+                                                                        <span className="flex items-center gap-1">
+                                                                            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                                            </svg>
+                                                                            Updating…
+                                                                        </span>
+                                                                    ) : complaint.status}
+                                                                </div>
+
+                                                                {activeComplaintId === complaint.id && popupPosition && (
+                                                                    <div
+                                                                        className='fixed p-2 flex flex-col items-center justify-center gap-1 bg-white/30 backdrop-blur-2xl shadow-lg rounded-md border border-gray-100 z-50 w-30'
+                                                                        style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}
+                                                                    >
+                                                                        {Object.keys(complaintStatusColors).map((status) => (
+                                                                            <button
+                                                                                key={status}
+                                                                                disabled={updatingStatusId !== null}
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleStatusChange(complaint.id!, status);
+                                                                                }}
+                                                                                className='w-full px-3 py-2 text-xs hover:bg-gray-50 rounded-md transition-colors text-center'
+                                                                                style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg, borderRadius: '20px' }}
+                                                                            >
+                                                                                {status}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className='p-3 text-sm text-center'>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setShowDeleteConfirm(complaint.id!);
+                                                                }}
+                                                                className='p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors'
+                                                                title="Delete Complaint"
+                                                            >
+                                                                <MdDeleteOutline size={20} />
+                                                            </button>
+                                                        </td>
+                                                        <td className='p-3 text-sm text-center'>
+                                                            <Link
+                                                                href={`/logs/${complaint.id}`}
+                                                                className='p-2 text-blue-500 hover:bg-red-50 rounded-full transition-colors'
+                                                                title="Logs"
+                                                            >
+                                                                <CgNotes size={20} />
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
+                                                )))
+                                    }
                                 </tbody>
                             </table>
                         </div>
@@ -682,7 +706,7 @@ export default function ComplaintSection() {
                                 <select
                                     value={complaintDetails.role_addressed_to}
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, role_addressed_to: e.target.value })}
-                                    id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' >
+                                    id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' >
                                     <option value="">-- Select Recipient --</option>
                                     <option value="SP">SP</option>
                                     <option value="TI">TI</option>
@@ -695,35 +719,35 @@ export default function ComplaintSection() {
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, recipient_address: e.target.value })}
                                     placeholder="Enter recipient's address" type="text"
                                     id="name"
-                                    className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                    className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Subject</label>
                                 <input
                                     value={complaintDetails.subject}
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, subject: e.target.value })}
-                                    placeholder="Enter complaint subject" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                    placeholder="Enter complaint subject" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Date</label>
                                 <input
                                     type='date'
                                     value={complaintDetails.date}
-                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, date: e.target.value })} id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                    onChange={(e) => setComplaintDetails({ ...complaintDetails, date: e.target.value })} id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Name of Complainer</label>
                                 <input
                                     value={complaintDetails.name_of_complainer}
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, name_of_complainer: e.target.value })}
-                                    placeholder="Enter full name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                    placeholder="Enter full name" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center">
                                 <label htmlFor="name">Mobile No. of Complainer</label>
                                 <input
                                     value={complaintDetails.complainer_contact_number}
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, complainer_contact_number: e.target.value })}
-                                    placeholder="Enter 10-digit mobile number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                    placeholder="Enter 10-digit mobile number" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                             </div>
 
                             <div className="flex flex-col items-start gap-2 justify-start">
@@ -731,7 +755,7 @@ export default function ComplaintSection() {
                                 <select
                                     value={complaintDetails.allocated_thana}
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, allocated_thana: e.target.value })}
-                                    id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' >
+                                    id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' >
 
                                     <option value="">-- Select Thana --</option>
                                     {
@@ -749,7 +773,7 @@ export default function ComplaintSection() {
                                     placeholder="Enter detailed description of the complaint"
                                     id="description"
                                     rows={4}
-                                    className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 focus:outline-none'
+                                    className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none'
                                 />
                             </div>
                             <div className="flex flex-col items-start gap-2 justify-center col-span-3 max-lg:col-span-2 max-sm:col-span-1 border-t border-gray-300 pt-4 mt-2">
@@ -830,54 +854,57 @@ export default function ComplaintSection() {
                         <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4 w-full mt-5'>
 
                             {/* ADD THANA */}
-                            <div className='flex flex-col items-start justify-start gap-3 bg-white border border-gray-200 p-3 rounded-lg'>
-                                <h1 className='text-lg font-semibold text-gray-600 text-center'>Add a Thana</h1>
-                                <div className='flex flex-col items-start gap-2 justify-center w-full mt-3'>
+                            <div className='flex flex-col items-start justify-start gap-3 bg-white border rounded-sm border-gray-200 shadow-sm'>
+                                <h1 className='text-lg font-semibold text-gray-600 text-center p-3 w-full bg-slate-200 rounded-t-xs'>Add a Thana</h1>
+                                <div className='flex flex-col items-start gap-2 justify-center w-full mt-3 px-3'>
                                     <label htmlFor="name" className='text-gray-600'>Thana Name</label>
                                     <input
                                         value={addThanaDetails.name}
                                         onChange={(e) => setAddThanaDetails({ ...addThanaDetails, name: e.target.value })}
-                                        placeholder="Enter Thana Name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
+                                        placeholder="Enter Thana Name" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none rounded-r-none' />
                                 </div>
 
-                                <div className='flex flex-col items-start gap-2 justify-center w-full'>
+                                <div className='flex flex-col items-start gap-2 justify-center w-full px-3'>
                                     <label htmlFor="name" className='text-gray-600'>Thana Contact No.</label>
                                     <input
                                         value={addThanaDetails.contact_number}
                                         onChange={(e) => setAddThanaDetails({ ...addThanaDetails, contact_number: e.target.value })}
-                                        placeholder="Enter Contact Number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                        placeholder="Enter Contact Number" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
 
-                                <div className='flex flex-col items-start gap-2 justify-center w-full'>
+                                <div className='flex flex-col items-start gap-2 justify-center w-full px-3'>
                                     <label htmlFor="name" className='text-gray-600'>City</label>
                                     <input
                                         value={addThanaDetails.city}
                                         onChange={(e) => setAddThanaDetails({ ...addThanaDetails, city: e.target.value })}
-                                        placeholder="Enter City" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                        placeholder="Enter City" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
 
-                                <div className='flex flex-col items-start gap-2 justify-center w-full'>
+                                <div className='flex flex-col items-start gap-2 justify-center w-full px-3'>
                                     <label htmlFor="name" className='text-gray-600'>Pin Code</label>
                                     <input
                                         value={addThanaDetails.pin_code}
                                         onChange={(e) => setAddThanaDetails({ ...addThanaDetails, pin_code: e.target.value })}
-                                        placeholder="Enter Pin Code" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                        placeholder="Enter Pin Code" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
-                                <button
-                                    onClick={addThana}
-                                    disabled={addThanaLoading}
-                                    className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none bg-green-500 text-white hover:bg-green-600 transition-colors cursor-pointer'>{addThanaLoading ? "Adding..." : "Add Thana"}</button>
+                                <div className='px-3 pb-3 w-full'>
+                                    <button
+                                        onClick={addThana}
+                                        disabled={addThanaLoading}
+                                        className='w-full h-10 outline-none rounded-xs focus:border-gray-500 border-r-none focus:outline-none bg-green-500 text-white hover:bg-green-600 transition-colors cursor-pointer'>{addThanaLoading ? "Adding..." : "Add Thana"}
+                                    </button>
+                                </div>
                             </div>
                             {/* ALLOCATE TI */}
-                            <div className='flex flex-col items-start justify-start gap-3 border border-gray-200 bg-white p-3 rounded-lg'>
-                                <h1 className='text-lg font-semibold text-gray-600 text-center w-full'>Allocate TI</h1>
-                                <div className='flex flex-col items-start gap-2 justify-center w-full mt-3'>
+                            <div className='flex flex-col items-start justify-start gap-3 border border-gray-200 bg-white rounded-sm shadow-sm'>
+                                <h1 className='text-lg font-semibold text-gray-600 text-center w-full p-3 bg-slate-200 rounded-t-xs'>Allocate TI</h1>
+                                <div className='flex flex-col items-start gap-2 justify-center w-full mt-3 px-3'>
                                     <label htmlFor="name" className='text-gray-600'>Select Thana</label>
                                     <select
                                         id="name"
                                         value={thanaAdminInfo.thana}
                                         onChange={(e) => setThanaAdminInfo({ ...thanaAdminInfo, thana: e.target.value })}
-                                        className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none'
+                                        className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none'
                                     >
                                         <option value="">Select Thana</option>
                                         {thana?.map((th, index) => (
@@ -887,28 +914,32 @@ export default function ComplaintSection() {
                                         ))}
                                     </select>
                                 </div>
-                                <div className='flex flex-col items-start gap-2 justify-center w-full'>
+                                <div className='flex flex-col items-start gap-2 justify-center w-full px-3'>
                                     <label htmlFor="name" className='text-gray-600'>Name</label>
                                     <input
                                         value={thanaAdminInfo.name}
                                         onChange={(e) => setThanaAdminInfo({ ...thanaAdminInfo, name: e.target.value })}
-                                        placeholder="Enter TI Name" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                        placeholder="Enter TI Name" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
-                                <div className='flex flex-col items-start gap-2 justify-center w-full'>
+                                <div className='flex flex-col items-start gap-2 justify-center w-full px-3'>
                                     <label htmlFor="name" className='text-gray-600'>Contact No.</label>
                                     <input
                                         value={thanaAdminInfo.contact_number}
                                         onChange={(e) => setThanaAdminInfo({ ...thanaAdminInfo, contact_number: e.target.value })}
-                                        placeholder="Enter Contact Number" type="text" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                        placeholder="Enter Contact Number" type="text" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
-                                <div className='flex flex-col items-start gap-2 justify-center w-full'>
+                                <div className='flex flex-col items-start gap-2 justify-center w-full px-3'>
                                     <label htmlFor="name" className='text-gray-600'>Email</label>
                                     <input
                                         value={thanaAdminInfo.email}
                                         onChange={(e) => setThanaAdminInfo({ ...thanaAdminInfo, email: e.target.value })}
-                                        placeholder="Enter Email Address" type="email" id="name" className='w-full p-2 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
+                                        placeholder="Enter Email Address" type="email" id="name" className='w-full p-2 border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none' />
                                 </div>
-                                <button onClick={allocateThanaTI} disabled={allocateThanaLoading} className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer'>{allocateThanaLoading ? "Allocating..." : "Submit"}</button>
+                                <div className='px-3 pb-3 w-full'>
+                                    <button onClick={allocateThanaTI} disabled={allocateThanaLoading} className='w-full h-10 rounded-md border border-gray-300 focus:border-gray-500 border-r-none focus:outline-none bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer'>
+                                        {allocateThanaLoading ? "Allocating..." : "Submit"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

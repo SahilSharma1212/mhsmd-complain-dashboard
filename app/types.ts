@@ -18,7 +18,7 @@ export interface Complaint {
     recipient_address: string;
     subject: string;
     date: string;
-    current_status: string;
+    status: string;
     name_of_complainer: string;
     complainer_contact_number: string;
     allocated_thana: string;
