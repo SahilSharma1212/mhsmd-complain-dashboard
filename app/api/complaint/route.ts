@@ -159,6 +159,7 @@ export async function POST(request: NextRequest) {
             allocated_thana,
             submitted_by: decodedToken.name,
             description,
+            source: "WEBSITE",
             docs_url: docs_url.length > 0 ? docs_url : null,
         })
         .select()

@@ -490,154 +490,147 @@ export default function ComplaintSection() {
                             </div>
                         </form>
 
-                        <div className='overflow-x-auto w-full shadow-sm border border-slate-200'>
-                            <table className='w-full text-left border-collapse'>
+                        <div className='w-full overflow-x-auto border border-slate-200 rounded-sm shadow-sm'>
+                            <table className='w-full text-left border-collapse text-sm' style={{ minWidth: '900px' }}>
                                 <thead>
-                                    <tr className='bg-slate-50/50 border-b border-slate-200'>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Complaint ID</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Name of the Complainer</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Complaint Date</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Addressed To</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Thana</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Subject</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Description</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider'>Documents</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center'>Complaint Status</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center'>Actions</th>
-                                        <th className='px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center'>Logs</th>
+                                    <tr className='bg-slate-50 border-b border-slate-200'>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap'>ID</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap'>Complainer</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap'>Date</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap'>To</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap'>Thana</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide'>Subject</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide'>Description</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap text-center'>Docs</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap text-center'>Status</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap text-center'>Del</th>
+                                        <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap text-center'>Logs</th>
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-100'>
-                                    {
-                                        searchLoading ? (
-                                            Array.from({ length: 11 }).map((_, idx) => (
-                                                <tr key={idx} className="animate-pulse">
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-32"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-24"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-40"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-28"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
-                                                    <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
-                                                </tr>
-                                            ))
-                                        ) :
-                                            complaints?.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={10} className='text-center py-8 text-gray-500'>No complaints found</td>
-                                                </tr>
-                                            ) : (
-                                                complaints?.map((complaint) => (
-                                                    <tr key={complaint.id} className='hover:bg-gray-50 cursor-pointer transition-colors'>
-                                                        <td className='p-2 text-sm text-gray-700 font-medium'>{complaint.id}</td>
-                                                        <td className='p-2 text-sm text-gray-700 font-medium'>{complaint.name_of_complainer}</td>
-                                                        <td className='p-2 text-sm text-gray-700'>{complaint.date}</td>
-                                                        <td className='p-2 text-sm text-gray-700'>{complaint.role_addressed_to}</td>
-                                                        <td className='p-2 text-sm text-gray-700'>{complaint.allocated_thana}</td>
-                                                        <td className='p-2 text-sm text-gray-700'>{complaint.subject}</td>
-                                                        <td className='p-2 text-sm text-gray-500'>{complaint.description}</td>
-                                                        <td className='p-2 text-sm text-gray-700'>
-                                                            <div className="flex gap-2 flex-wrap max-w-[150px]">
-                                                                {complaint.docs_url && complaint.docs_url.length > 0 ? (
-                                                                    complaint.docs_url.map((url, index) => (
-                                                                        <a
-                                                                            key={index}
-                                                                            href={url}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-full transition-colors flex items-center justify-center border border-transparent hover:border-blue-100"
-                                                                            title={`View Document ${index + 1}`}
-                                                                            onClick={(e) => e.stopPropagation()}
-                                                                        >
-                                                                            <MdAttachFile size={18} />
-                                                                        </a>
-                                                                    ))
-                                                                ) : (
-                                                                    <span className="text-gray-400 text-xs italic">None</span>
-                                                                )}
+                                    {searchLoading ? (
+                                        Array.from({ length: 8 }).map((_, idx) => (
+                                            <tr key={idx} className="animate-pulse">
+                                                {Array.from({ length: 11 }).map((_, i) => (
+                                                    <td key={i} className="px-3 py-3"><div className="h-3 bg-slate-100 rounded w-full"></div></td>
+                                                ))}
+                                            </tr>
+                                        ))
+                                    ) : complaints?.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={11} className='text-center py-10 text-gray-400 text-sm'>No complaints found</td>
+                                        </tr>
+                                    ) : (
+                                        complaints?.map((complaint) => (
+                                            <tr key={complaint.id} className='hover:bg-gray-50 transition-colors'>
+                                                {/* ID */}
+                                                <td className='px-3 py-2 text-xs text-gray-500 font-mono whitespace-nowrap'>
+                                                    <span title={complaint.id}>{String(complaint.id).slice(0, 8)}…</span>
+                                                </td>
+                                                {/* Complainer — name + number stacked */}
+                                                <td className='px-3 py-2 whitespace-nowrap'>
+                                                    <div className='text-sm font-medium text-gray-800 max-w-[120px] truncate' title={complaint.name_of_complainer}>
+                                                        {complaint.name_of_complainer}
+                                                    </div>
+                                                    <div className='text-xs text-gray-400'>{complaint.complainer_contact_number}</div>
+                                                </td>
+                                                {/* Date */}
+                                                <td className='px-3 py-2 text-xs text-gray-600 whitespace-nowrap'>{complaint.date}</td>
+                                                {/* Addressed To */}
+                                                <td className='px-3 py-2 text-xs font-semibold text-gray-700 whitespace-nowrap'>{complaint.role_addressed_to}</td>
+                                                {/* Thana */}
+                                                <td className='px-3 py-2 text-xs text-gray-700 whitespace-nowrap max-w-[100px] truncate' title={complaint.allocated_thana}>
+                                                    {complaint.allocated_thana}
+                                                </td>
+                                                {/* Subject */}
+                                                <td className='px-3 py-2'>
+                                                    <div className='text-xs text-gray-700 max-w-[140px] truncate' title={complaint.subject}>
+                                                        {complaint.subject}
+                                                    </div>
+                                                </td>
+                                                {/* Description */}
+                                                <td className='px-3 py-2'>
+                                                    <div className='text-xs text-gray-400 max-w-[160px] truncate' title={complaint.description}>
+                                                        {complaint.description || <span className='italic'>—</span>}
+                                                    </div>
+                                                </td>
+                                                {/* Docs */}
+                                                <td className='px-3 py-2 text-center'>
+                                                    {complaint.docs_url && complaint.docs_url.length > 0 ? (
+                                                        <div className='flex gap-1 justify-center flex-wrap'>
+                                                            {complaint.docs_url.map((url, index) => (
+                                                                <a key={index} href={url} target="_blank" rel="noopener noreferrer"
+                                                                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded transition-colors"
+                                                                    title={`Document ${index + 1}`}
+                                                                    onClick={(e) => e.stopPropagation()}>
+                                                                    <MdAttachFile size={16} />
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-300 text-xs">—</span>
+                                                    )}
+                                                </td>
+                                                {/* Status */}
+                                                <td className='px-3 py-2 text-center'>
+                                                    <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="inline-block relative">
+                                                        <div
+                                                            onClick={(e) => {
+                                                                if (activeComplaintId === complaint.id) {
+                                                                    setActiveComplaintId(null); setPopupPosition(null);
+                                                                } else {
+                                                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                                    setPopupPosition({ top: rect.top, left: rect.left + rect.width / 2 });
+                                                                    setActiveComplaintId(complaint.id || null);
+                                                                }
+                                                            }}
+                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium cursor-pointer whitespace-nowrap"
+                                                            style={{
+                                                                color: complaintStatusColors[complaint.status]?.text,
+                                                                backgroundColor: complaintStatusColors[complaint.status]?.bg,
+                                                            }}>
+                                                            {updatingStatusId === complaint.id ? (
+                                                                <span className="flex items-center gap-1">
+                                                                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                                    </svg>
+                                                                    …
+                                                                </span>
+                                                            ) : complaint.status}
+                                                        </div>
+                                                        {activeComplaintId === complaint.id && popupPosition && (
+                                                            <div className='fixed p-2 flex flex-col gap-1 bg-white/80 backdrop-blur-xl shadow-xl rounded-lg border border-gray-100 z-50 w-32'
+                                                                style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}>
+                                                                {Object.keys(complaintStatusColors).map((status) => (
+                                                                    <button key={status} disabled={updatingStatusId !== null}
+                                                                        onClick={(e) => { e.stopPropagation(); handleStatusChange(complaint.id!, status); }}
+                                                                        className='w-full px-3 py-1.5 text-xs rounded-full transition-colors text-center'
+                                                                        style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg }}>
+                                                                        {status}
+                                                                    </button>
+                                                                ))}
                                                             </div>
-                                                        </td>
-                                                        <td className='p-2 text-sm text-center'>
-                                                            <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="inline-block">
-                                                                <div
-                                                                    onClick={(e) => {
-                                                                        if (activeComplaintId === complaint.id) {
-                                                                            setActiveComplaintId(null);
-                                                                            setPopupPosition(null);
-                                                                        } else {
-                                                                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                                                            setPopupPosition({ top: rect.top, left: rect.left + rect.width / 2 });
-                                                                            setActiveComplaintId(complaint.id || null);
-                                                                        }
-                                                                    }}
-                                                                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer"
-                                                                    style={{
-                                                                        color: complaintStatusColors[complaint.status]?.text,
-                                                                        backgroundColor: complaintStatusColors[complaint.status]?.bg,
-                                                                    }}
-                                                                >
-                                                                    {updatingStatusId === complaint.id ? (
-                                                                        <span className="flex items-center gap-1">
-                                                                            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                                                            </svg>
-                                                                            Updating…
-                                                                        </span>
-                                                                    ) : complaint.status}
-                                                                </div>
-
-                                                                {activeComplaintId === complaint.id && popupPosition && (
-                                                                    <div
-                                                                        className='fixed p-2 flex flex-col items-center justify-center gap-1 bg-white/30 backdrop-blur-2xl shadow-lg rounded-md border border-gray-100 z-50 w-30'
-                                                                        style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}
-                                                                    >
-                                                                        {Object.keys(complaintStatusColors).map((status) => (
-                                                                            <button
-                                                                                key={status}
-                                                                                disabled={updatingStatusId !== null}
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleStatusChange(complaint.id!, status);
-                                                                                }}
-                                                                                className='w-full px-3 py-2 text-xs hover:bg-gray-50 rounded-md transition-colors text-center'
-                                                                                style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg, borderRadius: '20px' }}
-                                                                            >
-                                                                                {status}
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td className='p-3 text-sm text-center'>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setShowDeleteConfirm(complaint.id!);
-                                                                }}
-                                                                className='p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors'
-                                                                title="Delete Complaint"
-                                                            >
-                                                                <MdDeleteOutline size={20} />
-                                                            </button>
-                                                        </td>
-                                                        <td className='p-3 text-sm text-center'>
-                                                            <Link
-                                                                href={`/logs/${complaint.id}`}
-                                                                className='p-2 text-blue-500 hover:bg-red-50 rounded-full transition-colors'
-                                                                title="Logs"
-                                                            >
-                                                                <CgNotes size={20} />
-                                                            </Link>
-                                                        </td>
-                                                    </tr>
-                                                )))
-                                    }
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                {/* Delete */}
+                                                <td className='px-3 py-2 text-center'>
+                                                    <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(complaint.id!); }}
+                                                        className='p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors' title="Delete">
+                                                        <MdDeleteOutline size={18} />
+                                                    </button>
+                                                </td>
+                                                {/* Logs */}
+                                                <td className='px-3 py-2 text-center'>
+                                                    <Link href={`/logs/${complaint.id}`}
+                                                        className='p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors inline-block' title="Logs">
+                                                        <CgNotes size={18} />
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
