@@ -54,16 +54,29 @@ export default function ComplaintSection() {
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
     const allocateThanaTI = async () => {
-        setAllocateThanaLoading(true);
-        if (!thanaAdminInfo.name || !thanaAdminInfo.email || !thanaAdminInfo.contact_number || !thanaAdminInfo.thana) {
+        if (allocateThanaLoading) return;
+
+        if (
+            !thanaAdminInfo.name ||
+            !thanaAdminInfo.email ||
+            !thanaAdminInfo.contact_number ||
+            !thanaAdminInfo.thana
+        ) {
             toast.error("Please fill all the fields");
-            setAllocateThanaLoading(false);
             return;
         }
+
         try {
-            const response = await axios.post("/api/thana/allocate-ti", thanaAdminInfo);
+            setAllocateThanaLoading(true);
+
+            const response = await axios.post(
+                "/api/thana/allocate-ti",
+                thanaAdminInfo
+            );
+
             if (response.data.success) {
-                toast.success("Thana allocated successfully");
+                toast.success(response.data.message);
+
                 setThanaAdminInfo({
                     name: "",
                     email: "",
@@ -71,12 +84,17 @@ export default function ComplaintSection() {
                     thana: "",
                 });
             }
-        } catch (error) {
-            toast.error("Failed to allocate thana");
+        } catch (error: any) {
+            console.error(error);
+
+            toast.error(
+                error?.response?.data?.message ||
+                "Something went wrong"
+            );
         } finally {
             setAllocateThanaLoading(false);
         }
-    }
+    };
 
     const addThana = async () => {
         setAddThanaLoading(true);

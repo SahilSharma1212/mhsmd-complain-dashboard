@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
     const parsed = thanaPostSchema.safeParse(body);
 
     if (!parsed.success) {
+        console.log(parsed.error.flatten().fieldErrors)
         return NextResponse.json(
             { message: "Validation failed", errors: parsed.error.flatten().fieldErrors, success: false },
             { status: 400 }

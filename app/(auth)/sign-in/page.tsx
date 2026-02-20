@@ -7,31 +7,43 @@ import { auth } from "../../_config/firbase"
 import axios from "axios"
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/app/_store/userStore'
-
+import toast from "react-hot-toast"
 export default function SignInPage() {
+    const [loading, setLoading] = useState(false)
     const { setUser } = useUserStore()
     const [role, setRole] = useState<Role["role"]>("SP")
     const router = useRouter()
     const handleGoogleSignIn = async () => {
+        if (loading) return
+
         try {
+            setLoading(true)
+
             const provider = new GoogleAuthProvider()
             const result = await signInWithPopup(auth, provider)
 
             const email = result.user.email
-
-            if (!email) {
-                throw new Error("No email found from Google")
-            }
+            if (!email) throw new Error("No email found from Google")
 
             const response = await axios.post("/api/user/sign-in", {
                 email,
                 role
             })
+
             const resData: User = response.data
             setUser(resData)
+
+            toast.success("Signed in successfully")
+
             router.push("/")
-        } catch (error) {
-            console.error(error)
+        } catch (error: any) {
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Sign in failed"
+            )
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -78,9 +90,18 @@ export default function SignInPage() {
                 <div className='w-full pt-2'>
                     <button
                         onClick={handleGoogleSignIn}
-                        className='w-full group flex items-center justify-center gap-3 bg-white text-gray-700 border border-gray-200 font-semibold py-3.5 px-4 rounded-xl transition-all duration-300 hover:shadow-md hover:border-gray-300 active:scale-[0.98] cursor-pointer'>
-                        <FaGoogle className="text-xl text-blue-500 group-hover:scale-110 transition-transform duration-300" />
-                        <span className='max-sm:text-sm'>Continue with Google</span>
+                        disabled={loading}
+                        className={`w-full group flex items-center justify-center gap-3 bg-white text-gray-700 border border-gray-200 font-semibold py-3.5 px-4 rounded-xl transition-all duration-300 
+    ${loading ? "opacity-70 cursor-not-allowed" : "hover:shadow-md hover:border-gray-300 active:scale-[0.98] cursor-pointer"}`}
+                    >
+                        {loading ? (
+                            <span>Signing in...</span>
+                        ) : (
+                            <>
+                                <FaGoogle className="text-xl text-blue-500 group-hover:scale-110 transition-transform duration-300" />
+                                <span className='max-sm:text-sm'>Continue with Google</span>
+                            </>
+                        )}
                     </button>
                     <p className='mt-6 text-center text-xs text-gray-400'>
                         By continuing, you agree to our Terms of Service and Privacy Policy.
