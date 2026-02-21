@@ -367,12 +367,12 @@ export default function ManageComplaints() {
                                             </span>
                                         </td>
                                         {/* Subject & Description */}
-                                        <td className='px-4 py-4'>
+                                        <td className='px-4 py-4 min-w-[200px]'>
                                             <div className='flex flex-col gap-1'>
-                                                <span className='text-xs font-bold text-slate-700 max-w-[200px] truncate' title={complaint.subject}>
+                                                <span className='text-xs font-bold text-slate-700 max-w-[200px] truncate hover:max-w-none hover:whitespace-normal transition-all duration-300 cursor-help' title={complaint.subject}>
                                                     {complaint.subject}
                                                 </span>
-                                                <span className='text-[10px] font-medium text-slate-400 max-w-[200px] truncate' title={complaint.message}>
+                                                <span className='text-[10px] font-medium text-slate-400 max-w-[200px] truncate hover:max-w-none hover:whitespace-normal transition-all duration-300 cursor-help' title={complaint.message}>
                                                     {complaint.message || "— No detailed description provided —"}
                                                 </span>
                                             </div>
@@ -426,7 +426,7 @@ export default function ManageComplaints() {
                                                 {activeComplaintId === complaint.id && popupPosition && (
                                                     <div className='fixed p-1.5 flex flex-col gap-1 bg-white/95 backdrop-blur-md shadow-2xl rounded-xs border border-slate-200 z-50 w-36 scale-in-center'
                                                         style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}>
-                                                        <p className='text-[8px] font-bold text-slate-400 uppercase tracking-widest text-center py-1 border-b border-slate-100 mb-1'>Update Registry Status</p>
+                                                        <p className='text-[8px] font-bold text-slate-400 uppercase tracking-widest text-center py-1 border-b border-slate-100 mb-1'>Update Status</p>
                                                         {Object.keys(complaintStatusColors).map((status) => (
                                                             <button key={status} disabled={updatingStatusId !== null}
                                                                 onClick={(e) => { e.stopPropagation(); handleStatusChange(complaint.id!, status); }}

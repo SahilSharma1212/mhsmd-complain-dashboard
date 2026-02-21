@@ -505,8 +505,8 @@ export default function LogsPage() {
                                                 <span className="text-slate-700 font-semibold">{log.updated_by || 'Unknown'}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <p className="text-slate-500 max-w-xs leading-relaxed italic" title={log.reason}>
+                                        <td className="px-6 py-4 max-w-[300px]">
+                                            <p className="text-slate-500 leading-relaxed italic line-clamp-1 hover:line-clamp-none transition-all duration-300 cursor-help" title={log.reason}>
                                                 "{log.reason || "No specific reason provided for this action."}"
                                             </p>
                                         </td>
