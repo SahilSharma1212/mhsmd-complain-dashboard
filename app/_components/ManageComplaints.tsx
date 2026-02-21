@@ -8,6 +8,7 @@ import { FcRefresh } from 'react-icons/fc';
 import { MdNavigateNext, MdNavigateBefore, MdDeleteOutline, MdAttachFile } from 'react-icons/md';
 import { CgNotes } from 'react-icons/cg';
 import Link from 'next/link';
+import { IoTrash } from 'react-icons/io5';
 
 export default function ManageComplaints() {
     const { user, complaints, setComplaints, setCurrentlyViewingComplaint } = useUserStore();
@@ -369,7 +370,7 @@ export default function ManageComplaints() {
                                                         setActiveComplaintId(complaint.id || null);
                                                     }
                                                 }}
-                                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium cursor-pointer whitespace-nowrap"
+                                                className="inline-flex items-center px-2 py-1 rounded-xs text-xs font-medium cursor-pointer whitespace-nowrap"
                                                 style={{
                                                     color: complaintStatusColors[complaint.status]?.text,
                                                     backgroundColor: complaintStatusColors[complaint.status]?.bg,
@@ -385,12 +386,12 @@ export default function ManageComplaints() {
                                                 ) : complaint.status}
                                             </div>
                                             {activeComplaintId === complaint.id && popupPosition && (
-                                                <div className='fixed p-2 flex flex-col gap-1 bg-white/80 backdrop-blur-xl shadow-xl rounded-lg border border-gray-100 z-50 w-32'
+                                                <div className='fixed p-2 flex flex-col gap-1 bg-white/80 backdrop-blur-xl shadow-xl rounded-xs border border-gray-100 z-50 w-32'
                                                     style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}>
                                                     {Object.keys(complaintStatusColors).map((status) => (
                                                         <button key={status} disabled={updatingStatusId !== null}
                                                             onClick={(e) => { e.stopPropagation(); handleStatusChange(complaint.id!, status); }}
-                                                            className='w-full px-3 py-1.5 text-xs rounded-full transition-colors text-center'
+                                                            className='w-full px-3 py-1.5 text-xs rounded-xs transition-colors text-center'
                                                             style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg }}>
                                                             {status}
                                                         </button>
@@ -403,7 +404,7 @@ export default function ManageComplaints() {
                                     <td className='px-3 py-2 text-center'>
                                         <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(complaint.id!); }}
                                             className='p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors' title="Delete">
-                                            <MdDeleteOutline size={18} />
+                                            <IoTrash size={18} />
                                         </button>
                                     </td>
                                     {/* Logs */}
@@ -475,20 +476,20 @@ export default function ManageComplaints() {
             {/* DELETE CONFIRMATION MODAL */}
             {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full border border-gray-100 scale-in-center">
+                    <div className="bg-white rounded-xs shadow-2xl p-6 max-w-sm w-full border border-gray-100 scale-in-center">
                         <h2 className="text-xl font-bold text-gray-800 mb-2">Delete Complaint?</h2>
                         <p className="text-gray-600 mb-6">Are you sure you want to delete this complaint? This action cannot be undone.</p>
                         <div className="flex gap-3 justify-end">
                             <button
                                 onClick={() => setShowDeleteConfirm(null)}
-                                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xs transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={() => handleDeleteComplaint(showDeleteConfirm)}
                                 disabled={deletingId !== null}
-                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2"
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xs transition-colors flex items-center gap-2"
                             >
                                 {deletingId ? (
                                     <>

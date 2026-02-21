@@ -51,10 +51,10 @@ export default function SignInPage() {
 
 
     return (
-        <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4'>
+        <div className='min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4'>
             <div className='w-full max-w-md bg-white/80 backdrop-blur-xl rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20 p-8 flex flex-col items-center space-y-8'>
                 <div className='text-center space-y-2'>
-                    <h1 className='text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
+                    <h1 className='text-3xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
                         Welcome Back
                     </h1>
                     <p className='text-gray-500 font-medium'>Sign in to your dashboard</p>

@@ -33,6 +33,7 @@ export interface Complaint {
 }
 
 export interface Thana {
+    id?: string;
     name: string;
 }
 

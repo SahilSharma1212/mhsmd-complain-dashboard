@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
             recipient_address,
             subject,
             date,
-            status: "PENDING",             // ✅ complaints table column
+            status: "PENDING",
             complainant_name,
             complainant_contact,
             allocated_thana,

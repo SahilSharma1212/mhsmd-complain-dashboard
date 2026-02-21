@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import axios from "axios"
-import { IoArrowBack, IoPersonOutline, IoChatbubbleOutline, IoTimeOutline, IoLocationOutline, IoCallOutline, IoChevronForward } from "react-icons/io5"
+import { IoArrowBack, IoPersonOutline, IoChatbubbleOutline, IoTimeOutline, IoLocationOutline, IoCallOutline, IoChevronForward, IoAdd, IoTrash, IoCreateOutline } from "react-icons/io5"
 import { useUserStore } from "@/app/_store/userStore"
 import { Complaint } from "@/app/types"
 import { MdOutlineSubject, MdOutlineTrackChanges } from "react-icons/md"
+import toast from "react-hot-toast"
 
 type Log = {
     id: number
@@ -29,7 +30,76 @@ export default function LogsPage() {
     const [detailsLoading, setDetailsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const { currentlyViewingComplaint, setCurrentlyViewingComplaint } = useUserStore()
+    // Add Log State
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [newLogReason, setNewLogReason] = useState("")
+    const [selectedStatus, setSelectedStatus] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    // Delete Log State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [logToDelete, setLogToDelete] = useState<number | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+
+    // Edit Complaint State
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [editForm, setEditForm] = useState({
+        subject: "",
+        message: "",
+        complainant_name: "",
+        complainant_contact: "",
+        allocated_thana: ""
+    })
+    const [isEditingComplaint, setIsEditingComplaint] = useState(false)
+
+    const { user, thana, currentlyViewingComplaint, setCurrentlyViewingComplaint } = useUserStore()
+
+    const fetchLogs = async (isManualRefresh = false) => {
+        if (!isManualRefresh) setLoading(true)
+        try {
+            const response = await axios.get(
+                `/api/logs`,
+                {
+                    params: { id: complaintId },
+                    withCredentials: true,
+                }
+            )
+            setLogs(response.data.data)
+        } catch (err: any) {
+            console.error("Failed to fetch logs", err)
+            if (!isManualRefresh) {
+                if (err.response) {
+                    setError(err.response.data.message)
+                } else {
+                    setError("Failed to fetch logs")
+                }
+            }
+        } finally {
+            if (!isManualRefresh) setLoading(false)
+        }
+    }
+
+    const fetchComplaintDetails = async () => {
+        if (currentlyViewingComplaint && String(currentlyViewingComplaint.id) === String(complaintId)) {
+            return
+        }
+
+        setDetailsLoading(true)
+        try {
+            const response = await axios.get(`/api/complaint`, {
+                params: { filter: "id", value: complaintId },
+                withCredentials: true,
+            })
+
+            if (response.data.success && response.data.data.length > 0) {
+                setCurrentlyViewingComplaint(response.data.data[0])
+            }
+        } catch (err) {
+            console.error("Failed to fetch complaint details", err)
+        } finally {
+            setDetailsLoading(false)
+        }
+    }
 
     useEffect(() => {
         if (!params?.id) return
@@ -40,53 +110,115 @@ export default function LogsPage() {
             return
         }
 
-        const fetchLogs = async () => {
-            try {
-                const response = await axios.get(
-                    `/api/logs`,
-                    {
-                        params: { id: complaintId },
-                        withCredentials: true,
-                    }
-                )
+        fetchLogs()
+        fetchComplaintDetails()
+    }, [params?.id, complaintId])
 
-                setLogs(response.data.data)
-            } catch (err: any) {
-                if (err.response) {
-                    setError(err.response.data.message)
-                } else {
-                    setError("Failed to fetch logs")
-                }
-            } finally {
-                setLoading(false)
-            }
+
+    const handleAddLog = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!newLogReason.trim()) {
+            toast.error("Please enter a reason or note")
+            return
         }
 
-        const fetchComplaintDetails = async () => {
-            if (currentlyViewingComplaint && String(currentlyViewingComplaint.id) === String(complaintId)) {
-                return
-            }
+        setIsSubmitting(true)
+        try {
+            const response = await axios.post("/api/logs", {
+                complaint_id: complaintId,
+                reason: newLogReason.trim(),
+                status: selectedStatus
+            }, { withCredentials: true })
 
-            setDetailsLoading(true)
-            try {
-                const response = await axios.get(`/api/complaint`, {
+            if (response.data.success) {
+                toast.success("Log added successfully")
+                setNewLogReason("")
+                setIsModalOpen(false)
+
+                // Refresh complaint details if status changed
+                if (selectedStatus !== currentlyViewingComplaint?.status) {
+                    fetchComplaintDetails()
+                }
+
+                fetchLogs() // Refresh logs
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to add log")
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleEditComplaint = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!editForm.subject.trim() || !editForm.complainant_name.trim() || !editForm.complainant_contact.trim() || !editForm.allocated_thana.trim()) {
+            toast.error("Please fill all required fields")
+            return
+        }
+
+        setIsEditingComplaint(true)
+        try {
+            const response = await axios.patch("/api/complaint/edit", {
+                id: complaintId,
+                ...editForm
+            }, { withCredentials: true })
+
+            if (response.data.success) {
+                toast.success("Complaint updated successfully")
+                setIsEditModalOpen(false)
+
+                // Force a full re-fetch of complaint details to update the UI
+                setCurrentlyViewingComplaint(null) // Reset to trigger conditional in fetchComplaintDetails
+
+                const fetchRes = await axios.get(`/api/complaint`, {
                     params: { filter: "id", value: complaintId },
                     withCredentials: true,
                 })
 
-                if (response.data.success && response.data.data.length > 0) {
-                    setCurrentlyViewingComplaint(response.data.data[0])
+                if (fetchRes.data.success && fetchRes.data.data.length > 0) {
+                    setCurrentlyViewingComplaint(fetchRes.data.data[0])
                 }
-            } catch (err) {
-                console.error("Failed to fetch complaint details", err)
-            } finally {
-                setDetailsLoading(false)
-            }
-        }
 
-        fetchLogs()
-        fetchComplaintDetails()
-    }, [params?.id, complaintId, currentlyViewingComplaint, setCurrentlyViewingComplaint])
+                fetchLogs() // Refresh logs to show "EDITED" entry
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to update complaint")
+        } finally {
+            setIsEditingComplaint(false)
+        }
+    }
+
+    const handleDeleteLog = async () => {
+        if (!logToDelete) return
+
+        setIsDeleting(true)
+        try {
+            const response = await axios.delete(`/api/logs`, {
+                params: { id: logToDelete },
+                withCredentials: true
+            })
+
+            if (response.data.success) {
+                toast.success("Log deleted successfully")
+                setIsDeleteModalOpen(false)
+                setLogToDelete(null)
+                fetchLogs() // Refresh logs
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to delete log")
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
+    const complaintStatusColors: Record<string, { bg: string, text: string }> = {
+        "PENDING": { bg: "bg-blue-50 text-blue-700", text: "text-blue-700" },
+        "FIR": { bg: "bg-amber-50 text-amber-700", text: "text-amber-700" },
+        "NON FIR": { bg: "bg-purple-50 text-purple-700", text: "text-purple-700" },
+        "FILE": { bg: "bg-slate-50 text-slate-700", text: "text-slate-700" },
+        "NO CONTACT": { bg: "bg-red-50 text-red-700", text: "text-red-700" },
+        "SOLVED": { bg: "bg-emerald-50 text-emerald-700", text: "text-emerald-700" },
+    }
 
     if (error)
         return (
@@ -123,6 +255,36 @@ export default function LogsPage() {
                     <p className="text-slate-500 mt-1">
                         Comprehensive history and progress logs for case ID: <span className="font-semibold text-slate-700">#{complaintId}</span>
                     </p>
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => {
+                            if (currentlyViewingComplaint) {
+                                setEditForm({
+                                    subject: currentlyViewingComplaint.subject || "",
+                                    message: currentlyViewingComplaint.message || "",
+                                    complainant_name: currentlyViewingComplaint.complainant_name || "",
+                                    complainant_contact: currentlyViewingComplaint.complainant_contact || "",
+                                    allocated_thana: currentlyViewingComplaint.allocated_thana || ""
+                                })
+                                setIsEditModalOpen(true)
+                            }
+                        }}
+                        className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xs font-bold border border-slate-200 shadow-sm transition-all hover:-translate-y-0.5"
+                    >
+                        <IoCreateOutline size={20} />
+                        Edit Case
+                    </button>
+                    <button
+                        onClick={() => {
+                            setSelectedStatus(currentlyViewingComplaint?.status || "")
+                            setIsModalOpen(true)
+                        }}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5"
+                    >
+                        <IoAdd size={20} />
+                        Add New Log
+                    </button>
                 </div>
             </div>
 
@@ -190,6 +352,28 @@ export default function LogsPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {currentlyViewingComplaint.file_urls && currentlyViewingComplaint.file_urls.length > 0 && (
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                            Attachments ({currentlyViewingComplaint.file_urls.length})
+                                        </h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {currentlyViewingComplaint.file_urls.map((url, idx) => (
+                                                <a
+                                                    key={idx}
+                                                    href={url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 transition-colors"
+                                                >
+                                                    <IoChatbubbleOutline className="text-blue-500" size={14} />
+                                                    View Document {idx + 1}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <p className="text-slate-400 text-sm italic">Failed to load complaint details.</p>
@@ -215,7 +399,7 @@ export default function LogsPage() {
                             <div className="text-center">
                                 <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm ring-1 ring-blue-100">
                                     <span className="text-blue-600 text-xl font-bold">
-                                        {currentlyViewingComplaint.complainant_name?.charAt(0)}
+                                        {currentlyViewingComplaint.complainant_name ? currentlyViewingComplaint.complainant_name.charAt(0) : 'C'}
                                     </span>
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900">{currentlyViewingComplaint.complainant_name}</h3>
@@ -251,6 +435,7 @@ export default function LogsPage() {
                                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status Transition</th>
                                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Modified By</th>
                                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reason / Remarks</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
@@ -263,11 +448,12 @@ export default function LogsPage() {
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-40"></div></td>
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-28"></div></td>
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-48"></div></td>
+                                        <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded-sm w-12 ml-auto"></div></td>
                                     </tr>
                                 ))
                             ) : logs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic bg-slate-50/20">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic bg-slate-50/20">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="p-3 bg-slate-100 rounded-full">
                                                 <MdOutlineTrackChanges size={24} className="text-slate-300" />
@@ -314,15 +500,29 @@ export default function LogsPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-500">
-                                                    {log.updated_by.charAt(0)}
+                                                    {log.updated_by ? log.updated_by.charAt(0) : 'U'}
                                                 </div>
-                                                <span className="text-slate-700 font-semibold">{log.updated_by}</span>
+                                                <span className="text-slate-700 font-semibold">{log.updated_by || 'Unknown'}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <p className="text-slate-500 max-w-xs leading-relaxed italic" title={log.reason}>
                                                 "{log.reason || "No specific reason provided for this action."}"
                                             </p>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            {log.action !== 'CREATED' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setLogToDelete(log.id)
+                                                        setIsDeleteModalOpen(true)
+                                                    }}
+                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                    title="Delete Log"
+                                                >
+                                                    <IoTrash size={18} />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -331,6 +531,258 @@ export default function LogsPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Add Log Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xs shadow-2xl w-full max-w-lg border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                <IoAdd className="text-blue-600" size={24} />
+                                Add Manual Log / Note
+                            </h2>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded-full transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddLog} className="p-6 space-y-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-slate-700">
+                                        Current Identifying ID
+                                    </label>
+                                    <div className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-mono text-sm">
+                                        #{complaintId}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-slate-700">
+                                        Update Case Status
+                                    </label>
+                                    <select
+                                        value={selectedStatus}
+                                        onChange={(e) => setSelectedStatus(e.target.value)}
+                                        className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-semibold text-slate-700"
+                                    >
+                                        {Object.keys(complaintStatusColors).map((status) => (
+                                            <option key={status} value={status}>
+                                                {status} {status === currentlyViewingComplaint?.status ? '(Current)' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">
+                                    Log entry / Observations
+                                </label>
+                                <textarea
+                                    value={newLogReason}
+                                    onChange={(e) => setNewLogReason(e.target.value)}
+                                    placeholder="Enter details about the action taken or notes for this case..."
+                                    className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-slate-700 resize-none font-medium text-sm leading-relaxed"
+                                    required
+                                />
+                            </div>
+                            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xs border border-slate-100">
+                                <div className="p-2 bg-white rounded-lg shadow-sm">
+                                    <IoChatbubbleOutline className="text-blue-600" />
+                                </div>
+                                <p className="text-[11px] text-slate-500 leading-tight font-medium">
+                                    This manual entry will create a permanent history record. Changing the status here will also update the main complaint file.
+                                </p>
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xs font-bold shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            Adding...
+                                        </>
+                                    ) : (
+                                        'Save Entry'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Complaint Modal */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xs shadow-2xl w-full max-w-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                <IoCreateOutline className="text-blue-600" size={24} />
+                                Edit Complaint Details
+                            </h2>
+                            <button
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded-full transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditComplaint} className="p-6 space-y-4">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Subject</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.subject}
+                                        onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                        required
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Complainant Name</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.complainant_name}
+                                            onChange={(e) => setEditForm({ ...editForm, complainant_name: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Complainant Contact</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.complainant_contact}
+                                            onChange={(e) => setEditForm({ ...editForm, complainant_contact: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Allocated Thana</label>
+                                    <select
+                                        value={editForm.allocated_thana}
+                                        onChange={(e) => setEditForm({ ...editForm, allocated_thana: e.target.value })}
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                        required
+                                    >
+                                        <option value="">Select Thana</option>
+                                        {thana?.map((t, idx) => (
+                                            <option key={idx} value={t.name}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Description / Message</label>
+                                    <textarea
+                                        value={editForm.message}
+                                        onChange={(e) => setEditForm({ ...editForm, message: e.target.value })}
+                                        className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium resize-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isEditingComplaint}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xs font-bold shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isEditingComplaint ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="max-md:hidden">Save Changes</span>
+                                            <span className="md:hidden">Save</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xs shadow-2xl w-full max-w-sm border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-6">
+                            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4 mx-auto">
+                                <IoTrash className="text-red-600" size={24} />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900 text-center mb-2">Delete Log Entry?</h3>
+                            <p className="text-slate-500 text-sm text-center mb-6">
+                                Are you sure you want to delete this activity log? This action cannot be undone and will permanently remove it from the history.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setIsDeleteModalOpen(false)
+                                        setLogToDelete(null)
+                                    }}
+                                    className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xs transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteLog}
+                                    disabled={isDeleting}
+                                    className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xs transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        'Confirm'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
