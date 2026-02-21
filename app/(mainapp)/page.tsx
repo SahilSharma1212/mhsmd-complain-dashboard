@@ -3,8 +3,10 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useEffect } from 'react'
 import { useUserStore } from '../_store/userStore'
-import ComplaintSection from '../_components/ComplaintSection'
 import { RiDashboardLine } from 'react-icons/ri'
+
+import Link from 'next/link'
+
 
 export default function Home() {
     const { user, setUser, thana, setThana } = useUserStore();
@@ -45,9 +47,29 @@ export default function Home() {
     }, []);
 
     return (
-        <>
-            <h1 className='text-2xl font-bold text-slate-900 tracking-tight bg-gray-50 p-3 border-b border-gray-200 flex items-center justify-start gap-3'><RiDashboardLine strokeWidth={0.05} className='text-gray-600' />Dashboard</h1>
-            <ComplaintSection />
-        </>
+        <div className='p-6 flex flex-col gap-6 bg-white'>
+            <h1 className='text-2xl font-bold text-slate-900 tracking-tight flex items-center justify-start gap-3'>
+                <RiDashboardLine strokeWidth={0.05} className='text-gray-600' />Dashboard
+            </h1>
+
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                <Link href="/manage-complaints" className='bg-white p-6 rounded-xs border border-gray-200 shadow-sm hover:shadow-md transition-all group'>
+                    <h2 className='text-xl font-bold text-indigo-600 mb-2 group-hover:underline'>Manage Complaints</h2>
+                    <p className='text-gray-500 text-sm'>View, filter, and update status of all submitted complaints.</p>
+                </Link>
+
+                <Link href="/register-complaint" className='bg-white p-6 rounded-xs border border-gray-200 shadow-sm hover:shadow-md transition-all group'>
+                    <h2 className='text-xl font-bold text-blue-600 mb-2 group-hover:underline'>Register Complaint</h2>
+                    <p className='text-gray-500 text-sm'>File a new complaint with details and attachments.</p>
+                </Link>
+
+                {user?.role === "SP" && (
+                    <Link href="/admin-actions" className='bg-white p-6 rounded-xs border border-gray-200 shadow-sm hover:shadow-md transition-all group'>
+                        <h2 className='text-xl font-bold text-green-600 mb-2 group-hover:underline'>Admin Actions</h2>
+                        <p className='text-gray-500 text-sm'>Add thanas, allocate TIs, and manage user accounts.</p>
+                    </Link>
+                )}
+            </div>
+        </div>
     )
 }
