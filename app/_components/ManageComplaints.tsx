@@ -223,8 +223,8 @@ export default function ManageComplaints() {
 
             <div className='p-6 flex flex-col gap-6'>
                 {/* SEARCH FORM */}
-                <form onSubmit={handleSearch} className='flex flex-wrap items-end justify-start gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xs'>
-                    <div className='flex flex-col gap-1.5'>
+                <form onSubmit={handleSearch} className='flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end justify-start gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xs'>
+                    <div className='flex flex-col gap-1.5 w-full sm:w-auto'>
                         <label className='text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5'>
                             <IoFilterOutline className="text-blue-500" />
                             Filter By
@@ -232,7 +232,7 @@ export default function ManageComplaints() {
                         <select
                             value={filterAttribute}
                             onChange={(e) => setFilterAttribute(e.target.value)}
-                            className='w-[200px] px-3 py-2 bg-white border border-slate-200 rounded-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all'
+                            className='w-full sm:w-[200px] px-3 py-2 bg-white border border-slate-200 rounded-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all'
                         >
                             <option value="">-- Select Attribute --</option>
                             <option value="status">Status</option>
@@ -241,14 +241,14 @@ export default function ManageComplaints() {
                         </select>
                     </div>
 
-                    <div className='flex flex-col gap-1.5 flex-1 min-w-[300px]'>
+                    <div className='flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[300px]'>
                         <label className='text-[11px] font-bold text-slate-400 uppercase tracking-wider'>Search Value</label>
                         <div className='flex group'>
                             {filterAttribute === "status" ? (
                                 <select
                                     value={filterValue}
                                     onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all'
+                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                 >
                                     <option value="">-- Select Status --</option>
                                     <option value="PENDING">PENDING</option>
@@ -262,7 +262,7 @@ export default function ManageComplaints() {
                                 <select
                                     value={filterValue}
                                     onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all'
+                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                 >
                                     <option value="">-- Select Role --</option>
                                     <option value="SP">SP</option>
@@ -273,7 +273,7 @@ export default function ManageComplaints() {
                                     type="text"
                                     value={filterValue}
                                     onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all'
+                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                     placeholder={filterAttribute ? 'Type to search records...' : 'Select an attribute first'}
                                     disabled={!filterAttribute}
                                 />
@@ -281,7 +281,7 @@ export default function ManageComplaints() {
                             <button
                                 type="submit"
                                 disabled={searchLoading}
-                                className='bg-blue-600 text-white px-5 rounded-r-xs border border-blue-600 hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center shadow-md shadow-blue-500/10'
+                                className='bg-blue-600 text-white px-5 rounded-r-xs border border-blue-600 hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center shadow-md shadow-blue-500/10 shrink-0'
                             >
                                 {searchLoading ? (
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -441,7 +441,7 @@ export default function ManageComplaints() {
                                         </td>
                                         {/* Actions */}
                                         <td className='px-4 py-4'>
-                                            <div className='flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+                                            <div className='flex items-center justify-center gap-1 transition-opacity'>
                                                 <Link href={`/logs/${complaint.id}`}
                                                     onClick={() => setCurrentlyViewingComplaint(complaint)}
                                                     className='w-8 h-8 flex items-center justify-center text-blue-500 hover:text-white hover:bg-blue-600 rounded-xs transition-all border border-blue-100 bg-blue-50 shadow-xs'
@@ -465,11 +465,11 @@ export default function ManageComplaints() {
 
                 {/* ─── Pagination Controls ─── */}
                 {totalPages > 1 && (
-                    <div className='flex items-center justify-between border-t border-slate-100 pt-6 px-2'>
+                    <div className='flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 pt-6 px-2 gap-4'>
                         <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
                             Showing <span className='text-slate-700'>page {currentPage}</span> of {totalPages}
                         </p>
-                        <div className='flex items-center gap-2'>
+                        <div className='flex flex-wrap justify-center items-center gap-2'>
                             <button
                                 onClick={() => handlePageChange(currentPage - 1)}
                                 disabled={currentPage === 1 || searchLoading}

@@ -29,7 +29,7 @@ export default function DashboardLayout({
 
     return (
         <>
-            <nav className="flex bg-white text-slate-900 py-3 w-full justify-between items-center p-4 border-b border-slate-200 shadow-sm sticky top-0 z-50">
+            <nav className="flex bg-white text-slate-900 py-3 w-full justify-between items-center p-4 border-b border-slate-200 sticky top-0 z-50">
                 <div className="flex items-center gap-3 group">
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                         <MdOutlineDashboardCustomize className="text-white text-xl" />

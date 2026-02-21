@@ -5,9 +5,9 @@ import { useParams, useRouter } from "next/navigation"
 import axios from "axios"
 import { IoArrowBack, IoPersonOutline, IoChatbubbleOutline, IoTimeOutline, IoLocationOutline, IoCallOutline, IoChevronForward, IoAdd, IoTrash, IoCreateOutline } from "react-icons/io5"
 import { useUserStore } from "@/app/_store/userStore"
-import { Complaint } from "@/app/types"
 import { MdOutlineSubject, MdOutlineTrackChanges } from "react-icons/md"
 import toast from "react-hot-toast"
+import { IoIosDocument } from "react-icons/io"
 
 type Log = {
     id: number
@@ -280,7 +280,7 @@ export default function LogsPage() {
                             setSelectedStatus(currentlyViewingComplaint?.status || "")
                             setIsModalOpen(true)
                         }}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-sm transition-all hover:-translate-y-0.5"
                     >
                         <IoAdd size={20} />
                         Add New Log
@@ -365,9 +365,9 @@ export default function LogsPage() {
                                                     href={url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 transition-colors"
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-red-700 hover:bg-red-600 border border-red-200 rounded-xs text-xs font-medium text-white transition-colors"
                                                 >
-                                                    <IoChatbubbleOutline className="text-blue-500" size={14} />
+                                                    <IoIosDocument className="text-white" size={14} />
                                                     View Document {idx + 1}
                                                 </a>
                                             ))}

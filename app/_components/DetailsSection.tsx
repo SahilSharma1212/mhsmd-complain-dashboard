@@ -21,7 +21,7 @@ export default function DetailsSection() {
         .join(" ");
 
     return (
-        <div className="bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden mb-6">
+        <div className="bg-white rounded-xs border border-slate-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                     <IoHomeOutline className="text-blue-500" />
