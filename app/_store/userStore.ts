@@ -14,6 +14,9 @@ interface UserState {
     complaints: Complaint[] | null;
     setComplaints: (complaints: Complaint[]) => void;
     clearComplaints: () => void;
+
+    currentlyViewingComplaint: Complaint | null;
+    setCurrentlyViewingComplaint: (complaint: Complaint | null) => void;
 }
 
 export const useUserStore = create<UserState>()(persist((set) => ({
@@ -28,6 +31,9 @@ export const useUserStore = create<UserState>()(persist((set) => ({
     complaints: null,
     setComplaints: (complaints: Complaint[]) => set({ complaints }),
     clearComplaints: () => set({ complaints: null }),
+
+    currentlyViewingComplaint: null,
+    setCurrentlyViewingComplaint: (complaint: Complaint | null) => set({ currentlyViewingComplaint: complaint }),
 }), {
     name: "user",
 }));

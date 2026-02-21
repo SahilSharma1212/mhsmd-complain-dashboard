@@ -10,7 +10,7 @@ import { CgNotes } from 'react-icons/cg';
 import Link from 'next/link';
 
 export default function ManageComplaints() {
-    const { user, complaints, setComplaints } = useUserStore();
+    const { user, complaints, setComplaints, setCurrentlyViewingComplaint } = useUserStore();
 
     // ─── Search & Pagination state ───
     const [filterAttribute, setFilterAttribute] = useState("");
@@ -207,7 +207,7 @@ export default function ManageComplaints() {
                     >
                         <option value="">-- Select Filter --</option>
                         <option value="status">Status</option>
-                        <option value="name_of_complainer">Name of Complainer</option>
+                        <option value="complainant_name">Name of Complainer</option>
                         <option value="role_addressed_to">Addressed To</option>
                     </select>
                 </div>
@@ -278,6 +278,7 @@ export default function ManageComplaints() {
                             <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap'>Thana</th>
                             <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide'>Subject</th>
                             <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide'>Description</th>
+                            <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide'>Source</th>
                             <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap text-center'>Docs</th>
                             <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap text-center'>Status</th>
                             <th className='px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wide whitespace-nowrap text-center'>Del</th>
@@ -306,13 +307,17 @@ export default function ManageComplaints() {
                                     </td>
                                     {/* Complainer — name + number stacked */}
                                     <td className='px-3 py-2 whitespace-nowrap'>
-                                        <div className='text-sm font-medium text-gray-800 max-w-[120px] truncate' title={complaint.name_of_complainer}>
-                                            {complaint.name_of_complainer}
+                                        <div className='text-sm font-medium text-gray-800 max-w-[120px] truncate' title={complaint.complainant_name}>
+                                            {complaint.complainant_name}
                                         </div>
-                                        <div className='text-xs text-gray-400'>{complaint.complainer_contact_number}</div>
+                                        <div className='text-xs text-gray-400'>{complaint.complainant_contact}</div>
                                     </td>
                                     {/* Date */}
-                                    <td className='px-3 py-2 text-xs text-gray-600 whitespace-nowrap'>{complaint.date}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">
+                                        {new Date(complaint.date || complaint.created_at!)
+                                            .toISOString()
+                                            .split("T")[0]}
+                                    </td>
                                     {/* Addressed To */}
                                     <td className='px-3 py-2 text-xs font-semibold text-gray-700 whitespace-nowrap'>{complaint.role_addressed_to}</td>
                                     {/* Thana */}
@@ -327,15 +332,18 @@ export default function ManageComplaints() {
                                     </td>
                                     {/* Description */}
                                     <td className='px-3 py-2'>
-                                        <div className='text-xs text-gray-400 max-w-[160px] truncate' title={complaint.description}>
-                                            {complaint.description || <span className='italic'>—</span>}
+                                        <div className='text-xs text-gray-400 max-w-[160px] truncate' title={complaint.message}>
+                                            {complaint.message || <span className='italic'>—</span>}
                                         </div>
+                                    </td>
+                                    <td className='px-3 py-2 text-xs text-gray-700 whitespace-nowrap max-w-[100px] truncate' title={complaint.source}>
+                                        {complaint.source}
                                     </td>
                                     {/* Docs */}
                                     <td className='px-3 py-2 text-center'>
-                                        {complaint.docs_url && complaint.docs_url.length > 0 ? (
+                                        {complaint.file_urls && complaint.file_urls.length > 0 ? (
                                             <div className='flex gap-1 justify-center flex-wrap'>
-                                                {complaint.docs_url.map((url, index) => (
+                                                {complaint.file_urls.map((url, index) => (
                                                     <a key={index} href={url} target="_blank" rel="noopener noreferrer"
                                                         className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded transition-colors"
                                                         title={`Document ${index + 1}`}
@@ -345,7 +353,7 @@ export default function ManageComplaints() {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <span className="text-gray-300 text-xs">—</span>
+                                            <span className="text-gray-300 text-xs">NONE</span>
                                         )}
                                     </td>
                                     {/* Status */}
@@ -401,6 +409,7 @@ export default function ManageComplaints() {
                                     {/* Logs */}
                                     <td className='px-3 py-2 text-center'>
                                         <Link href={`/logs/${complaint.id}`}
+                                            onClick={() => setCurrentlyViewingComplaint(complaint)}
                                             className='p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors inline-block' title="Logs">
                                             <CgNotes size={18} />
                                         </Link>

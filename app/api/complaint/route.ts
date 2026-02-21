@@ -11,10 +11,10 @@ const complaintPostSchema = z.object({
     recipient_address: z.string().min(1),
     subject: z.string().min(1),
     date: z.string().min(1),
-    name_of_complainer: z.string().min(1),
-    complainer_contact_number: z.string().min(10),
+    complainant_name: z.string().min(1),
+    complainant_contact: z.string().min(10),
     allocated_thana: z.string().min(1),
-    description: z.string().optional(),
+    message: z.string().optional(),
 });
 
 const complaintPatchSchema = z.object({
@@ -66,14 +66,14 @@ export async function POST(request: NextRequest) {
     const recipient_address = formData.get("recipient_address") as string;
     const subject = formData.get("subject") as string;
     const date = formData.get("date") as string;
-    const name_of_complainer = formData.get("name_of_complainer") as string;
-    const complainer_contact_number = formData.get("complainer_contact_number") as string;
+    const complainant_name = formData.get("complainant_name") as string;
+    const complainant_contact = formData.get("complainant_contact") as string;
     const allocated_thana = formData.get("allocated_thana") as string;
-    const description = formData.get("description") as string;
+    const message = formData.get("message") as string;
     const files = formData.getAll("files") as File[];
 
     // Validate essential fields
-    if (!role_addressed_to || !recipient_address || !subject || !date || !name_of_complainer || !complainer_contact_number || !allocated_thana) {
+    if (!role_addressed_to || !recipient_address || !subject || !date || !complainant_name || !complainant_contact || !allocated_thana) {
         return NextResponse.json(
             { message: "All fields are required", success: false },
             { status: 400 }
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Handle File Uploads
-    const docs_url: string[] = [];
+    const file_urls: string[] = [];
 
     if (files && files.length > 0) {
         for (const file of files) {
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
                 .from("complain_docs")
                 .getPublicUrl(fileName);
 
-            docs_url.push(publicUrl);
+            file_urls.push(publicUrl);
         }
     }
 
@@ -154,13 +154,13 @@ export async function POST(request: NextRequest) {
             subject,
             date,
             status: "PENDING",             // ✅ complaints table column
-            name_of_complainer,
-            complainer_contact_number,
+            complainant_name,
+            complainant_contact,
             allocated_thana,
             submitted_by: decodedToken.name,
-            description,
+            message,
             source: "WEBSITE",
-            docs_url: docs_url.length > 0 ? docs_url : null,
+            file_urls: file_urls.length > 0 ? file_urls : null,
         })
         .select()
         .single();
@@ -255,12 +255,14 @@ export async function GET(request: NextRequest) {
 
     // Apply filters if provided
     if (filter && value) {
-        if (filter === "name_of_complainer") {
-            query = query.ilike("name_of_complainer", `%${value}%`);
+        if (filter === "complainant_name") {
+            query = query.ilike("complainant_name", `%${value}%`);
         } else if (filter === "status") {
             query = query.eq("status", value);          // ✅ complaints table column
         } else if (filter === "role_addressed_to") {
             query = query.eq("role_addressed_to", value);
+        } else if (filter === "id") {
+            query = query.eq("id", value);
         }
     }
 

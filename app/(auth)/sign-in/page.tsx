@@ -1,9 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { Role, User } from '../../types'
-import { FaGoogle } from 'react-icons/fa'
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
-import { auth } from "../../_config/firbase"
 import axios from "axios"
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/app/_store/userStore'

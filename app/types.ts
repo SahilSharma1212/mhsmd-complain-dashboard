@@ -14,17 +14,22 @@ export interface User {
 
 export interface Complaint {
     id?: string;
+    created_at?: string;
     role_addressed_to: string;
     recipient_address: string;
     subject: string;
-    date: string;
+    date?: string;
     status: string;
-    name_of_complainer: string;
-    complainer_contact_number: string;
+    complainant_name: string;
+    complainant_contact: string;
+    complainant_details?: string;
     allocated_thana: string;
     submitted_by: string;
-    description?: string;
-    docs_url?: string[];
+    message?: string;
+    file_urls?: string[];
+    accused_details?: string;
+    source?: string;
+    submitted_by_name?: string;
 }
 
 export interface Thana {

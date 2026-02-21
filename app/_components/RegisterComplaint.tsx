@@ -15,11 +15,11 @@ export default function RegisterComplaint() {
         subject: "",
         date: "",
         status: "",
-        name_of_complainer: "",
-        complainer_contact_number: "",
+        complainant_name: "",
+        complainant_contact: "",
         allocated_thana: "",
         submitted_by: "",
-        description: "",
+        message: "",
     });
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,7 +43,7 @@ export default function RegisterComplaint() {
     const submitComplaint = async () => {
         setLoading(true);
 
-        if (!complaintDetails.role_addressed_to || !complaintDetails.recipient_address || !complaintDetails.subject || !complaintDetails.date || !complaintDetails.name_of_complainer || !complaintDetails.complainer_contact_number || !complaintDetails.allocated_thana) {
+        if (!complaintDetails.role_addressed_to || !complaintDetails.recipient_address || !complaintDetails.subject || !complaintDetails.date || !complaintDetails.complainant_name || !complaintDetails.complainant_contact || !complaintDetails.allocated_thana) {
             toast.error("Please fill all the required fields");
             setLoading(false);
             return;
@@ -77,11 +77,11 @@ export default function RegisterComplaint() {
                     subject: "",
                     date: "",
                     status: "",
-                    name_of_complainer: "",
-                    complainer_contact_number: "",
+                    complainant_name: "",
+                    complainant_contact: "",
                     allocated_thana: "",
                     submitted_by: "",
-                    description: "",
+                    message: "",
                 });
                 setSelectedFiles([]);
                 if (fileInputRef.current) fileInputRef.current.value = "";
@@ -139,19 +139,19 @@ export default function RegisterComplaint() {
                         onChange={(e) => setComplaintDetails({ ...complaintDetails, date: e.target.value })} className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' />
                 </div>
                 <div className="flex flex-col items-start gap-2 justify-center">
-                    <label htmlFor="name_of_complainer">Name of Complainer</label>
+                    <label htmlFor="complainant_name">Name of Complainer</label>
                     <input
-                        id="name_of_complainer"
-                        value={complaintDetails.name_of_complainer}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, name_of_complainer: e.target.value })}
+                        id="complainant_name"
+                        value={complaintDetails.complainant_name}
+                        onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_name: e.target.value })}
                         placeholder="Enter full name" type="text" className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' />
                 </div>
                 <div className="flex flex-col items-start gap-2 justify-center">
                     <label htmlFor="mobile_no">Mobile No. of Complainer</label>
                     <input
                         id="mobile_no"
-                        value={complaintDetails.complainer_contact_number}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, complainer_contact_number: e.target.value })}
+                        value={complaintDetails.complainant_contact}
+                        onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_contact: e.target.value })}
                         placeholder="Enter 10-digit mobile number" type="text" className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' />
                 </div>
 
@@ -172,8 +172,8 @@ export default function RegisterComplaint() {
                     <label htmlFor="description">Description (Optional)</label>
                     <textarea
                         id="description"
-                        value={complaintDetails.description}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, description: e.target.value })}
+                        value={complaintDetails.message}
+                        onChange={(e) => setComplaintDetails({ ...complaintDetails, message: e.target.value })}
                         placeholder="Enter detailed description of the complaint"
                         rows={4}
                         className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md'
