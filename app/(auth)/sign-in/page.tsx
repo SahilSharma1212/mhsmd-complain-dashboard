@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/app/_store/userStore'
 import toast from "react-hot-toast"
 import { FaArrowRightLong } from 'react-icons/fa6'
+import { MdOutlineDashboardCustomize } from "react-icons/md"
 export default function SignInPage() {
     const [loading, setLoading] = useState(false)
     const { setUser } = useUserStore()
@@ -51,69 +52,114 @@ export default function SignInPage() {
 
 
     return (
-        <div className='min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4'>
-            <div className='w-full max-w-md bg-white/80 backdrop-blur-xl rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20 p-8 flex flex-col items-center space-y-8'>
-                <div className='text-center space-y-2'>
-                    <h1 className='text-3xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
-                        Welcome Back
-                    </h1>
-                    <p className='text-gray-500 font-medium'>Sign in to your dashboard</p>
-                </div>
-
-                <div className='w-full space-y-3'>
-                    <p className='text-xs font-semibold text-gray-400 uppercase tracking-wider text-center font-mono'>Select Role</p>
-                    <div className='grid grid-cols-2 p-1.5 bg-gray-100/80 rounded-sm relative'>
-                        <button
-                            onClick={() => setRole("SP")}
-                            className={`relative z-10 py-2.5 text-sm font-semibold rounded-sm transition-all duration-300 cursor-pointer hover:bg-gray-50 ${role === "SP"
-                                ? "bg-white text-blue-600 shadow-sm"
-                                : "text-gray-500 hover:text-gray-700"
-                                }`}
-                        >
-                            <span className="flex items-center justify-center gap-2">
-                                SP
+        <div className='min-h-screen bg-slate-50 flex items-center justify-center p-4 selection:bg-blue-100'>
+            <div className='w-full max-w-[400px] bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden flex flex-col p-8 space-y-8'>
+                {/* Branding Section */}
+                <div className='flex flex-col items-center gap-4 text-center'>
+                    <div className="flex items-center gap-3 group">
+                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                            <MdOutlineDashboardCustomize className="text-white text-xl" />
+                        </div>
+                        <div className="flex flex-col text-left">
+                            <span className="text-xl font-bold text-slate-900 tracking-tight leading-tight">
+                                Complain<span className="text-blue-600">Dashboard</span>
                             </span>
-                        </button>
-
-                        <button
-                            onClick={() => setRole("TI")}
-                            className={`relative z-10 py-2.5 text-sm font-semibold rounded-sm transition-all duration-300 hover:bg-gray-50 cursor-pointer ${role === "TI"
-                                ? "bg-white text-blue-600 shadow-sm"
-                                : "text-gray-500 hover:text-gray-700"
-                                }`}
-                        >
-                            <span className="flex items-center justify-center gap-2">
-                                TI
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                                System Portal
                             </span>
-                        </button>
+                        </div>
+                    </div>
+                    <div className='space-y-1 mt-2'>
+                        <h1 className='text-2xl font-bold text-slate-900 tracking-tight'>
+                            Welcome Back
+                        </h1>
+                        <p className='text-sm text-slate-500 font-medium'>Sign in to your dashboard</p>
                     </div>
                 </div>
 
-                <div className='w-full flex flex-col gap-2 items-center'>
-                    <label htmlFor="email" className='text-left text-gray-700 w-full'>Email</label>
-                    <input value={credentials.email} onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} type="text" placeholder='xyz@gmail.com' className='w-full p-2 border border-gray-200 focus:outline-none focus:border-blue-500' />
-                    <label htmlFor="password" className='text-left text-gray-700 w-full'>Password</label>
-                    <input value={credentials.password} onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} type="password" placeholder='Password' className='w-full p-2 border border-gray-200 focus:outline-none focus:border-blue-500' />
+                {/* Role Selector */}
+                <div className='w-full space-y-3'>
+                    <div className="relative flex border-b border-slate-100 w-full">
+                        <button
+                            onClick={() => setRole("SP")}
+                            className={`flex-1 py-3 text-sm font-bold transition-all duration-200 text-center relative z-10 ${role === "SP" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                                }`}
+                        >
+                            SP Account
+                        </button>
+                        <button
+                            onClick={() => setRole("TI")}
+                            className={`flex-1 py-3 text-sm font-bold transition-all duration-200 text-center relative z-10 ${role === "TI" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                                }`}
+                        >
+                            TI Account
+                        </button>
+
+                        <div
+                            className="absolute bottom-0 h-0.5 bg-blue-600 transition-all duration-300"
+                            style={{
+                                width: '50%',
+                                left: role === "SP" ? '0%' : '50%'
+                            }}
+                        />
+                    </div>
                 </div>
 
-                <div className='w-full '>
+                {/* Form Fields */}
+                <div className='w-full flex flex-col gap-5'>
+                    <div className="space-y-1.5">
+                        <label htmlFor="email" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Email Address
+                        </label>
+                        <input
+                            id="email"
+                            value={credentials.email}
+                            onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                            type="text"
+                            placeholder='name@department.gov'
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all'
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between items-center">
+                            <label htmlFor="password" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                                Password
+                            </label>
+                        </div>
+                        <input
+                            id="password"
+                            value={credentials.password}
+                            onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                            type="password"
+                            placeholder='••••••••'
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all'
+                        />
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className='w-full pt-2'>
                     <button
                         onClick={handleGoogleSignIn}
                         disabled={loading}
-                        className={`w-full group flex items-center justify-center gap-3 bg-blue-500 text-white border border-gray-200 font-semibold py-3.5 px-4 rounded-sm transition-all duration-300 
-    ${loading ? "opacity-70 cursor-not-allowed" : "hover:shadow-md hover:border-gray-300 active:scale-[0.98] cursor-pointer"}`}
+                        className={`w-full group flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 px-4 rounded-xs transition-all duration-300 shadow-lg shadow-blue-500/20
+    ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-700 hover:shadow-blue-500/30 active:scale-[0.98] cursor-pointer"}`}
                     >
                         {loading ? (
-                            <span>Signing in...</span>
+                            <span className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Authenticating...
+                            </span>
                         ) : (
                             <>
-                                <span className='max-sm:text-sm'>Sign In</span>
-                                <FaArrowRightLong className="text-xl text-white group-hover:scale-110 transition-transform duration-300" />
+                                <span>Sign In to Dashboard</span>
+                                <FaArrowRightLong className="text-lg group-hover:translate-x-1 transition-transform" />
                             </>
                         )}
                     </button>
-                    <p className='mt-6 text-center text-xs text-gray-400'>
-                        By continuing, you agree to our Terms of Service and Privacy Policy.
+                    <p className='mt-8 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
+                        Secure System Access • 2026
                     </p>
                 </div>
             </div>

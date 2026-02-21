@@ -4,7 +4,8 @@ import { Complaint, Thana } from '../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
-import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage } from 'react-icons/md';
+import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage, MdCreate } from 'react-icons/md';
+import { IoArrowForwardCircleOutline } from 'react-icons/io5';
 
 export default function RegisterComplaint() {
     const { thana } = useUserStore();
@@ -98,150 +99,212 @@ export default function RegisterComplaint() {
     }
 
     return (
-        <div className='w-full px-3 bg-white rounded-lg p-5 shadow-sm'>
-            <h1 className='text-xl font-bold text-slate-900 tracking-tight mb-5'>Register a New Complaint</h1>
-            <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4 w-full'>
-                <div className="flex flex-col items-start gap-2 justify-center">
-                    <label htmlFor="role_addressed_to">Addressed to:</label>
-                    <select
-                        id="role_addressed_to"
-                        value={complaintDetails.role_addressed_to}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, role_addressed_to: e.target.value })}
-                        className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' >
-                        <option value="">-- Select Recipient --</option>
-                        <option value="SP">SP</option>
-                        <option value="TI">TI</option>
-                    </select>
-                </div>
-                <div className="flex flex-col items-start gap-2 justify-center">
-                    <label htmlFor="recipient_address">Recipient Address</label>
-                    <input
-                        id="recipient_address"
-                        value={complaintDetails.recipient_address}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, recipient_address: e.target.value })}
-                        placeholder="Enter recipient's address" type="text"
-                        className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' />
-                </div>
-                <div className="flex flex-col items-start gap-2 justify-center">
-                    <label htmlFor="subject">Subject</label>
-                    <input
-                        id="subject"
-                        value={complaintDetails.subject}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, subject: e.target.value })}
-                        placeholder="Enter complaint subject" type="text" className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' />
-                </div>
-                <div className="flex flex-col items-start gap-2 justify-center">
-                    <label htmlFor="date">Date</label>
-                    <input
-                        id="date"
-                        type='date'
-                        value={complaintDetails.date}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, date: e.target.value })} className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' />
-                </div>
-                <div className="flex flex-col items-start gap-2 justify-center">
-                    <label htmlFor="complainant_name">Name of Complainer</label>
-                    <input
-                        id="complainant_name"
-                        value={complaintDetails.complainant_name}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_name: e.target.value })}
-                        placeholder="Enter full name" type="text" className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' />
-                </div>
-                <div className="flex flex-col items-start gap-2 justify-center">
-                    <label htmlFor="mobile_no">Mobile No. of Complainer</label>
-                    <input
-                        id="mobile_no"
-                        value={complaintDetails.complainant_contact}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_contact: e.target.value })}
-                        placeholder="Enter 10-digit mobile number" type="text" className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' />
-                </div>
+        <div className='w-full bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden'>
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white">
+                <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                    <MdCreate className="text-blue-500" />
+                    Register a New Official Complaint
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold tracking-tight uppercase">
+                    New Entry
+                </span>
+            </div>
 
-                <div className="flex flex-col items-start gap-2 justify-start">
-                    <label htmlFor="thana">Allocate to Thana</label>
-                    <select
-                        id="thana"
-                        value={complaintDetails.allocated_thana}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, allocated_thana: e.target.value })}
-                        className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md' >
-                        <option value="">-- Select Thana --</option>
-                        {thana?.map((th: Thana, index: number) => (
-                            <option key={index} value={th.name}>{th.name}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="flex flex-col items-start gap-2 justify-center col-span-2 max-lg:col-span-2 max-sm:col-span-1">
-                    <label htmlFor="description">Description (Optional)</label>
-                    <textarea
-                        id="description"
-                        value={complaintDetails.message}
-                        onChange={(e) => setComplaintDetails({ ...complaintDetails, message: e.target.value })}
-                        placeholder="Enter detailed description of the complaint"
-                        rows={4}
-                        className='w-full p-2 border border-gray-300 focus:border-gray-500 focus:outline-none rounded-md'
-                    />
-                </div>
-                <div className="flex flex-col items-start gap-2 justify-center col-span-3 max-lg:col-span-2 max-sm:col-span-1 border-t border-gray-300 pt-4 mt-2">
-                    <label className="font-semibold text-gray-700">Attachments (Optional)</label>
-                    <div className="flex flex-wrap gap-4 w-full">
-                        <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-all cursor-pointer font-medium"
-                        >
-                            <MdAttachFile size={20} />
-                            Add Documents
-                        </button>
+            <div className='p-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full'>
+                    {/* Addressed to */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="role_addressed_to" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Addressed to
+                        </label>
+                        <select
+                            id="role_addressed_to"
+                            value={complaintDetails.role_addressed_to}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, role_addressed_to: e.target.value })}
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
+                            <option value="">-- Select Recipient --</option>
+                            <option value="SP">SP</option>
+                            <option value="TI">TI</option>
+                        </select>
+                    </div>
+
+                    {/* Recipient Address */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="recipient_address" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Recipient Address
+                        </label>
                         <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            multiple
-                            accept=".pdf,image/*"
-                            className="hidden"
+                            id="recipient_address"
+                            value={complaintDetails.recipient_address}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, recipient_address: e.target.value })}
+                            placeholder="Enter recipient's designation/office" type="text"
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                    </div>
+
+                    {/* Subject */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="subject" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Complaint Subject
+                        </label>
+                        <input
+                            id="subject"
+                            value={complaintDetails.subject}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, subject: e.target.value })}
+                            placeholder="Briefly state the subject" type="text"
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                    </div>
+
+                    {/* Date */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="date" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Occurrence Date
+                        </label>
+                        <input
+                            id="date"
+                            type='date'
+                            value={complaintDetails.date}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, date: e.target.value })}
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                    </div>
+
+                    {/* Name of Complainer */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="complainant_name" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Name of Complainer
+                        </label>
+                        <input
+                            id="complainant_name"
+                            value={complaintDetails.complainant_name}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_name: e.target.value })}
+                            placeholder="Enter full legal name" type="text"
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                    </div>
+
+                    {/* Mobile No. */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="mobile_no" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Complainer Contact Number
+                        </label>
+                        <input
+                            id="mobile_no"
+                            value={complaintDetails.complainant_contact}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_contact: e.target.value })}
+                            placeholder="+91-00000-00000" type="text"
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                    </div>
+
+                    {/* Thana */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="thana" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Allocate to Station (Thana)
+                        </label>
+                        <select
+                            id="thana"
+                            value={complaintDetails.allocated_thana}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, allocated_thana: e.target.value })}
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
+                            <option value="">-- Select Thana --</option>
+                            {thana?.map((th: Thana, index: number) => (
+                                <option key={index} value={th.name}>{th.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                        <label htmlFor="description" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                            Detailed Description / Message
+                        </label>
+                        <textarea
+                            id="description"
+                            value={complaintDetails.message}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, message: e.target.value })}
+                            placeholder="Provide a comprehensive description of the incident..."
+                            rows={4}
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden resize-none'
                         />
                     </div>
 
-                    {selectedFiles.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 w-full mt-3">
-                            {selectedFiles.map((file, index) => (
-                                <div key={index} className="relative group flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <div className="text-blue-500">
-                                        {file.type === 'application/pdf' ? <MdPictureAsPdf size={24} /> : <MdImage size={24} />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-gray-700 truncate">{file.name}</p>
-                                        <p className="text-[10px] text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
-                                    </div>
-                                    <button
-                                        onClick={() => removeFile(index)}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <MdClose size={14} />
-                                    </button>
-                                </div>
-                            ))}
+                    <div className="space-y-4 md:col-span-2 lg:col-span-3 border-t border-slate-100 pt-6 mt-4">
+                        <div className="flex items-center justify-between">
+                            <label className='text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5'>
+                                <MdAttachFile className="text-blue-500" />
+                                Support Documents & Evidence
+                            </label>
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic animate-pulse">
+                                Images & PDF Only
+                            </span>
                         </div>
-                    )}
-                    <p className="text-[10px] text-gray-400 mt-1">* Only images and PDF files are allowed.</p>
-                </div>
 
-                <div className='w-full col-span-3 max-lg:col-span-2 max-sm:col-span-1 mt-4'>
-                    <button
-                        onClick={submitComplaint}
-                        disabled={loading}
-                        className='w-full h-12 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer group flex items-center justify-center gap-2 font-semibold shadow-md'
-                    >
-                        {loading ? (
-                            <>
-                                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                Submitting...
-                            </>
-                        ) : (
-                            "Submit Complaint"
+                        <div className="flex flex-wrap gap-4 w-full">
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex items-center gap-2.5 px-4 py-2 border border-slate-200 rounded-xs text-slate-600 bg-white hover:bg-slate-50 hover:border-blue-200 transition-all cursor-pointer text-xs font-bold uppercase tracking-wider shadow-xs"
+                            >
+                                <MdAttachFile className="text-blue-500 text-lg" />
+                                Add Documents
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                multiple
+                                accept=".pdf,image/*"
+                                className="hidden"
+                            />
+                        </div>
+
+                        {selectedFiles.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 w-full">
+                                {selectedFiles.map((file, index) => (
+                                    <div key={index} className="relative group flex items-center gap-3 p-3 bg-slate-50 rounded-xs border border-slate-200 hover:border-blue-200 transition-colors">
+                                        <div className="text-blue-500 shrink-0">
+                                            {file.type === 'application/pdf' ? <MdPictureAsPdf size={20} /> : <MdImage size={20} />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[11px] font-bold text-slate-700 truncate">{file.name}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">{(file.size / 1024).toFixed(1)} KB</p>
+                                        </div>
+                                        <button
+                                            onClick={() => removeFile(index)}
+                                            className="ml-1 p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                        >
+                                            <MdClose size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         )}
-                    </button>
+                    </div>
+
+                    <div className='w-full md:col-span-2 lg:col-span-3 pt-6 mt-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6'>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-tight italic">
+                                Verification Required
+                            </span>
+                            <p className="text-[10px] font-bold text-slate-400 mt-1">
+                                Ensure all official details are accurate before submission.
+                            </p>
+                        </div>
+                        <button
+                            onClick={submitComplaint}
+                            disabled={loading}
+                            className={`w-full md:w-auto min-w-[200px] h-11 bg-blue-600 text-white font-bold text-xs uppercase tracking-widest rounded-xs transition-all duration-300 shadow-lg shadow-blue-500/20 flex items-center justify-center gap-3 py-2 px-8
+                            ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-700 hover:shadow-blue-500/30 active:scale-[0.98] cursor-pointer"}`}
+                        >
+                            {loading ? (
+                                <span className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Submitting Entry...
+                                </span>
+                            ) : (
+                                <>
+                                    <span>Finalize Submission</span>
+                                    <IoArrowForwardCircleOutline className="text-xl" />
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -3,43 +3,63 @@ import supabase from "@/app/_config/supabase";
 import { generateToken } from "@/app/_utils/generateToken";
 import { z } from 'zod'
 import bcrypt from "bcryptjs"
+
 const signInSchema = z.object({
-    email: z.string().email(),
+    email: z.string().email("Invalid email format"),
     password: z.string().min(8, "Password must be at least 8 characters long"),
-    role: z.string().min(1, "Role is required")
+    role: z.enum(["SP", "TI"], { message: "Role must be SP or TI" })
 })
+
 export async function POST(req: NextRequest) {
     try {
-        const { email, password, role } = await req.json();
+        const body = await req.json();
+        const validation = signInSchema.safeParse(body);
 
-        const validation = signInSchema.safeParse({ email, password, role });
         if (!validation.success) {
-            return NextResponse.json({ error: validation.error.message }, { status: 400 });
+            const fieldErrors = validation.error.flatten().fieldErrors;
+            const firstError = Object.values(fieldErrors).flat()[0] || "Invalid input";
+            return NextResponse.json({ message: firstError }, { status: 400 });
         }
 
-        const { data, error } = await supabase.from("users").select("id, name, email, role, phone, thana, password").eq("email", email).eq("role", role).single();
-        console.log(data, error);
+        const { email, password, role } = validation.data;
 
-        if (!data) {
-            return NextResponse.json({ error: "Invalid Credentials" }, { status: 404 });
+        // First find user by email only, then check role separately for better error messages
+        const { data: user, error: dbError } = await supabase
+            .from("users")
+            .select("id, name, email, role, phone, thana, password")
+            .eq("email", email)
+            .maybeSingle();
+
+        if (dbError) {
+            console.error("DB Error:", dbError);
+            return NextResponse.json({ message: "Database error, please try again" }, { status: 500 });
         }
 
-        const isPasswordValid = await bcrypt.compare(password, data.password);
+        if (!user) {
+            return NextResponse.json({ message: "No account found with this email" }, { status: 404 });
+        }
+
+        // Check role mismatch separately — gives a clearer error
+        if (user.role !== role) {
+            return NextResponse.json(
+                { message: `This account is registered as '${user.role}', not '${role}'. Please select the correct account type.` },
+                { status: 403 }
+            );
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return NextResponse.json({ error: "Invalid Credentials" }, { status: 404 });
+            return NextResponse.json({ message: "Incorrect password" }, { status: 401 });
         }
 
-
-        if (data.role !== role) {
-            return NextResponse.json({ error: "Invalid Role" }, { status: 404 });
-        }
-
-        const res = NextResponse.json(data, { status: 200 });
-        generateToken(data.id, data.name, data.role, data.phone, data.email, data.thana, res);
+        const { password: _password, ...safeUser } = user;
+        const res = NextResponse.json(safeUser, { status: 200 });
+        generateToken(user.id, user.name, user.role, user.phone, user.email, user.thana, res);
 
         return res;
+
     } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        console.error("Sign-in error:", error);
+        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
     }
 }
