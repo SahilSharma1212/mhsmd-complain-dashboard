@@ -185,12 +185,17 @@ export default function RegisterComplaint() {
                         <label htmlFor="mobile_no" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
                             Complainer Contact Number
                         </label>
-                        <input
-                            id="mobile_no"
-                            value={complaintDetails.complainant_contact}
-                            onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_contact: e.target.value })}
-                            placeholder="+91-00000-00000" type="text"
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                        <div className="flex group overflow-hidden border border-slate-200 rounded-xs focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/5 transition-all bg-slate-50">
+                            <div className="bg-slate-100 px-4 py-2.5 border-r border-slate-200 flex items-center justify-center shrink-0">
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">+91</span>
+                            </div>
+                            <input
+                                id="mobile_no"
+                                value={complaintDetails.complainant_contact}
+                                onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_contact: e.target.value })}
+                                placeholder="00000-00000" type="text"
+                                className='w-full px-4 py-2.5 bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all outline-none' />
+                        </div>
                     </div>
 
                     {/* Thana */}
