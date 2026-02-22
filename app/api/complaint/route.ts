@@ -335,8 +335,7 @@ export async function PATCH(request: NextRequest) {
     const { data, error } = await supabase
         .from("complaints")
         .update({
-            status: status,                 // ✅ complaints table column
-            updated_by: user.name,
+            status: status,
             updated_at: new Date().toISOString(),
         })
         .eq("id", id)
