@@ -77,13 +77,13 @@ export default function AdminActions() {
 
     return (
         <div className='w-full flex flex-col gap-8'>
-            <div className="flex items-center gap-3">
+            <div className="flex p-4 pb-0 items-center gap-3">
                 <div className="w-10 h-10 bg-indigo-50 rounded-xs flex items-center justify-center border border-indigo-100">
                     <IoShieldCheckmarkOutline className="text-indigo-600 text-xl" />
                 </div>
                 <div className="flex flex-col">
-                    <h1 className='text-sm font-bold text-slate-900 uppercase tracking-wider'>Administrative Power Actions</h1>
-                    <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>System-Level Configuration & Personnel Management</span>
+                    <h1 className='text-sm font-bold text-slate-900 uppercase tracking-wider'>Admin Actions</h1>
+                    <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Admin Control Panel</span>
                 </div>
             </div>
 

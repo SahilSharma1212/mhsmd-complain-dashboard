@@ -87,7 +87,7 @@ export default function UnallocatedComplaints() {
                             Unallocated Complaints Queue
                         </h2>
                         <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
-                            Needs Jurisdiction Assignment • {totalCount} pending
+                            TOTAL • {totalCount} pending
                         </span>
                     </div>
                 </div>
@@ -160,9 +160,9 @@ export default function UnallocatedComplaints() {
                                             </span>
                                         </td>
                                         <td className='px-4 py-4 text-center'>
-                                            <span className='text-[10px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded-full uppercase tracking-tighter'>
+                                            <p className='mx-auto w-fit text-white bg-slate-800 px-2 py-0.5 rounded-lg uppercase tracking-tighter'>
                                                 {complaint.role_addressed_to}
-                                            </span>
+                                            </p>
                                         </td>
                                         <td className='px-4 py-4 min-w-[200px]'>
                                             <div className='flex items-center justify-between gap-4'>

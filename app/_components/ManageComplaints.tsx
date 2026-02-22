@@ -356,9 +356,9 @@ export default function ManageComplaints() {
                                         </td>
                                         {/* Addressed To */}
                                         <td className='px-4 py-4 text-center'>
-                                            <span className='text-[10px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded-full uppercase tracking-tighter'>
+                                            <p className='text-white bg-slate-800 rounded-lg w-fit mx-auto px-2 py-0.5 uppercase tracking-tighter'>
                                                 {complaint.role_addressed_to}
-                                            </span>
+                                            </p>
                                         </td>
                                         {/* Thana */}
                                         <td className='px-4 py-4'>
