@@ -83,22 +83,25 @@ export async function GET(request: NextRequest) {
         // ROLE: SP
         // =====================
         if (user.role === "SP") {
-            const { data: designatedThana, error: thanaError } =
-                await supabase
+            // Allow access if complaint is unallocated (SP manages unallocated queue)
+            // or if it's allocated to one of this SP's thanas
+            if (complaint.allocated_thana) {
+                const { data: designatedThana, error: thanaError } = await supabase
                     .from("thana")
-                    .select("*")
+                    .select("name")
                     .eq("designated_sp", user.name)
-                    .eq("name", user.thana)
-                    .single()
+                    .eq("name", complaint.allocated_thana)
+                    .maybeSingle()
 
-            if (thanaError || !designatedThana) {
-                return NextResponse.json(
-                    {
-                        message: "You are not authorized to access this complaint",
-                        success: false,
-                    },
-                    { status: 401 }
-                )
+                if (thanaError || !designatedThana) {
+                    return NextResponse.json(
+                        {
+                            message: "You are not authorized to access this complaint",
+                            success: false,
+                        },
+                        { status: 401 }
+                    )
+                }
             }
         }
 
@@ -115,12 +118,17 @@ export async function GET(request: NextRequest) {
                 { status: 500 }
             )
         }
+        console.log(logs)
+        console.log(complaint)
 
         return NextResponse.json(
             {
                 message: "Logs found",
                 success: true,
-                data: logs,
+                data: {
+                    logs,
+                    complaint
+                },
             },
             { status: 200 }
         )
@@ -250,6 +258,8 @@ export async function POST(request: NextRequest) {
             )
         }
 
+        console.log(logData)
+        console.log(complaint)
         return NextResponse.json({
             message: "Log added successfully",
             success: true,

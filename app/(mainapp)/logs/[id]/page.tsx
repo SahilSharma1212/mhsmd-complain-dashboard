@@ -64,7 +64,11 @@ export default function LogsPage() {
                     withCredentials: true,
                 }
             )
-            setLogs(response.data.data)
+            // Combined data from backend
+            const { logs: logsData, complaint: complaintData } = response.data.data
+            setLogs(logsData)
+            setCurrentlyViewingComplaint(complaintData)
+
         } catch (err: any) {
             console.error("Failed to fetch logs", err)
             if (!isManualRefresh) {
@@ -79,28 +83,6 @@ export default function LogsPage() {
         }
     }
 
-    const fetchComplaintDetails = async () => {
-        if (currentlyViewingComplaint && String(currentlyViewingComplaint.id) === String(complaintId)) {
-            return
-        }
-
-        setDetailsLoading(true)
-        try {
-            const response = await axios.get(`/api/complaint`, {
-                params: { filter: "id", value: complaintId },
-                withCredentials: true,
-            })
-
-            if (response.data.success && response.data.data.length > 0) {
-                setCurrentlyViewingComplaint(response.data.data[0])
-            }
-        } catch (err) {
-            console.error("Failed to fetch complaint details", err)
-        } finally {
-            setDetailsLoading(false)
-        }
-    }
-
     useEffect(() => {
         if (!params?.id) return
 
@@ -111,7 +93,6 @@ export default function LogsPage() {
         }
 
         fetchLogs()
-        fetchComplaintDetails()
     }, [params?.id, complaintId])
 
 
@@ -135,12 +116,7 @@ export default function LogsPage() {
                 setNewLogReason("")
                 setIsModalOpen(false)
 
-                // Refresh complaint details if status changed
-                if (selectedStatus !== currentlyViewingComplaint?.status) {
-                    fetchComplaintDetails()
-                }
-
-                fetchLogs() // Refresh logs
+                fetchLogs() // This now refreshes both logs and complaint details
             }
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Failed to add log")
@@ -167,19 +143,7 @@ export default function LogsPage() {
                 toast.success("Complaint updated successfully")
                 setIsEditModalOpen(false)
 
-                // Force a full re-fetch of complaint details to update the UI
-                setCurrentlyViewingComplaint(null) // Reset to trigger conditional in fetchComplaintDetails
-
-                const fetchRes = await axios.get(`/api/complaint`, {
-                    params: { filter: "id", value: complaintId },
-                    withCredentials: true,
-                })
-
-                if (fetchRes.data.success && fetchRes.data.data.length > 0) {
-                    setCurrentlyViewingComplaint(fetchRes.data.data[0])
-                }
-
-                fetchLogs() // Refresh logs to show "EDITED" entry
+                fetchLogs() // This now refreshes both logs and complaint details including changes
             }
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Failed to update complaint")
@@ -252,8 +216,8 @@ export default function LogsPage() {
                         <MdOutlineTrackChanges className="text-blue-500" />
                         Log Timeline
                     </h1>
-                    <p className="text-slate-500 mt-1">
-                        Complaint ID: <span className="font-semibold text-slate-700">#{complaintId}</span>
+                    <p className="text-slate-600 mt-1">
+                        Complaint ID: <span className="font-semibold text-slate-800">#{complaintId}</span>
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -292,7 +256,7 @@ export default function LogsPage() {
             <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden">
                     <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             <IoChatbubbleOutline className="text-blue-500" />
                             Complaint Information
                         </h2>
@@ -315,7 +279,7 @@ export default function LogsPage() {
                         ) : currentlyViewingComplaint ? (
                             <div className="space-y-6">
                                 <div>
-                                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                    <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-2">
                                         <MdOutlineSubject /> Subject
                                     </h3>
                                     <p className="text-slate-900 font-medium text-lg leading-relaxed">
@@ -323,8 +287,8 @@ export default function LogsPage() {
                                     </p>
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Description</h3>
-                                    <p className="text-slate-600 bg-slate-50/50 p-4 rounded-xs border border-slate-100 italic">
+                                    <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Description</h3>
+                                    <p className="text-slate-700 bg-slate-50/50 p-4 rounded-xs border border-slate-100 italic">
                                         "{currentlyViewingComplaint.message || "No description provided"}"
                                     </p>
                                 </div>
@@ -334,8 +298,8 @@ export default function LogsPage() {
                                             <IoLocationOutline className="text-blue-600" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-400 uppercase">Allocated Thana</p>
-                                            <p className="text-sm text-slate-700 font-medium">{currentlyViewingComplaint.allocated_thana}</p>
+                                            <p className="text-xs font-semibold text-slate-600 uppercase">Allocated Thana</p>
+                                            <p className="text-sm text-slate-900 font-medium">{currentlyViewingComplaint.allocated_thana}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3">
@@ -343,8 +307,8 @@ export default function LogsPage() {
                                             <IoTimeOutline className="text-purple-600" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-400 uppercase">Submission Date</p>
-                                            <p className="text-sm text-slate-700 font-medium">
+                                            <p className="text-xs font-semibold text-slate-600 uppercase">Submission Date</p>
+                                            <p className="text-sm text-slate-900 font-medium">
                                                 {new Date(currentlyViewingComplaint.date || currentlyViewingComplaint.created_at!).toLocaleDateString('en-IN', {
                                                     dateStyle: 'full'
                                                 })}
@@ -355,7 +319,7 @@ export default function LogsPage() {
 
                                 {currentlyViewingComplaint.file_urls && currentlyViewingComplaint.file_urls.length > 0 && (
                                     <div className="pt-4 border-t border-slate-100">
-                                        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-2">
                                             Attachments ({currentlyViewingComplaint.file_urls.length})
                                         </h3>
                                         <div className="flex flex-wrap gap-2">
@@ -376,14 +340,14 @@ export default function LogsPage() {
                                 )}
                             </div>
                         ) : (
-                            <p className="text-slate-400 text-sm italic">Failed to load complaint details.</p>
+                            <p className="text-slate-600 text-sm italic">Failed to load complaint details.</p>
                         )}
                     </div>
                 </div>
 
                 <div className="bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                     <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-200">
-                        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             <IoPersonOutline className="text-blue-500" />
                             Complainant Details
                         </h2>
@@ -404,13 +368,13 @@ export default function LogsPage() {
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900">{currentlyViewingComplaint.complainant_name}</h3>
                                 <div className="mt-4 space-y-3">
-                                    <div className="flex items-center justify-center gap-2 text-slate-600 bg-slate-50 py-2 px-4 rounded-xs border border-slate-100">
+                                    <div className="flex items-center justify-center gap-2 text-slate-700 bg-slate-50 py-2 px-4 rounded-xs border border-slate-100">
                                         <IoCallOutline className="text-blue-500" size={16} />
-                                        <span className="text-sm font-medium">{currentlyViewingComplaint.complainant_contact}</span>
+                                        <span className="text-sm font-medium">{currentlyViewingComplaint.complainant_contact || currentlyViewingComplaint.phone}</span>
                                     </div>
-                                    <div className="text-xs text-slate-400 flex flex-col gap-1 mt-6">
+                                    <div className="text-xs text-slate-700 flex flex-col gap-1 mt-6">
                                         <p>Submitted By</p>
-                                        <p className="text-slate-700 font-semibold text-sm uppercase">{currentlyViewingComplaint.submitted_by}</p>
+                                        <p className="text-slate-900 font-semibold text-sm uppercase">{currentlyViewingComplaint.submitted_by}</p>
                                     </div>
                                 </div>
                             </div>
@@ -421,7 +385,7 @@ export default function LogsPage() {
 
             <div className="bg-white rounded-xs shadow-sm border border-slate-200 overflow-hidden">
                 <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-200">
-                    <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                         <MdOutlineTrackChanges className="text-blue-500" size={18} />
                         Detailed Action Logs
                     </h2>
@@ -430,12 +394,12 @@ export default function LogsPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/30 border-b border-slate-200">
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date & Time</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status Transition</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Modified By</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reason / Remarks</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Date & Time</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Action</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Status Transition</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Modified By</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Reason / Remarks</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
@@ -453,10 +417,10 @@ export default function LogsPage() {
                                 ))
                             ) : logs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic bg-slate-50/20">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-600 italic bg-slate-50/20">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="p-3 bg-slate-100 rounded-full">
-                                                <MdOutlineTrackChanges size={24} className="text-slate-300" />
+                                                <MdOutlineTrackChanges size={24} className="text-slate-500" />
                                             </div>
                                             No activity logs recorded for this complaint.
                                         </div>
@@ -466,13 +430,13 @@ export default function LogsPage() {
                                 logs.map((log) => (
                                     <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-slate-700 font-semibold">
+                                            <div className="text-slate-900 font-semibold">
                                                 {new Date(log.created_at).toLocaleTimeString('en-IN', {
                                                     hour: '2-digit',
                                                     minute: '2-digit'
                                                 })}
                                             </div>
-                                            <div className="text-slate-400 text-xs">
+                                            <div className="text-slate-600 text-xs">
                                                 {new Date(log.created_at).toLocaleDateString('en-IN', {
                                                     day: '2-digit',
                                                     month: 'short',
@@ -489,8 +453,8 @@ export default function LogsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-slate-400 font-medium bg-slate-100 px-2 py-0.5 rounded text-xs">{log.prev_status}</span>
-                                                <IoChevronForward className="text-slate-300" size={12} />
+                                                <span className="text-slate-600 font-medium bg-slate-100 px-2 py-0.5 rounded text-xs">{log.prev_status}</span>
+                                                <IoChevronForward className="text-slate-500" size={12} />
                                                 <span className={`font-bold px-2 py-0.5 rounded text-xs ${log.current_status === 'SOLVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-800 text-white'
                                                     }`}>
                                                     {log.current_status}
@@ -506,7 +470,7 @@ export default function LogsPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 max-w-[300px]">
-                                            <p className="text-slate-500 leading-relaxed italic line-clamp-1 hover:line-clamp-none transition-all duration-300 cursor-help" title={log.reason}>
+                                            <p className="text-slate-700 leading-relaxed italic line-clamp-1 hover:line-clamp-none transition-all duration-300 cursor-help" title={log.reason}>
                                                 "{log.reason || "No specific reason provided for this action."}"
                                             </p>
                                         </td>
@@ -553,10 +517,10 @@ export default function LogsPage() {
                         <form onSubmit={handleAddLog} className="p-6 space-y-5">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-bold text-slate-700">
+                                    <label className="block text-sm font-bold text-slate-800">
                                         Current Identifying ID
                                     </label>
-                                    <div className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-mono text-sm">
+                                    <div className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-mono text-sm">
                                         #{complaintId}
                                     </div>
                                 </div>
@@ -579,14 +543,14 @@ export default function LogsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">
+                                <label className="block text-sm font-bold text-slate-800 mb-2">
                                     Log entry / Observations
                                 </label>
                                 <textarea
                                     value={newLogReason}
                                     onChange={(e) => setNewLogReason(e.target.value)}
                                     placeholder="Enter details about the action taken or notes for this case..."
-                                    className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-slate-700 resize-none font-medium text-sm leading-relaxed"
+                                    className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder:text-slate-500 resize-none font-medium text-sm leading-relaxed"
                                     required
                                 />
                             </div>
@@ -594,7 +558,7 @@ export default function LogsPage() {
                                 <div className="p-2 bg-white rounded-lg shadow-sm">
                                     <IoChatbubbleOutline className="text-blue-600" />
                                 </div>
-                                <p className="text-[11px] text-slate-500 leading-tight font-medium">
+                                <p className="text-[11px] text-slate-700 leading-tight font-medium">
                                     This manual entry will create a permanent history record. Changing the status here will also update the main complaint file.
                                 </p>
                             </div>
@@ -602,7 +566,7 @@ export default function LogsPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                                    className="px-5 py-2 text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -650,43 +614,43 @@ export default function LogsPage() {
                         <form onSubmit={handleEditComplaint} className="p-6 space-y-4">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Subject</label>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">Subject</label>
                                     <input
                                         type="text"
                                         value={editForm.subject}
                                         onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
                                         required
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Complainant Name</label>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">Complainant Name</label>
                                         <input
                                             type="text"
                                             value={editForm.complainant_name}
                                             onChange={(e) => setEditForm({ ...editForm, complainant_name: e.target.value })}
-                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
                                             required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Complainant Contact</label>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">Complainant Contact</label>
                                         <input
                                             type="text"
                                             value={editForm.complainant_contact}
                                             onChange={(e) => setEditForm({ ...editForm, complainant_contact: e.target.value })}
-                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
                                             required
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Allocated Thana</label>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">Allocated Thana</label>
                                     <select
                                         value={editForm.allocated_thana}
                                         onChange={(e) => setEditForm({ ...editForm, allocated_thana: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
                                         required
                                     >
                                         <option value="">Select Thana</option>
@@ -696,11 +660,11 @@ export default function LogsPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Description / Message</label>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">Description / Message</label>
                                     <textarea
                                         value={editForm.message}
                                         onChange={(e) => setEditForm({ ...editForm, message: e.target.value })}
-                                        className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium resize-none"
+                                        className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 resize-none"
                                     />
                                 </div>
                             </div>
@@ -709,7 +673,7 @@ export default function LogsPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsEditModalOpen(false)}
-                                    className="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                                    className="px-5 py-2 text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -748,7 +712,7 @@ export default function LogsPage() {
                                 <IoTrash className="text-red-600" size={24} />
                             </div>
                             <h3 className="text-lg font-bold text-slate-900 text-center mb-2">Delete Log Entry?</h3>
-                            <p className="text-slate-500 text-sm text-center mb-6">
+                            <p className="text-slate-700 text-sm text-center mb-6">
                                 Are you sure you want to delete this activity log? This action cannot be undone and will permanently remove it from the history.
                             </p>
                             <div className="flex gap-3">
@@ -757,7 +721,7 @@ export default function LogsPage() {
                                         setIsDeleteModalOpen(false)
                                         setLogToDelete(null)
                                     }}
-                                    className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xs transition-colors"
+                                    className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xs transition-colors"
                                 >
                                     Cancel
                                 </button>

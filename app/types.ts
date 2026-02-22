@@ -20,6 +20,7 @@ export interface Complaint {
     subject: string;
     date?: string;
     status: string;
+    phone?: string;
     complainant_name: string;
     complainant_contact: string;
     complainant_details?: string;

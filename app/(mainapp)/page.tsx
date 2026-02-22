@@ -54,9 +54,6 @@ export default function Home() {
                     <RiDashboardLine className="text-blue-500" strokeWidth={0.5} />
                     Dashboard Overview
                 </h1>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    Version 1.0.4
-                </span>
             </div>
 
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>

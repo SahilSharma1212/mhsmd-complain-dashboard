@@ -33,8 +33,8 @@ export default function ActionsLayout({
     const activeTab = tabs.find(t => t.id === activeTabId);
 
     return (
-        <div className='bg-white p-2 pt-0 rounded-lg w-full flex flex-col gap-2 items-start'>
-            <div className="relative flex border-b py-2 border-gray-100 w-full mb-4">
+        <div className='bg-white rounded-lg w-full flex flex-col items-start'>
+            <div className="relative flex border-b py-2 border-gray-100 w-full">
                 {visibleTabs.map((tab) => (
                     <Link
                         key={tab.id}

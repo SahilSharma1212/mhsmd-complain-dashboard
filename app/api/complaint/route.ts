@@ -370,7 +370,7 @@ export async function GET(request: NextRequest) {
             { status: 500 }
         );
     }
-
+    console.log(data);
     return NextResponse.json(
         { message: "Complaints fetched successfully", success: true, data, totalCount: count },
         { status: 200 }

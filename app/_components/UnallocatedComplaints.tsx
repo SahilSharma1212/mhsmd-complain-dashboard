@@ -5,7 +5,6 @@ import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
 import { IoLayersOutline, IoReloadOutline, IoBusinessOutline } from 'react-icons/io5';
 import { MdAttachFile } from 'react-icons/md';
-import Link from 'next/link';
 import { Complaint } from '../types';
 
 export default function UnallocatedComplaints() {
@@ -82,10 +81,10 @@ export default function UnallocatedComplaints() {
                         <IoBusinessOutline className="text-orange-600 text-xl" />
                     </div>
                     <div className="flex flex-col">
-                        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+                        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
                             Unallocated Complaints Queue
                         </h2>
-                        <span className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
+                        <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
                             Needs Jurisdiction Assignment • {totalCount} pending
                         </span>
                     </div>
@@ -108,13 +107,13 @@ export default function UnallocatedComplaints() {
                     <table className='w-full text-left border-collapse text-sm' style={{ minWidth: '1000px' }}>
                         <thead>
                             <tr className='bg-slate-50 border-b border-slate-200'>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>ID</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>Complainant</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Letter Date</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Letter To</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>Subject & Details</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Docs</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Allocation Action</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>ID</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Complainant</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Letter Date</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Letter To</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Subject & Details</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Docs</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Allocation Action</th>
                             </tr>
                         </thead>
                         <tbody className='divide-y divide-slate-100'>
@@ -139,20 +138,20 @@ export default function UnallocatedComplaints() {
                                 complaints.map((complaint) => (
                                     <tr key={complaint.id} className='hover:bg-slate-50/50 transition-colors group'>
                                         <td className='px-4 py-4'>
-                                            <span className="text-[10px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                                            <span className="text-[10px] font-mono text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
                                                 #{String(complaint.id).slice(0, 8)}
                                             </span>
                                         </td>
                                         <td className='px-4 py-4'>
                                             <div className='flex flex-col'>
-                                                <span className='text-xs font-bold text-slate-700 truncate max-w-[120px]'>
+                                                <span className='text-xs font-bold text-slate-900 truncate max-w-[120px]'>
                                                     {complaint.complainant_name}
                                                 </span>
-                                                <span className='text-[10px] font-semibold text-slate-400'>{complaint.complainant_contact}</span>
+                                                <span className='text-[10px] font-semibold text-slate-600'>{complaint.complainant_contact}</span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-4 text-center">
-                                            <span className='text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full'>
+                                            <span className='text-[11px] font-bold text-slate-800 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full'>
                                                 {new Date(complaint.date || complaint.created_at!)
                                                     .toISOString()
                                                     .split("T")[0]}
@@ -165,10 +164,10 @@ export default function UnallocatedComplaints() {
                                         </td>
                                         <td className='px-4 py-4 min-w-[200px]'>
                                             <div className='flex flex-col gap-1'>
-                                                <span className='text-xs font-bold text-slate-700 truncate max-w-[250px]' title={complaint.subject}>
+                                                <span className='text-xs font-bold text-slate-900 truncate max-w-[250px]' title={complaint.subject}>
                                                     {complaint.subject}
                                                 </span>
-                                                <span className='text-[10px] font-medium text-slate-400 truncate max-w-[250px]' title={complaint.message}>
+                                                <span className='text-[10px] font-medium text-slate-600 truncate max-w-[250px]' title={complaint.message}>
                                                     {complaint.message || "— No description —"}
                                                 </span>
                                             </div>
@@ -192,7 +191,7 @@ export default function UnallocatedComplaints() {
                                                 <select
                                                     value={selectedThanas[complaint.id!] || ""}
                                                     onChange={(e) => setSelectedThanas(prev => ({ ...prev, [complaint.id!]: e.target.value }))}
-                                                    className='p-2 bg-slate-50 border border-slate-200 rounded-xs text-[10px] font-bold text-slate-700 outline-none focus:border-orange-500 transition-all'
+                                                    className='p-2 bg-slate-50 border border-slate-200 rounded-xs text-[10px] font-bold text-slate-900 outline-none focus:border-orange-500 transition-all'
                                                 >
                                                     <option value="">-- Select Thana --</option>
                                                     {thana?.map((t, idx) => (
@@ -220,7 +219,7 @@ export default function UnallocatedComplaints() {
                 {/* PAGINATION */}
                 {totalCount > 20 && (
                     <div className='flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xs'>
-                        <span className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
+                        <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
                             Showing {complaints.length} of {totalCount} entries
                         </span>
                         <div className='flex gap-1'>

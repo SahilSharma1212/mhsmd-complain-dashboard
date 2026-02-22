@@ -126,12 +126,12 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
         .from("thana").insert({
-            name,
+            name: name.toLowerCase(),
             contact_number,
             pin_code,
-            city,
+            city: city.toLowerCase(),
             ti: "NOT ALLOCATED",
-            designated_sp: decodedToken.name
+            designated_sp: decodedToken.name.toLowerCase()
         });
 
 

@@ -94,12 +94,12 @@ export async function POST(req: NextRequest) {
         const { data, error } = await supabase
             .from("users")
             .insert({
-                name,
+                name: name.toLowerCase(),
                 email,
                 password: hashedPassword,
                 role,
                 phone,
-                thana: thana || null,
+                thana: thana?.toLowerCase() || null,
             })
             .select()
             .single();

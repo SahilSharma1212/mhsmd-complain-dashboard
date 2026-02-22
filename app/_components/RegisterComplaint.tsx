@@ -101,7 +101,7 @@ export default function RegisterComplaint() {
     return (
         <div className='w-full bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden'>
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white">
-                <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                     <MdCreate className="text-blue-500" />
                     Register a New Official Complaint
                 </h2>
@@ -114,14 +114,14 @@ export default function RegisterComplaint() {
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full'>
                     {/* Addressed to */}
                     <div className="space-y-1.5">
-                        <label htmlFor="role_addressed_to" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                        <label htmlFor="role_addressed_to" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             Addressed to
                         </label>
                         <select
                             id="role_addressed_to"
                             value={complaintDetails.role_addressed_to}
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, role_addressed_to: e.target.value })}
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
                             <option value="">-- Select Recipient --</option>
                             <option value="SP">SP</option>
                             <option value="TI">TI</option>
@@ -130,7 +130,7 @@ export default function RegisterComplaint() {
 
                     {/* Recipient Address */}
                     <div className="space-y-1.5">
-                        <label htmlFor="recipient_address" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                        <label htmlFor="recipient_address" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             Recipient Address
                         </label>
                         <input
@@ -138,12 +138,12 @@ export default function RegisterComplaint() {
                             value={complaintDetails.recipient_address}
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, recipient_address: e.target.value })}
                             placeholder="Enter recipient's designation/office" type="text"
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
                     </div>
 
                     {/* Subject */}
                     <div className="space-y-1.5">
-                        <label htmlFor="subject" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                        <label htmlFor="subject" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             Complaint Subject
                         </label>
                         <input
@@ -151,12 +151,12 @@ export default function RegisterComplaint() {
                             value={complaintDetails.subject}
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, subject: e.target.value })}
                             placeholder="Briefly state the subject" type="text"
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
                     </div>
 
                     {/* Date */}
                     <div className="space-y-1.5">
-                        <label htmlFor="date" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                        <label htmlFor="date" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             Occurrence Date
                         </label>
                         <input
@@ -164,12 +164,12 @@ export default function RegisterComplaint() {
                             type='date'
                             value={complaintDetails.date}
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, date: e.target.value })}
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
                     </div>
 
                     {/* Name of Complainer */}
                     <div className="space-y-1.5">
-                        <label htmlFor="complainant_name" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                        <label htmlFor="complainant_name" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             Name of Complainer
                         </label>
                         <input
@@ -177,37 +177,37 @@ export default function RegisterComplaint() {
                             value={complaintDetails.complainant_name}
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_name: e.target.value })}
                             placeholder="Enter full legal name" type="text"
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
                     </div>
 
                     {/* Mobile No. */}
                     <div className="space-y-1.5">
-                        <label htmlFor="mobile_no" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                        <label htmlFor="mobile_no" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             Complainer Contact Number
                         </label>
                         <div className="flex group overflow-hidden border border-slate-200 rounded-xs focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/5 transition-all bg-slate-50">
                             <div className="bg-slate-100 px-4 py-2.5 border-r border-slate-200 flex items-center justify-center shrink-0">
-                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">+91</span>
+                                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">+91</span>
                             </div>
                             <input
                                 id="mobile_no"
                                 value={complaintDetails.complainant_contact}
                                 onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_contact: e.target.value })}
                                 placeholder="00000-00000" type="text"
-                                className='w-full px-4 py-2.5 bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all outline-none' />
+                                className='w-full px-4 py-2.5 bg-transparent text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:bg-white transition-all outline-none' />
                         </div>
                     </div>
 
                     {/* Thana */}
                     <div className="space-y-1.5">
-                        <label htmlFor="thana" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                        <label htmlFor="thana" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             Allocate to Station (Thana)
                         </label>
                         <select
                             id="thana"
                             value={complaintDetails.allocated_thana}
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, allocated_thana: e.target.value })}
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
                             <option value="">-- Select Thana --</option>
                             {thana?.map((th: Thana, index: number) => (
                                 <option key={index} value={th.name}>{th.name}</option>
@@ -216,7 +216,7 @@ export default function RegisterComplaint() {
                     </div>
 
                     <div className="space-y-1.5 md:col-span-2">
-                        <label htmlFor="description" className='text-[11px] font-bold text-slate-400 uppercase tracking-wider block'>
+                        <label htmlFor="description" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             Detailed Description / Message
                         </label>
                         <textarea
@@ -225,17 +225,17 @@ export default function RegisterComplaint() {
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, message: e.target.value })}
                             placeholder="Provide a comprehensive description of the incident..."
                             rows={4}
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden resize-none'
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden resize-none'
                         />
                     </div>
 
                     <div className="space-y-4 md:col-span-2 lg:col-span-3 border-t border-slate-100 pt-6 mt-4">
                         <div className="flex items-center justify-between">
-                            <label className='text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5'>
+                            <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5'>
                                 <MdAttachFile className="text-blue-500" />
                                 Support Documents & Evidence
                             </label>
-                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic animate-pulse">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic animate-pulse">
                                 Images & PDF Only
                             </span>
                         </div>
@@ -267,8 +267,8 @@ export default function RegisterComplaint() {
                                             {file.type === 'application/pdf' ? <MdPictureAsPdf size={20} /> : <MdImage size={20} />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[11px] font-bold text-slate-700 truncate">{file.name}</p>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">{(file.size / 1024).toFixed(1)} KB</p>
+                                            <p className="text-[11px] font-bold text-slate-800 truncate">{file.name}</p>
+                                            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter mt-0.5">{(file.size / 1024).toFixed(1)} KB</p>
                                         </div>
                                         <button
                                             onClick={() => removeFile(index)}
@@ -284,10 +284,10 @@ export default function RegisterComplaint() {
 
                     <div className='w-full md:col-span-2 lg:col-span-3 pt-6 mt-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6'>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-tight italic">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-tight italic">
                                 Verification Required
                             </span>
-                            <p className="text-[10px] font-bold text-slate-400 mt-1">
+                            <p className="text-[10px] font-bold text-slate-600 mt-1">
                                 Ensure all official details are accurate before submission.
                             </p>
                         </div>

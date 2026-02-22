@@ -198,11 +198,11 @@ export default function ManageComplaints() {
                         <IoLayersOutline className="text-blue-600 text-lg" />
                     </div>
                     <div className="flex flex-col">
-                        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                            Official Complaints Registry
+                        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                            Complaint Registry
                         </h2>
-                        <span className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
-                            Central Database • {totalCount} total entries
+                        <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
+                            TOTAL • {totalCount}
                         </span>
                     </div>
                 </div>
@@ -225,7 +225,7 @@ export default function ManageComplaints() {
                 {/* SEARCH FORM */}
                 <form onSubmit={handleSearch} className='flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end justify-start gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xs'>
                     <div className='flex flex-col gap-1.5 w-full sm:w-auto'>
-                        <label className='text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5'>
+                        <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5'>
                             <IoFilterOutline className="text-blue-500" />
                             Filter By
                         </label>
@@ -242,13 +242,13 @@ export default function ManageComplaints() {
                     </div>
 
                     <div className='flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[300px]'>
-                        <label className='text-[11px] font-bold text-slate-400 uppercase tracking-wider'>Search Value</label>
+                        <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider'>Search Value</label>
                         <div className='flex group'>
                             {filterAttribute === "status" ? (
                                 <select
                                     value={filterValue}
                                     onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
+                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                 >
                                     <option value="">-- Select Status --</option>
                                     <option value="PENDING">PENDING</option>
@@ -273,7 +273,7 @@ export default function ManageComplaints() {
                                     type="text"
                                     value={filterValue}
                                     onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
+                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                     placeholder={filterAttribute ? 'Type to search records...' : 'Select an attribute first'}
                                     disabled={!filterAttribute}
                                 />
@@ -298,16 +298,16 @@ export default function ManageComplaints() {
                     <table className='w-full text-left border-collapse text-sm' style={{ minWidth: '1000px' }}>
                         <thead>
                             <tr className='bg-slate-50 border-b border-slate-200'>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>ID</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>Complainant</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Letter Date</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Letter To</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>Jurisdiction</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>Subject & Details</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Source</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Files</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Status</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Actions</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>ID</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Complainant</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Letter Date</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Letter To</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Jurisdiction</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Subject & Details</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Source</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Files</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Status</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Actions</th>
                             </tr>
                         </thead>
                         <tbody className='divide-y divide-slate-100'>
@@ -333,22 +333,22 @@ export default function ManageComplaints() {
                                     <tr key={complaint.id} className='hover:bg-slate-50/50 transition-colors group'>
                                         {/* ID */}
                                         <td className='px-4 py-4'>
-                                            <span className="text-[10px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100" title={complaint.id}>
+                                            <span className="text-[10px] font-mono text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100" title={complaint.id}>
                                                 #{String(complaint.id).slice(0, 8)}
                                             </span>
                                         </td>
                                         {/* Complainer */}
                                         <td className='px-4 py-4'>
                                             <div className='flex flex-col'>
-                                                <span className='text-xs font-bold text-slate-700 truncate max-w-[120px]' title={complaint.complainant_name}>
+                                                <span className='text-xs font-bold text-slate-900 truncate max-w-[120px]' title={complaint.complainant_name}>
                                                     {complaint.complainant_name}
                                                 </span>
-                                                <span className='text-[10px] font-semibold text-slate-400'>{complaint.complainant_contact}</span>
+                                                <span className='text-[10px] font-semibold text-slate-600'>{complaint.complainant_contact}</span>
                                             </div>
                                         </td>
                                         {/* Date */}
                                         <td className="px-4 py-4 text-center">
-                                            <span className='text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full'>
+                                            <span className='text-[11px] font-bold text-slate-800 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full'>
                                                 {new Date(complaint.date || complaint.created_at!)
                                                     .toISOString()
                                                     .split("T")[0]}
@@ -362,24 +362,24 @@ export default function ManageComplaints() {
                                         </td>
                                         {/* Thana */}
                                         <td className='px-4 py-4'>
-                                            <span className='text-xs font-bold text-slate-500 truncate max-w-[100px] block' title={complaint.allocated_thana}>
+                                            <span className='text-xs font-bold text-slate-700 truncate max-w-[100px] block' title={complaint.allocated_thana}>
                                                 {complaint.allocated_thana}
                                             </span>
                                         </td>
                                         {/* Subject & Description */}
                                         <td className='px-4 py-4 min-w-[200px]'>
                                             <div className='flex flex-col gap-1'>
-                                                <span className='text-xs font-bold text-slate-700 max-w-[200px] truncate hover:max-w-none hover:whitespace-normal transition-all duration-300 cursor-help' title={complaint.subject}>
+                                                <span className='text-xs font-bold text-slate-900 max-w-[200px] truncate hover:max-w-none hover:whitespace-normal transition-all duration-300 cursor-help' title={complaint.subject}>
                                                     {complaint.subject}
                                                 </span>
-                                                <span className='text-[10px] font-medium text-slate-400 max-w-[200px] truncate hover:max-w-none hover:whitespace-normal transition-all duration-300 cursor-help' title={complaint.message}>
+                                                <span className='text-[10px] font-medium text-slate-600 max-w-[200px] truncate hover:max-w-none hover:whitespace-normal transition-all duration-300 cursor-help' title={complaint.message}>
                                                     {complaint.message || "— No detailed description provided —"}
                                                 </span>
                                             </div>
                                         </td>
                                         {/* Source */}
                                         <td className='px-4 py-4 text-center'>
-                                            <span className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
+                                            <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
                                                 {complaint.source || "System"}
                                             </span>
                                         </td>
@@ -466,8 +466,8 @@ export default function ManageComplaints() {
                 {/* ─── Pagination Controls ─── */}
                 {totalPages > 1 && (
                     <div className='flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 pt-6 px-2 gap-4'>
-                        <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
-                            Showing <span className='text-slate-700'>page {currentPage}</span> of {totalPages}
+                        <p className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
+                            Showing <span className='text-slate-900'>page {currentPage}</span> of {totalPages}
                         </p>
                         <div className='flex flex-wrap justify-center items-center gap-2'>
                             <button
