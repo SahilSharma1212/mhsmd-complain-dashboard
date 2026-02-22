@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
-import { IoLayersOutline, IoReloadOutline, IoBusinessOutline } from 'react-icons/io5';
+import { IoLayersOutline, IoReloadOutline, IoBusinessOutline, IoExpand, IoCloseOutline } from 'react-icons/io5';
 import { MdAttachFile } from 'react-icons/md';
 import { Complaint } from '../types';
 
@@ -15,6 +15,8 @@ export default function UnallocatedComplaints() {
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [selectedThanas, setSelectedThanas] = useState<{ [key: string]: string }>({});
+    const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
 
     const fetchUnallocated = useCallback(async () => {
         try {
@@ -163,13 +165,22 @@ export default function UnallocatedComplaints() {
                                             </span>
                                         </td>
                                         <td className='px-4 py-4 min-w-[200px]'>
-                                            <div className='flex flex-col gap-1'>
-                                                <span className='text-xs font-bold text-slate-900 truncate max-w-[250px]' title={complaint.subject}>
-                                                    {complaint.subject}
-                                                </span>
-                                                <span className='text-[10px] font-medium text-slate-600 truncate max-w-[250px]' title={complaint.message}>
-                                                    {complaint.message || "— No description —"}
-                                                </span>
+                                            <div className='flex items-center justify-between gap-4'>
+                                                <div className='flex flex-col gap-1 flex-1 min-w-0'>
+                                                    <span className='text-xs font-bold text-slate-900 truncate max-w-[250px]' title={complaint.subject}>
+                                                        {complaint.subject}
+                                                    </span>
+                                                    <span className='text-[10px] font-medium text-slate-600 truncate max-w-[250px]' title={complaint.message}>
+                                                        {complaint.message || "— No description —"}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={() => { setSelectedComplaint(complaint); setShowDetailsModal(true); }}
+                                                    className='p-1.5 bg-slate-50 border border-slate-200 text-slate-400 hover:text-orange-600 hover:border-orange-200 hover:bg-white rounded-xs transition-all cursor-pointer shadow-xs group shrink-0'
+                                                    title="View Full Details"
+                                                >
+                                                    <IoExpand size={14} />
+                                                </button>
                                             </div>
                                         </td>
                                         <td className='px-4 py-4 text-center'>
@@ -241,6 +252,131 @@ export default function UnallocatedComplaints() {
                     </div>
                 )}
             </div>
+
+            {/* FULL DETAILS MODAL */}
+            {showDetailsModal && selectedComplaint && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-100 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xs border border-slate-200 shadow-2xl w-full max-w-2xl scale-in-center overflow-hidden flex flex-col max-h-[90vh]">
+                        {/* Modal Header */}
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-orange-50 rounded-xs flex items-center justify-center border border-orange-100">
+                                    <IoBusinessOutline className="text-orange-600 text-xl" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Complaint Detailed View</h2>
+                                    <span className="text-[10px] font-mono text-slate-500">#{selectedComplaint.id}</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowDetailsModal(false)}
+                                className="p-2 hover:bg-slate-50 rounded-xs text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <IoCloseOutline size={24} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 overflow-y-auto space-y-6">
+                            {/* Info Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complainant Name</p>
+                                    <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100 italic">
+                                        {selectedComplaint.complainant_name}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Number</p>
+                                    <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">
+                                        {selectedComplaint.complainant_contact}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Letter Date</p>
+                                    <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">
+                                        {new Date(selectedComplaint.date || selectedComplaint.created_at!).toLocaleDateString('en-IN', {
+                                            day: '2-digit',
+                                            month: 'long',
+                                            year: 'numeric'
+                                        })}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Addressed To</p>
+                                    <span className="inline-block px-3 py-1 bg-slate-800 text-white text-sm font-bold uppercase tracking-widest">
+                                        {selectedComplaint.role_addressed_to}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Subject Section */}
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Subject Reference</p>
+                                <div className="bg-orange-50/30 border border-orange-100 p-4 rounded-xs">
+                                    <p className="text-sm font-bold text-slate-800 leading-relaxed">
+                                        {selectedComplaint.subject}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Message Section */}
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complaint Message</p>
+                                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xs min-h-[120px]">
+                                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                        {selectedComplaint.message || "— No detailed message provided —"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Complainant Details */}
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complainant Details</p>
+                                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xs min-h-[120px]">
+                                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                        {selectedComplaint.complainant_details || "— No detailed message provided —"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Files Section */}
+                            {selectedComplaint.file_urls && selectedComplaint.file_urls.length > 0 && (
+                                <div className="space-y-1.5">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Attached Documentation</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedComplaint.file_urls.map((url, idx) => (
+                                            <a
+                                                key={idx}
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-xs"
+                                            >
+                                                <MdAttachFile size={16} className="text-blue-500" />
+                                                VIEW DOCUMENT {idx + 1}
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
+                            <button
+                                onClick={() => setShowDetailsModal(false)}
+                                className="px-6 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xs"
+                            >
+                                Dismiss
+                            </button>
+                            <div className="px-6 py-2 bg-orange-600 rounded-xs text-[10px] font-bold text-white uppercase tracking-widest opacity-50 cursor-not-allowed">
+                                Decision Required Below
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
