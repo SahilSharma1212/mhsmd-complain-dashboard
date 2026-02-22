@@ -13,15 +13,17 @@ export default function ActionsLayout({
 
     const tabs = [
         { id: "manage", label: "Manage Complaints", href: "/manage-complaints", color: "#7a00b3", indicatorColor: "#dd00ff" },
+        { id: "unallocated", label: "Unallocated Complaints", href: "/unallocated-complaints", color: "#e67e22", indicatorColor: "#f39c12" },
         { id: "register", label: "Register Complaint", href: "/register-complaint", color: "#0000ff", indicatorColor: "#0000ff" },
         { id: "admin", label: "Admin Actions", href: "/admin-actions", color: "#06a600", indicatorColor: "#00ff00" },
     ];
 
     // Filter tabs for non-SP users
-    const visibleTabs = user?.role === "SP" ? tabs : tabs.filter(tab => tab.id !== "admin");
+    const visibleTabs = user?.role === "SP" ? tabs : tabs.filter(tab => tab.id !== "admin" && tab.id !== "unallocated");
 
     const getActiveTab = () => {
         if (pathname.includes("/manage-complaints")) return "manage";
+        if (pathname.includes("/unallocated-complaints")) return "unallocated";
         if (pathname.includes("/register-complaint")) return "register";
         if (pathname.includes("/admin-actions")) return "admin";
         return "manage";

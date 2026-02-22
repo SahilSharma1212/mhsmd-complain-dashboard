@@ -300,8 +300,8 @@ export default function ManageComplaints() {
                             <tr className='bg-slate-50 border-b border-slate-200'>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>ID</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>Complainant</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Date</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Target</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Letter Date</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Letter To</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>Jurisdiction</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest'>Subject & Details</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center'>Source</th>

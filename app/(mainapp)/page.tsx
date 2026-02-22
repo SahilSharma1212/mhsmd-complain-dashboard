@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { useEffect } from 'react'
 import { useUserStore } from '../_store/userStore'
 import { RiDashboardLine } from 'react-icons/ri'
-import { IoLayersOutline, IoCreateOutline, IoSettingsOutline, IoArrowForwardCircleOutline } from 'react-icons/io5'
+import { IoLayersOutline, IoCreateOutline, IoSettingsOutline, IoArrowForwardCircleOutline, IoBusinessOutline } from 'react-icons/io5'
 
 import Link from 'next/link'
 
@@ -59,7 +59,7 @@ export default function Home() {
                 </span>
             </div>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
                 {/* Manage Complaints */}
                 <Link href="/manage-complaints" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group flex flex-col justify-between h-full'>
                     <div>
@@ -76,6 +76,25 @@ export default function Home() {
                         <IoArrowForwardCircleOutline className="text-xl group-hover:translate-x-1 transition-transform" />
                     </div>
                 </Link>
+
+                {/* Unallocated Complaints - SP only */}
+                {user?.role === "SP" && (
+                    <Link href="/unallocated-complaints" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between'>
+                        <div>
+                            <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <IoBusinessOutline className="text-orange-600 text-2xl" />
+                            </div>
+                            <h2 className='text-lg font-bold text-slate-900 mb-2 group-hover:text-orange-600 transition-colors'>Unallocated Complaints</h2>
+                            <p className='text-slate-500 text-sm leading-relaxed mb-6'>
+                                Review and assign jurisdictions to complaints submitted without a Thana.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 text-orange-600 text-xs font-bold uppercase tracking-wider">
+                            <span>Manage Allocation</span>
+                            <IoArrowForwardCircleOutline className="text-xl group-hover:translate-x-1 transition-transform" />
+                        </div>
+                    </Link>
+                )}
 
                 {/* Register Complaint */}
                 <Link href="/register-complaint" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group flex flex-col justify-between h-full'>
@@ -112,6 +131,8 @@ export default function Home() {
                         </div>
                     </Link>
                 )}
+
+
             </div>
 
         </div>
