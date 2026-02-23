@@ -1,12 +1,12 @@
 "use client"
 
-import DetailsSection from "../_components/DetailsSection";
 import { IoLogOutOutline } from "react-icons/io5";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MdOutlineDashboardCustomize } from "react-icons/md";
+import { useLanguageStore } from "../_store/languageStore";
 
 export default function DashboardLayout({
     children,
@@ -14,7 +14,6 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const router = useRouter();
-
     const handleLogout = async () => {
         try {
             const response = await axios.get("/api/user/logout");
@@ -27,6 +26,8 @@ export default function DashboardLayout({
         }
     }
 
+    const { language, setLanguage } = useLanguageStore();
+
     return (
         <>
             <nav className="flex bg-white text-slate-900 py-3 w-full justify-between items-center p-4 border-b border-slate-200 sticky top-0 z-50">
@@ -36,25 +37,33 @@ export default function DashboardLayout({
                     </div>
                     <Link href="/" className="flex flex-col">
                         <span className="text-xl font-bold text-slate-900 tracking-tight leading-tight">
-                            Complain<span className="text-blue-600">Dashboard</span>
+                            {language === "english" ? "Complain" : "शिकायत"}<span className="text-blue-600">{language === "english" ? "Dashboard" : "डैशबोर्ड"}</span>
                         </span>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
-                            System Portal
+                            {language === "english" ? "System Portal" : "सिस्टम पोर्टल"}
                         </span>
                     </Link>
                 </div>
 
                 <div className="flex gap-2 items-center">
+
+                    <button
+                        onClick={() => {
+                            language === "english" ? setLanguage("hindi") : setLanguage("english")
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xs transition-all border border-slate-200 hover:border-red-100"
+                    >
+                        {language === "english" ? "En" : "हिं"}
+                    </button>
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xs transition-all border border-slate-200 hover:border-red-100"
                     >
-                        <span className="max-[400px]:hidden">Logout</span>
+                        <span className="max-[400px]:hidden">{language === "english" ? "Logout" : "लॉगआउट"}</span>
                         <IoLogOutOutline size={20} />
                     </button>
                 </div>
             </nav>
-            <DetailsSection />
             <main>{children}</main>
         </>
     )

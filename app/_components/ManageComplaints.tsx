@@ -9,9 +9,11 @@ import { IoLayersOutline, IoFilterOutline, IoReloadOutline, IoTrashOutline, IoEx
 import { CgNotes } from 'react-icons/cg';
 import { Complaint } from '../types';
 import Link from 'next/link';
+import { useLanguageStore } from '../_store/languageStore';
 
 export default function ManageComplaints() {
     const { complaints, setComplaints, setCurrentlyViewingComplaint } = useUserStore();
+    const { language, setLanguage } = useLanguageStore();
 
     // ─── Search & Pagination state ───
     const [filterAttribute, setFilterAttribute] = useState("");
@@ -202,10 +204,10 @@ export default function ManageComplaints() {
                     </div>
                     <div className="flex flex-col">
                         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                            Complaint Registry
+                            {language === "english" ? "Complaint Registry" : "शिकायत रजिस्टर"}
                         </h2>
                         <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
-                            TOTAL • {totalCount}
+                            {language === "english" ? "TOTAL" : "कुल"} • {totalCount}
                         </span>
                     </div>
                 </div>
@@ -213,13 +215,13 @@ export default function ManageComplaints() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleRefresh}
-                        className='p-2 rounded-xs bg-slate-50 border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-white transition-all cursor-pointer shadow-xs group'
+                        className='p-2 rounded-xs bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-white transition-all cursor-pointer shadow-xs group'
                         title="Refresh Registry"
                     >
                         <IoReloadOutline size={18} className="group-active:rotate-180 transition-transform duration-500" />
                     </button>
                     <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold tracking-tight uppercase">
-                        Admin View
+                        {language === "english" ? "Admin View" : "प्रशासक दृश्य"}
                     </span>
                 </div>
             </div>
@@ -230,22 +232,22 @@ export default function ManageComplaints() {
                     <div className='flex flex-col gap-1.5 w-full sm:w-auto'>
                         <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5'>
                             <IoFilterOutline className="text-blue-500" />
-                            Filter By
+                            {language === "english" ? "Filter By" : "फिल्टर"}
                         </label>
                         <select
                             value={filterAttribute}
                             onChange={(e) => setFilterAttribute(e.target.value)}
                             className='w-full sm:w-[200px] px-3 py-2 bg-white border border-slate-200 rounded-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all'
                         >
-                            <option value="">-- Select Attribute --</option>
-                            <option value="status">Status</option>
-                            <option value="complainant_name">Name of Complainer</option>
-                            <option value="role_addressed_to">Addressed To</option>
+                            <option value="">{language === "english" ? "-- Select Attribute --" : "-- विशेषता चुनें --"}</option>
+                            <option value="status">{language === "english" ? "Status" : "स्टेटस"}</option>
+                            <option value="complainant_name">{language === "english" ? "Name of Complainer" : "शिकायतकर्ता का नाम"}</option>
+                            <option value="role_addressed_to">{language === "english" ? "Addressed To" : "किसको संबोधित"}</option>
                         </select>
                     </div>
 
                     <div className='flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[300px]'>
-                        <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider'>Search Value</label>
+                        <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider'>{language === "english" ? "Search Value" : "खोज"}</label>
                         <div className='flex group'>
                             {filterAttribute === "status" ? (
                                 <select
@@ -253,7 +255,7 @@ export default function ManageComplaints() {
                                     onChange={(e) => setFilterValue(e.target.value)}
                                     className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                 >
-                                    <option value="">-- Select Status --</option>
+                                    <option value="">{language === "english" ? "-- Select Status --" : "-- स्टेटस चुनें --"}</option>
                                     <option value="PENDING">PENDING</option>
                                     <option value="FIR">FIR</option>
                                     <option value="NON FIR">NON FIR</option>
@@ -267,7 +269,7 @@ export default function ManageComplaints() {
                                     onChange={(e) => setFilterValue(e.target.value)}
                                     className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                 >
-                                    <option value="">-- Select Role --</option>
+                                    <option value="">{language === "english" ? "-- Select Role --" : "-- भूमिका चुनें --"}</option>
                                     <option value="SP">SP</option>
                                     <option value="TI">TI</option>
                                 </select>
@@ -276,7 +278,7 @@ export default function ManageComplaints() {
                                     type="text"
                                     value={filterValue}
                                     onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
+                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                     placeholder={filterAttribute ? 'Type to search records...' : 'Select an attribute first'}
                                     disabled={!filterAttribute}
                                 />
@@ -302,15 +304,15 @@ export default function ManageComplaints() {
                         <thead>
                             <tr className='bg-slate-50 border-b border-slate-200'>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>ID</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Complainant</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Letter Date</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Letter To</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Jurisdiction</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Subject & Details</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Source</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Files</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Status</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Actions</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>{language === "english" ? "Complainant" : "शिकायतकर्ता"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Letter Date" : "पत्र तिथि"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Letter To" : "पत्र किसको"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>{language === "english" ? "Jurisdiction" : "अधिकार क्षेत्र"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>{language === "english" ? "Subject & Details" : "विषय और विवरण"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Source" : "स्रोत"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Files" : "फाइलें"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Status" : "स्टेटस"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Actions" : "एक्शन"}</th>
                             </tr>
                         </thead>
                         <tbody className='divide-y divide-slate-100'>
@@ -327,7 +329,7 @@ export default function ManageComplaints() {
                                     <td colSpan={10} className='text-center py-16'>
                                         <div className='flex flex-col items-center gap-2 opacity-20'>
                                             <IoLayersOutline size={48} />
-                                            <p className='text-sm font-bold uppercase tracking-widest'>No records found in database</p>
+                                            <p className='text-sm font-bold uppercase tracking-widest'>{language === "english" ? "No records found in database" : "डेटाबेस में कोई रिकॉर्ड नहीं मिला"}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -382,7 +384,7 @@ export default function ManageComplaints() {
                                                 </div>
                                                 <button
                                                     onClick={() => { setSelectedComplaint(complaint); setShowDetailsModal(true); }}
-                                                    className='p-1.5 bg-slate-50 border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-white rounded-xs transition-all cursor-pointer shadow-xs group shrink-0'
+                                                    className='p-1.5 bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-white rounded-xs transition-all cursor-pointer shadow-xs group shrink-0'
                                                     title="View Full Details"
                                                 >
                                                     <IoExpand size={14} />
@@ -408,7 +410,7 @@ export default function ManageComplaints() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <span className="text-[10px] font-bold text-slate-200">NONE</span>
+                                                <span className="text-[10px] font-bold text-slate-200">{language === "english" ? "NONE" : "कोई नहीं"}</span>
                                             )}
                                         </td>
                                         {/* Status */}
@@ -438,7 +440,7 @@ export default function ManageComplaints() {
                                                 {activeComplaintId === complaint.id && popupPosition && (
                                                     <div className='fixed p-1.5 flex flex-col gap-1 bg-white/95 backdrop-blur-md shadow-2xl rounded-xs border border-slate-200 z-50 w-36 scale-in-center'
                                                         style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}>
-                                                        <p className='text-[8px] font-bold text-slate-400 uppercase tracking-widest text-center py-1 border-b border-slate-100 mb-1'>Update Status</p>
+                                                        <p className='text-[8px] font-bold text-slate-600 uppercase tracking-widest text-center py-1 border-b border-slate-100 mb-1'>Update Status</p>
                                                         {Object.keys(complaintStatusColors).map((status) => (
                                                             <button key={status} disabled={updatingStatusId !== null}
                                                                 onClick={(e) => { e.stopPropagation(); handleStatusChange(complaint.id!, status); }}
@@ -479,7 +481,7 @@ export default function ManageComplaints() {
                 {totalPages > 1 && (
                     <div className='flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 pt-6 px-2 gap-4'>
                         <p className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
-                            Showing <span className='text-slate-900'>page {currentPage}</span> of {totalPages}
+                            {language === "english" ? "Showing" : "दिखा रहा है"} <span className='text-slate-900'>page {currentPage}</span> {language === "english" ? "of" : "का"} {totalPages}
                         </p>
                         <div className='flex flex-wrap justify-center items-center gap-2'>
                             <button
@@ -487,7 +489,7 @@ export default function ManageComplaints() {
                                 disabled={currentPage === 1 || searchLoading}
                                 className='flex items-center gap-1.5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs'
                             >
-                                <MdNavigateBefore size={16} /> Prev
+                                <MdNavigateBefore size={16} /> {language === "english" ? "Prev" : "पिछला"}
                             </button>
 
                             <div className="flex gap-1">
@@ -512,7 +514,7 @@ export default function ManageComplaints() {
                                                 disabled={searchLoading}
                                                 className={`w-8 h-8 flex items-center justify-center text-[10px] font-bold rounded-xs border transition-all cursor-pointer shadow-xs ${currentPage === item
                                                     ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20'
-                                                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
+                                                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                                                     }`}
                                             >
                                                 {item}
@@ -526,7 +528,7 @@ export default function ManageComplaints() {
                                 disabled={currentPage === totalPages || searchLoading}
                                 className='flex items-center gap-1.5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs'
                             >
-                                Next <MdNavigateNext size={16} />
+                                {language === "english" ? "Next" : "अगला"} <MdNavigateNext size={16} />
                             </button>
                         </div>
                     </div>
@@ -542,17 +544,17 @@ export default function ManageComplaints() {
                             <div className="w-10 h-10 bg-red-50 rounded-xs flex items-center justify-center border border-red-100">
                                 <IoTrashOutline className="text-red-600 text-xl" />
                             </div>
-                            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Authorize Deletion?</h2>
+                            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">{language === "english" ? "Authorize Deletion?" : "हटाने के लिए अधिकृत करें?"}</h2>
                         </div>
-                        <p className="text-[11px] font-medium text-slate-500 leading-relaxed mb-6">
-                            This action will permanently remove the complaint record from the system database. This process is irreversible and all associated data will be purged.
+                        <p className="text-[11px] font-medium text-slate-600 leading-relaxed mb-6">
+                            {language === "english" ? "This action will permanently remove the complaint record from the system database. This process is irreversible and all associated data will be purged." : "यह कार्रवाई शिकायत रिकॉर्ड को सिस्टम डेटाबेस से स्थायी रूप से हटा देगी। यह प्रक्रिया अपरिवर्तनीय है और सभी संबंधित डेटा को हटा दिया जाएगा।"}
                         </p>
                         <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
                             <button
                                 onClick={() => setShowDeleteConfirm(null)}
-                                className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:bg-slate-50 rounded-xs transition-colors"
+                                className="px-4 py-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-50 rounded-xs transition-colors"
                             >
-                                Abort
+                                {language === "english" ? "Abort" : "रद्द करें"}
                             </button>
                             <button
                                 onClick={() => handleDeleteComplaint(showDeleteConfirm)}
@@ -562,10 +564,10 @@ export default function ManageComplaints() {
                                 {deletingId ? (
                                     <>
                                         <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Processing...
+                                        {language === "english" ? "Processing..." : "प्रसंस्करण..."}
                                     </>
                                 ) : (
-                                    'Confirm Purge'
+                                    language === "english" ? "Confirm Purge" : "हटाने की पुष्टि करें"
                                 )}
                             </button>
                         </div>
@@ -583,13 +585,13 @@ export default function ManageComplaints() {
                                     <IoLayersOutline className="text-blue-600 text-xl" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Complaint Detailed View</h2>
-                                    <span className="text-[10px] font-mono text-slate-500">#{selectedComplaint.id}</span>
+                                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">{language === "english" ? "Complaint Detailed View" : "शिकायत का विस्तृत दृश्य"}</h2>
+                                    <span className="text-[10px] font-mono text-slate-600">#{selectedComplaint.id}</span>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setShowDetailsModal(false)}
-                                className="p-2 hover:bg-slate-50 rounded-xs text-slate-400 hover:text-slate-600 transition-colors"
+                                className="p-2 hover:bg-slate-50 rounded-xs text-slate-600 hover:text-slate-600 transition-colors"
                             >
                                 <IoCloseOutline size={24} />
                             </button>
@@ -600,19 +602,19 @@ export default function ManageComplaints() {
                             {/* Info Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complainant Name</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Complainant Name" : "शिकायतकर्ता का नाम"}</p>
                                     <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100 italic">
                                         {selectedComplaint.complainant_name}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Number</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Contact Number" : "संपर्क नंबर"}</p>
                                     <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">
                                         {selectedComplaint.complainant_contact}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Letter Date</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Reporting Date" : "रिपोर्टिंग तिथि"}</p>
                                     <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">
                                         {new Date(selectedComplaint.date || selectedComplaint.created_at!).toLocaleDateString('en-IN', {
                                             day: '2-digit',
@@ -622,7 +624,7 @@ export default function ManageComplaints() {
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Addressed To</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Addressed To" : "किसको संबोधित"}</p>
                                     <span className="inline-block px-3 py-1 bg-slate-800 text-white text-sm font-bold uppercase tracking-widest">
                                         {selectedComplaint.role_addressed_to}
                                     </span>
@@ -631,7 +633,7 @@ export default function ManageComplaints() {
 
                             {/* Subject Section */}
                             <div className="space-y-1.5">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Subject Reference</p>
+                                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Subject Reference" : "विषय संदर्भ"}</p>
                                 <div className="bg-blue-50/10 border border-blue-100 p-4 rounded-xs">
                                     <p className="text-sm font-bold text-slate-800 leading-relaxed">
                                         {selectedComplaint.subject}
@@ -641,7 +643,7 @@ export default function ManageComplaints() {
 
                             {/* Message Section */}
                             <div className="space-y-1.5">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complaint Message</p>
+                                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Complaint Message" : "शिकायत संदेश"}</p>
                                 <div className="bg-slate-50 border border-slate-100 p-4 rounded-xs min-h-[80px]">
                                     <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
                                         {selectedComplaint.message || "— No detailed message provided —"}
@@ -652,13 +654,13 @@ export default function ManageComplaints() {
                             {/* Jurisdiction / Status */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current Jurisdiction</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Current Jurisdiction" : "वर्तमान अधिकार क्षेत्र"}</p>
                                     <p className="text-xs font-bold text-slate-700 bg-slate-50 p-2 rounded-xs border border-slate-100">
                                         {selectedComplaint.allocated_thana || "Unallocated"}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current Status</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Current Status" : "वर्तमान स्थिति"}</p>
                                     <span className="inline-flex items-center px-3 py-1 rounded-xs text-[10px] font-bold uppercase tracking-wider shadow-xs"
                                         style={{
                                             color: complaintStatusColors[selectedComplaint.status]?.text,
@@ -673,7 +675,7 @@ export default function ManageComplaints() {
                             {/* Files Section */}
                             {selectedComplaint.file_urls && selectedComplaint.file_urls.length > 0 && (
                                 <div className="space-y-1.5">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Attached Documentation</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Attached Documentation" : "संलग्न दस्तावेज़ीकरण"}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedComplaint.file_urls.map((url, idx) => (
                                             <a
@@ -684,7 +686,7 @@ export default function ManageComplaints() {
                                                 className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-xs"
                                             >
                                                 <MdAttachFile size={16} className="text-blue-500" />
-                                                VIEW DOCUMENT {idx + 1}
+                                                {language === "english" ? "VIEW DOCUMENT" : "दस्तावेज़ देखें"} {idx + 1}
                                             </a>
                                         ))}
                                     </div>
@@ -698,7 +700,7 @@ export default function ManageComplaints() {
                                 onClick={() => setShowDetailsModal(false)}
                                 className="px-6 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xs"
                             >
-                                Dismiss
+                                {language === "english" ? "Dismiss" : "dismiss"}
                             </button>
                         </div>
                     </div>

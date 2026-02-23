@@ -2,6 +2,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useUserStore } from '../../_store/userStore';
+import { useLanguageStore } from '@/app/_store/languageStore';
 
 export default function ActionsLayout({
     children,
@@ -12,10 +13,10 @@ export default function ActionsLayout({
     const { user } = useUserStore();
 
     const tabs = [
-        { id: "manage", label: "Manage Complaints", href: "/manage-complaints", color: "#7a00b3", indicatorColor: "#dd00ff" },
-        { id: "unallocated", label: "Unallocated Complaints", href: "/unallocated-complaints", color: "#e67e22", indicatorColor: "#f39c12" },
-        { id: "register", label: "Register Complaint", href: "/register-complaint", color: "#0000ff", indicatorColor: "#0000ff" },
-        { id: "admin", label: "Admin Actions", href: "/admin-actions", color: "#06a600", indicatorColor: "#00ff00" },
+        { id: "manage", labeleng: "Manage Complaints", labelhindi: "शिकायत प्रबंधन", href: "/manage-complaints", color: "#7a00b3", indicatorColor: "#dd00ff" },
+        { id: "unallocated", labeleng: "Unallocated Complaints", labelhindi: "अनाबंटित शिकायतें", href: "/unallocated-complaints", color: "#e67e22", indicatorColor: "#f39c12" },
+        { id: "register", labeleng: "Register Complaint", labelhindi: "शिकायत दर्ज करें", href: "/register-complaint", color: "#0000ff", indicatorColor: "#0000ff" },
+        { id: "admin", labeleng: "Admin Actions", labelhindi: "प्रशासनिक कार्य", href: "/admin-actions", color: "#06a600", indicatorColor: "#00ff00" },
     ];
 
     // Filter tabs for non-SP users
@@ -28,6 +29,8 @@ export default function ActionsLayout({
         if (pathname.includes("/admin-actions")) return "admin";
         return "manage";
     };
+
+    const { language, setLanguage } = useLanguageStore();
 
     const activeTabId = getActiveTab();
     const activeTab = tabs.find(t => t.id === activeTabId);
@@ -44,7 +47,7 @@ export default function ActionsLayout({
                             color: activeTabId === tab.id ? tab.color : "#64748b",
                         }}
                     >
-                        {tab.label}
+                        {language === "english" ? tab.labeleng : tab.labelhindi}
                     </Link>
                 ))}
 

@@ -157,7 +157,7 @@ export default function RegisterComplaint() {
                     {/* Date */}
                     <div className="space-y-1.5">
                         <label htmlFor="date" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
-                            Occurrence Date
+                            Reporting Date
                         </label>
                         <input
                             id="date"
