@@ -4,15 +4,14 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
-import { FcRefresh } from 'react-icons/fc';
-import { MdNavigateNext, MdNavigateBefore, MdDeleteOutline, MdAttachFile } from 'react-icons/md';
-import { IoLayersOutline, IoFilterOutline, IoReloadOutline, IoTrashOutline, IoExpand, IoCloseOutline, IoBusinessOutline } from 'react-icons/io5';
+import { MdNavigateNext, MdNavigateBefore, MdAttachFile } from 'react-icons/md';
+import { IoLayersOutline, IoFilterOutline, IoReloadOutline, IoTrashOutline, IoExpand, IoCloseOutline } from 'react-icons/io5';
 import { CgNotes } from 'react-icons/cg';
 import { Complaint } from '../types';
 import Link from 'next/link';
 
 export default function ManageComplaints() {
-    const { user, complaints, setComplaints, setCurrentlyViewingComplaint } = useUserStore();
+    const { complaints, setComplaints, setCurrentlyViewingComplaint } = useUserStore();
 
     // ─── Search & Pagination state ───
     const [filterAttribute, setFilterAttribute] = useState("");
