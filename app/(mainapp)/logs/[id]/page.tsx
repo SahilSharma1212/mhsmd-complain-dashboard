@@ -8,6 +8,7 @@ import { useUserStore } from "@/app/_store/userStore"
 import { MdOutlineSubject, MdOutlineTrackChanges } from "react-icons/md"
 import toast from "react-hot-toast"
 import { IoIosDocument } from "react-icons/io"
+import { useLanguageStore } from "@/app/_store/languageStore"
 
 type Log = {
     id: number
@@ -53,6 +54,7 @@ export default function LogsPage() {
     const [isEditingComplaint, setIsEditingComplaint] = useState(false)
 
     const { user, thana, currentlyViewingComplaint, setCurrentlyViewingComplaint } = useUserStore()
+    const { language } = useLanguageStore()
 
     const fetchLogs = async (isManualRefresh = false) => {
         if (!isManualRefresh) setLoading(true)
@@ -70,12 +72,12 @@ export default function LogsPage() {
             setCurrentlyViewingComplaint(complaintData)
 
         } catch (err: any) {
-            console.error("Failed to fetch logs", err)
+            console.error(language === "english" ? "Failed to fetch logs" : "लॉग प्राप्त करने में विफल", err)
             if (!isManualRefresh) {
                 if (err.response) {
                     setError(err.response.data.message)
                 } else {
-                    setError("Failed to fetch logs")
+                    setError(language === "english" ? "Failed to fetch logs" : "लॉग प्राप्त करने में विफल")
                 }
             }
         } finally {
@@ -87,7 +89,7 @@ export default function LogsPage() {
         if (!params?.id) return
 
         if (isNaN(complaintId)) {
-            setError("Invalid complaint ID")
+            setError(language === "english" ? "Invalid complaint ID" : "अमान्य शिकायत आईडी")
             setLoading(false)
             return
         }
@@ -99,7 +101,7 @@ export default function LogsPage() {
     const handleAddLog = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!newLogReason.trim()) {
-            toast.error("Please enter a reason or note")
+            toast.error(language === "english" ? "Please enter a reason or note" : "कृपया एक कारण या नोट दर्ज करें")
             return
         }
 
@@ -112,14 +114,14 @@ export default function LogsPage() {
             }, { withCredentials: true })
 
             if (response.data.success) {
-                toast.success("Log added successfully")
+                toast.success(language === "english" ? "Log added successfully" : "लॉग सफलतापूर्वक जोड़ा गया")
                 setNewLogReason("")
                 setIsModalOpen(false)
 
                 fetchLogs() // This now refreshes both logs and complaint details
             }
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to add log")
+            toast.error(language === "english" ? "Failed to add log" : "लॉग जोड़ने में विफल")
         } finally {
             setIsSubmitting(false)
         }
@@ -128,7 +130,7 @@ export default function LogsPage() {
     const handleEditComplaint = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!editForm.subject.trim() || !editForm.complainant_name.trim() || !editForm.complainant_contact.trim() || !editForm.allocated_thana.trim()) {
-            toast.error("Please fill all required fields")
+            toast.error(language === "english" ? "Please fill all required fields" : "कृपया सभी आवश्यक फ़ील्ड भरें")
             return
         }
 
@@ -140,13 +142,13 @@ export default function LogsPage() {
             }, { withCredentials: true })
 
             if (response.data.success) {
-                toast.success("Complaint updated successfully")
+                toast.success(language === "english" ? "Complaint updated successfully" : "शिकायत सफलतापूर्वक अपडेट की गई")
                 setIsEditModalOpen(false)
 
                 fetchLogs() // This now refreshes both logs and complaint details including changes
             }
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to update complaint")
+            toast.error(language === "english" ? "Failed to update complaint" : "शिकायत अपडेट करने में विफल")
         } finally {
             setIsEditingComplaint(false)
         }
@@ -163,13 +165,13 @@ export default function LogsPage() {
             })
 
             if (response.data.success) {
-                toast.success("Log deleted successfully")
+                toast.success(language === "english" ? "Log deleted successfully" : "लॉग सफलतापूर्वक हटाया गया")
                 setIsDeleteModalOpen(false)
                 setLogToDelete(null)
                 fetchLogs() // Refresh logs
             }
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to delete log")
+            toast.error(language === "english" ? "Failed to delete log" : "लॉग हटाने में विफल")
         } finally {
             setIsDeleting(false)
         }
@@ -192,7 +194,7 @@ export default function LogsPage() {
                     className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mb-6"
                 >
                     <IoArrowBack className="mr-2" />
-                    Back to Complaints
+                    {language === "english" ? "Back to Complaints" : "शिकायतों पर वापस"}
                 </button>
                 <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xs font-medium shadow-sm">
                     {error}
@@ -207,14 +209,14 @@ export default function LogsPage() {
                 className="flex items-center text-slate-600 hover:text-slate-900 transition-colors mb-6 group bg-slate-100 hover:bg-slate-200 px-4 py-2 text-sm font-medium w-fit shadow-xs"
             >
                 <IoArrowBack className="mr-2 group-hover:-translate-x-1 transition-transform" />
-                Back to Complaints
+                {language === "english" ? "Back to Complaints" : "शिकायतों पर वापस"}
             </button>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                         <MdOutlineTrackChanges className="text-blue-500" />
-                        Log Timeline
+                        {language === "english" ? "Log Timeline" : "लॉग टाइमलाइन"}
                     </h1>
                     <p className="text-slate-600 mt-1">
                         Complaint ID: <span className="font-semibold text-slate-800">#{complaintId}</span>
@@ -237,7 +239,7 @@ export default function LogsPage() {
                         className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xs font-bold border border-slate-200 shadow-sm transition-all hover:-translate-y-0.5"
                     >
                         <IoCreateOutline size={20} />
-                        Edit Case
+                        {language === "english" ? "Edit Case" : "केस संपादित करें"}
                     </button>
                     <button
                         onClick={() => {
@@ -247,7 +249,7 @@ export default function LogsPage() {
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-sm transition-all hover:-translate-y-0.5"
                     >
                         <IoAdd size={20} />
-                        Add New Log
+                        {language === "english" ? "Add New Log" : "नया लॉग जोड़ें"}
                     </button>
                 </div>
             </div>
@@ -258,7 +260,7 @@ export default function LogsPage() {
                     <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             <IoChatbubbleOutline className="text-blue-500" />
-                            Complaint Information
+                            {language === "english" ? "Complaint Information" : "शिकायत जानकारी"}
                         </h2>
                         {currentlyViewingComplaint && (
                             <span className={`px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset ${currentlyViewingComplaint.status === 'PENDING' ? 'bg-blue-50 text-blue-700 ring-blue-700/10' :
@@ -280,14 +282,14 @@ export default function LogsPage() {
                             <div className="space-y-6">
                                 <div>
                                     <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                        <MdOutlineSubject /> Subject
+                                        <MdOutlineSubject /> {language === "english" ? "Subject" : "विषय"}
                                     </h3>
                                     <p className="text-slate-900 font-medium text-lg leading-relaxed">
                                         {currentlyViewingComplaint.subject}
                                     </p>
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Description</h3>
+                                    <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">{language === "english" ? "Description" : "विवरण"}</h3>
                                     <p className="text-slate-700 bg-slate-50/50 p-4 rounded-xs border border-slate-100 italic">
                                         "{currentlyViewingComplaint.message || "No description provided"}"
                                     </p>
@@ -298,7 +300,7 @@ export default function LogsPage() {
                                             <IoLocationOutline className="text-blue-600" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-600 uppercase">Allocated Thana</p>
+                                            <p className="text-xs font-semibold text-slate-600 uppercase">{language === "english" ? "Allocated Thana" : "आवंटित थाना"}</p>
                                             <p className="text-sm text-slate-900 font-medium">{currentlyViewingComplaint.allocated_thana}</p>
                                         </div>
                                     </div>
@@ -307,7 +309,7 @@ export default function LogsPage() {
                                             <IoTimeOutline className="text-purple-600" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-600 uppercase">Submission Date</p>
+                                            <p className="text-xs font-semibold text-slate-600 uppercase">{language === "english" ? "Submission Date" : "जमा करने की तिथि"}</p>
                                             <p className="text-sm text-slate-900 font-medium">
                                                 {new Date(currentlyViewingComplaint.date || currentlyViewingComplaint.created_at!).toLocaleDateString('en-IN', {
                                                     dateStyle: 'full'
@@ -320,7 +322,7 @@ export default function LogsPage() {
                                 {currentlyViewingComplaint.file_urls && currentlyViewingComplaint.file_urls.length > 0 && (
                                     <div className="pt-4 border-t border-slate-100">
                                         <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                            Attachments ({currentlyViewingComplaint.file_urls.length})
+                                            {language === "english" ? "Attachments" : "संलग्नक"} ({currentlyViewingComplaint.file_urls.length})
                                         </h3>
                                         <div className="flex flex-wrap gap-2">
                                             {currentlyViewingComplaint.file_urls.map((url, idx) => (
@@ -332,7 +334,7 @@ export default function LogsPage() {
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-red-700 hover:bg-red-600 border border-red-200 rounded-xs text-xs font-medium text-white transition-colors"
                                                 >
                                                     <IoIosDocument className="text-white" size={14} />
-                                                    View Document {idx + 1}
+                                                    {language === "english" ? "View Document" : "दस्तावेज़ देखें"} {idx + 1}
                                                 </a>
                                             ))}
                                         </div>
@@ -340,7 +342,7 @@ export default function LogsPage() {
                                 )}
                             </div>
                         ) : (
-                            <p className="text-slate-600 text-sm italic">Failed to load complaint details.</p>
+                            <p className="text-slate-600 text-sm italic">{language === "english" ? "Failed to load complaint details" : "शिकायत विवरण लोड करने में विफल"}.</p>
                         )}
                     </div>
                 </div>
@@ -349,7 +351,7 @@ export default function LogsPage() {
                     <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-200">
                         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             <IoPersonOutline className="text-blue-500" />
-                            Complainant Details
+                            {language === "english" ? "Complainant Details" : "शिकायतकर्ता का विवरण"}
                         </h2>
                     </div>
                     <div className="p-6 flex-1 flex flex-col justify-center">
@@ -373,7 +375,7 @@ export default function LogsPage() {
                                         <span className="text-sm font-medium">{currentlyViewingComplaint.complainant_contact || currentlyViewingComplaint.phone}</span>
                                     </div>
                                     <div className="text-xs text-slate-700 flex flex-col gap-1 mt-6">
-                                        <p>Submitted By</p>
+                                        <p>{language === "english" ? "Submitted By" : "द्वारा जमा किया गया"}</p>
                                         <p className="text-slate-900 font-semibold text-sm uppercase">{currentlyViewingComplaint.submitted_by}</p>
                                     </div>
                                 </div>
@@ -387,19 +389,19 @@ export default function LogsPage() {
                 <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-200">
                     <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                         <MdOutlineTrackChanges className="text-blue-500" size={18} />
-                        Detailed Action Logs
+                        {language === "english" ? "Detailed Action Logs" : "विस्तृत कार्रवाई लॉग"}
                     </h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/30 border-b border-slate-200">
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Date & Time</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Action</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Status Transition</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Modified By</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Reason / Remarks</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-right">Actions</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Date & Time" : "दिनांक और समय"}</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Action" : "कार्रवाई"}</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Status Transition" : "स्थिति परिवर्तन"}</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Modified By" : "द्वारा संशोधित"}</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Reason / Remarks" : "कारण / टिप्पणी"}</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-right">{language === "english" ? "Actions" : "कार्रवाई"}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
@@ -422,7 +424,7 @@ export default function LogsPage() {
                                             <div className="p-3 bg-slate-100 rounded-full">
                                                 <MdOutlineTrackChanges size={24} className="text-slate-500" />
                                             </div>
-                                            No activity logs recorded for this complaint.
+                                            {language === "english" ? "No activity logs recorded for this complaint." : "इस शिकायत के लिए कोई गतिविधि लॉग दर्ज नहीं है।"}
                                         </div>
                                     </td>
                                 </tr>
@@ -503,7 +505,7 @@ export default function LogsPage() {
                         <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                                 <IoAdd className="text-blue-600" size={24} />
-                                Add Manual Log / Note
+                                {language === "english" ? "Add Manual Log / Note" : "मैन्युअल लॉग / नोट जोड़ें"}
                             </h2>
                             <button
                                 onClick={() => setIsModalOpen(false)}
@@ -518,7 +520,7 @@ export default function LogsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-bold text-slate-800">
-                                        Current Identifying ID
+                                        {language === "english" ? "Current Identifying ID" : "वर्तमान पहचान आईडी"}
                                     </label>
                                     <div className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-mono text-sm">
                                         #{complaintId}
@@ -526,7 +528,7 @@ export default function LogsPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="block text-sm font-bold text-slate-700">
-                                        Update Case Status
+                                        {language === "english" ? "Update Case Status" : "केस स्थिति अपडेट करें"}
                                     </label>
                                     <select
                                         value={selectedStatus}
@@ -544,12 +546,12 @@ export default function LogsPage() {
 
                             <div>
                                 <label className="block text-sm font-bold text-slate-800 mb-2">
-                                    Log entry / Observations
+                                    {language === "english" ? "Log entry / Observations" : "लॉग प्रविष्टि / अवलोकन"}
                                 </label>
                                 <textarea
                                     value={newLogReason}
                                     onChange={(e) => setNewLogReason(e.target.value)}
-                                    placeholder="Enter details about the action taken or notes for this case..."
+                                    placeholder={language === "english" ? "Enter details about the action taken or notes for this case..." : "इस मामले में की गई कार्रवाई या नोट्स के बारे में विवरण दर्ज करें..."}
                                     className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder:text-slate-500 resize-none font-medium text-sm leading-relaxed"
                                     required
                                 />
@@ -559,7 +561,7 @@ export default function LogsPage() {
                                     <IoChatbubbleOutline className="text-blue-600" />
                                 </div>
                                 <p className="text-[11px] text-slate-700 leading-tight font-medium">
-                                    This manual entry will create a permanent history record. Changing the status here will also update the main complaint file.
+                                    {language === "english" ? "This manual entry will create a permanent history record. Changing the status here will also update the main complaint file." : "यह मैन्युअल प्रविष्टि एक स्थायी इतिहास रिकॉर्ड बनाएगी। यहां स्थिति बदलने से मुख्य शिकायत फ़ाइल भी अपडेट हो जाएगी।"}
                                 </p>
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
@@ -568,7 +570,7 @@ export default function LogsPage() {
                                     onClick={() => setIsModalOpen(false)}
                                     className="px-5 py-2 text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors"
                                 >
-                                    Cancel
+                                    {language === "english" ? "Cancel" : "रद्द करें"}
                                 </button>
                                 <button
                                     type="submit"
@@ -581,10 +583,10 @@ export default function LogsPage() {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                             </svg>
-                                            Adding...
+                                            {language === "english" ? "Adding..." : "जोड़ रहा है..."}
                                         </>
                                     ) : (
-                                        'Save Entry'
+                                        language === "english" ? "Save Entry" : "प्रविष्टि सहेजें"
                                     )}
                                 </button>
                             </div>
@@ -600,7 +602,7 @@ export default function LogsPage() {
                         <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                                 <IoCreateOutline className="text-blue-600" size={24} />
-                                Edit Complaint Details
+                                {language === "english" ? "Edit Complaint Details" : "शिकायत विवरण संपादित करें"}
                             </h2>
                             <button
                                 onClick={() => setIsEditModalOpen(false)}
@@ -614,7 +616,7 @@ export default function LogsPage() {
                         <form onSubmit={handleEditComplaint} className="p-6 space-y-4">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">Subject</label>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Subject" : "विषय"}</label>
                                     <input
                                         type="text"
                                         value={editForm.subject}
@@ -625,7 +627,7 @@ export default function LogsPage() {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">Complainant Name</label>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Complainant Name" : "शिकायतकर्ता का नाम"}</label>
                                         <input
                                             type="text"
                                             value={editForm.complainant_name}
@@ -635,7 +637,7 @@ export default function LogsPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">Complainant Contact</label>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Complainant Contact" : "शिकायतकर्ता संपर्क"}</label>
                                         <input
                                             type="text"
                                             value={editForm.complainant_contact}
@@ -646,21 +648,21 @@ export default function LogsPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">Allocated Thana</label>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Allocated Thana" : "आवंटित थाना"}</label>
                                     <select
                                         value={editForm.allocated_thana}
                                         onChange={(e) => setEditForm({ ...editForm, allocated_thana: e.target.value })}
                                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
                                         required
                                     >
-                                        <option value="">Select Thana</option>
+                                        <option value="">{language ? "Select Thana" : "थाना चुनें"}</option>
                                         {thana?.map((t, idx) => (
                                             <option key={idx} value={t.name}>{t.name}</option>
                                         ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">Description / Message</label>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Description / Message" : "विवरण / संदेश"}</label>
                                     <textarea
                                         value={editForm.message}
                                         onChange={(e) => setEditForm({ ...editForm, message: e.target.value })}
@@ -675,7 +677,7 @@ export default function LogsPage() {
                                     onClick={() => setIsEditModalOpen(false)}
                                     className="px-5 py-2 text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors"
                                 >
-                                    Cancel
+                                    {language === "english" ? "Cancel" : "रद्द करें"}
                                 </button>
                                 <button
                                     type="submit"
@@ -688,12 +690,12 @@ export default function LogsPage() {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                             </svg>
-                                            Saving...
+                                            {language === "english" ? "Saving..." : "सहेज रहा है..."}
                                         </>
                                     ) : (
                                         <>
-                                            <span className="max-md:hidden">Save Changes</span>
-                                            <span className="md:hidden">Save</span>
+                                            <span className="max-md:hidden">{language === "english" ? "Save Changes" : "परिवर्तन सहेजें"}</span>
+                                            <span className="md:hidden">{language === "english" ? "Save" : "सहेजें"}</span>
                                         </>
                                     )}
                                 </button>
@@ -711,9 +713,9 @@ export default function LogsPage() {
                             <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4 mx-auto">
                                 <IoTrash className="text-red-600" size={24} />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-900 text-center mb-2">Delete Log Entry?</h3>
+                            <h3 className="text-lg font-bold text-slate-900 text-center mb-2">{language === "english" ? "Delete Log Entry?" : "लॉग प्रविष्टि हटाएं?"}</h3>
                             <p className="text-slate-700 text-sm text-center mb-6">
-                                Are you sure you want to delete this activity log? This action cannot be undone and will permanently remove it from the history.
+                                {language === "english" ? "Are you sure you want to delete this activity log? This action cannot be undone and will permanently remove it from the history." : "क्या आप सुनिश्चित हैं कि आप इस गतिविधि लॉग को हटाना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती है और इसे इतिहास से स्थायी रूप से हटा दिया जाएगा।"}
                             </p>
                             <div className="flex gap-3">
                                 <button
@@ -723,7 +725,7 @@ export default function LogsPage() {
                                     }}
                                     className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xs transition-colors"
                                 >
-                                    Cancel
+                                    {language === "english" ? "Cancel" : "रद्द करें"}
                                 </button>
                                 <button
                                     onClick={handleDeleteLog}
@@ -736,10 +738,10 @@ export default function LogsPage() {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                             </svg>
-                                            Deleting...
+                                            {language === "english" ? "Deleting..." : "हटा रहा है..."}
                                         </>
                                     ) : (
-                                        'Confirm'
+                                        language === "english" ? "Confirm" : "पुष्टि करें"
                                     )}
                                 </button>
                             </div>

@@ -6,6 +6,7 @@ import { useUserStore } from '../_store/userStore';
 import { IoLayersOutline, IoReloadOutline, IoBusinessOutline, IoExpand, IoCloseOutline } from 'react-icons/io5';
 import { MdAttachFile } from 'react-icons/md';
 import { Complaint } from '../types';
+import { useLanguageStore } from '../_store/languageStore';
 
 export default function UnallocatedComplaints() {
     const { thana, user } = useUserStore();
@@ -17,7 +18,7 @@ export default function UnallocatedComplaints() {
     const [selectedThanas, setSelectedThanas] = useState<{ [key: string]: string }>({});
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-
+    const { language } = useLanguageStore();
     const fetchUnallocated = useCallback(async () => {
         try {
             setLoading(true);
@@ -42,7 +43,7 @@ export default function UnallocatedComplaints() {
     const handleAllocate = async (id: string) => {
         const targetThana = selectedThanas[id];
         if (!targetThana) {
-            toast.error("Please select a Thana first");
+            toast.error(language === "english" ? "Please select a Thana first" : "कृपया पहले एक थाना चुनें");
             return;
         }
 
@@ -54,7 +55,7 @@ export default function UnallocatedComplaints() {
             });
 
             if (response.data.success) {
-                toast.success("Complaint allocated successfully");
+                toast.success(language === "english" ? "Complaint allocated successfully" : "शिकायत सफलतापूर्वक आवंटित की गई");
                 // Remove from local list
                 setComplaints(prev => prev.filter(c => c.id !== id));
                 setTotalCount(prev => prev - 1);
@@ -69,7 +70,7 @@ export default function UnallocatedComplaints() {
     if (user?.role !== "SP") {
         return (
             <div className="flex items-center justify-center h-[200px] w-full bg-red-50 border border-red-100 rounded-xs">
-                <p className="text-red-600 font-bold uppercase tracking-widest text-xs">Access Restricted to SP Only</p>
+                <p className="text-red-600 font-bold uppercase tracking-widest text-xs">{language === 'english' ? "Access Restricted to SP Only" : "केवल एसपी के लिए प्रतिबंधित"}</p>
             </div>
         );
     }
@@ -84,10 +85,10 @@ export default function UnallocatedComplaints() {
                     </div>
                     <div className="flex flex-col">
                         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                            Unallocated Complaints Queue
+                            {language === 'english' ? "Unallocated Complaints Queue" : "अनआवंटित शिकायतें"}
                         </h2>
                         <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
-                            TOTAL • {totalCount} pending
+                            {language === 'english' ? "TOTAL • " : "कुल • "}{totalCount} {language === 'english' ? "pending" : "लंबित"}
                         </span>
                     </div>
                 </div>
@@ -110,12 +111,12 @@ export default function UnallocatedComplaints() {
                         <thead>
                             <tr className='bg-slate-50 border-b border-slate-200'>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>ID</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Complainant</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Letter Date</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Letter To</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>Subject & Details</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Docs</th>
-                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>Allocation Action</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>{language === 'english' ? "Complainant" : "शिकायतकर्ता"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === 'english' ? "Letter Date" : "पत्र तिथि"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === 'english' ? "Letter To" : "पत्र किसे"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>{language === 'english' ? "Subject & Details" : "विषय और विवरण"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === 'english' ? "Docs" : "दस्तावेज़"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === 'english' ? "Allocation Action" : "आवंटन कार्रवाई"}</th>
                             </tr>
                         </thead>
                         <tbody className='divide-y divide-slate-100'>
@@ -132,7 +133,7 @@ export default function UnallocatedComplaints() {
                                     <td colSpan={7} className='text-center py-16'>
                                         <div className='flex flex-col items-center gap-2 opacity-20'>
                                             <IoLayersOutline size={48} />
-                                            <p className='text-sm font-bold uppercase tracking-widest'>No unallocated records found</p>
+                                            <p className='text-sm font-bold uppercase tracking-widest'>{language === 'english' ? "No unallocated records found" : "कोई अनआवंटित रिकॉर्ड नहीं मिला"}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -194,7 +195,7 @@ export default function UnallocatedComplaints() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <span className="text-[10px] font-bold text-slate-200">NONE</span>
+                                                <span className="text-[10px] font-bold text-slate-200">{language === 'english' ? "NONE" : "कोई नहीं"}</span>
                                             )}
                                         </td>
                                         <td className='px-4 py-4'>
@@ -204,7 +205,7 @@ export default function UnallocatedComplaints() {
                                                     onChange={(e) => setSelectedThanas(prev => ({ ...prev, [complaint.id!]: e.target.value }))}
                                                     className='p-2 bg-slate-50 border border-slate-200 rounded-xs text-[10px] font-bold text-slate-900 outline-none focus:border-orange-500 transition-all'
                                                 >
-                                                    <option value="">-- Select Thana --</option>
+                                                    <option value="">{language === "english" ? "-- Select Thana --" : "-- थाना चुनें --"}</option>
                                                     {thana?.map((t, idx) => (
                                                         <option key={idx} value={t.name}>{t.name}</option>
                                                     ))}
@@ -216,7 +217,7 @@ export default function UnallocatedComplaints() {
                                                 >
                                                     {allocatingId === complaint.id ? (
                                                         <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    ) : "Allocate"}
+                                                    ) : language === 'english' ? "Allocate" : "आवंटित करें"}
                                                 </button>
                                             </div>
                                         </td>
@@ -264,7 +265,7 @@ export default function UnallocatedComplaints() {
                                     <IoBusinessOutline className="text-orange-600 text-xl" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Complaint Detailed View</h2>
+                                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">{language === 'english' ? "Complaint Detailed View" : "शिकायत का विस्तृत विवरण"}</h2>
                                     <span className="text-[10px] font-mono text-slate-500">#{selectedComplaint.id}</span>
                                 </div>
                             </div>
@@ -281,19 +282,19 @@ export default function UnallocatedComplaints() {
                             {/* Info Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complainant Name</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'english' ? "Complainant Name" : "शिकायतकर्ता का नाम"}</p>
                                     <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100 italic">
                                         {selectedComplaint.complainant_name}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Number</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'english' ? "Contact Number" : "संपर्क नंबर"}</p>
                                     <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">
                                         {selectedComplaint.complainant_contact}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Letter Date</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'english' ? "Letter Date" : "पत्र दिनांक"}</p>
                                     <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">
                                         {new Date(selectedComplaint.date || selectedComplaint.created_at!).toLocaleDateString('en-IN', {
                                             day: '2-digit',
@@ -303,7 +304,7 @@ export default function UnallocatedComplaints() {
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Addressed To</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'english' ? "Addressed To" : "को संबोधित"}</p>
                                     <span className="inline-block px-3 py-1 bg-slate-800 text-white text-sm font-bold uppercase tracking-widest">
                                         {selectedComplaint.role_addressed_to}
                                     </span>
@@ -312,7 +313,7 @@ export default function UnallocatedComplaints() {
 
                             {/* Subject Section */}
                             <div className="space-y-1.5">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Subject Reference</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'english' ? "Subject Reference" : "विषय संदर्भ"}</p>
                                 <div className="bg-orange-50/30 border border-orange-100 p-4 rounded-xs">
                                     <p className="text-sm font-bold text-slate-800 leading-relaxed">
                                         {selectedComplaint.subject}
@@ -322,7 +323,7 @@ export default function UnallocatedComplaints() {
 
                             {/* Message Section */}
                             <div className="space-y-1.5">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complaint Message</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'english' ? "Complaint Message" : "शिकायत संदेश"}</p>
                                 <div className="bg-slate-50 border border-slate-100 p-4 rounded-xs min-h-[120px]">
                                     <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
                                         {selectedComplaint.message || "— No detailed message provided —"}
@@ -332,7 +333,7 @@ export default function UnallocatedComplaints() {
 
                             {/* Complainant Details */}
                             <div className="space-y-1.5">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complainant Details</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'english' ? "Complainant Details" : "शिकायतकर्ता का विवरण"}</p>
                                 <div className="bg-slate-50 border border-slate-100 p-4 rounded-xs min-h-[120px]">
                                     <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
                                         {selectedComplaint.complainant_details || "— No detailed message provided —"}
@@ -343,7 +344,7 @@ export default function UnallocatedComplaints() {
                             {/* Files Section */}
                             {selectedComplaint.file_urls && selectedComplaint.file_urls.length > 0 && (
                                 <div className="space-y-1.5">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Attached Documentation</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'english' ? "Attached Documentation" : "संलग्न दस्तावेज़"}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedComplaint.file_urls.map((url, idx) => (
                                             <a
@@ -354,7 +355,7 @@ export default function UnallocatedComplaints() {
                                                 className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-xs"
                                             >
                                                 <MdAttachFile size={16} className="text-blue-500" />
-                                                VIEW DOCUMENT {idx + 1}
+                                                {language === 'english' ? "VIEW DOCUMENT" : "दस्तावेज़ देखें"} {idx + 1}
                                             </a>
                                         ))}
                                     </div>
@@ -368,10 +369,10 @@ export default function UnallocatedComplaints() {
                                 onClick={() => setShowDetailsModal(false)}
                                 className="px-6 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xs"
                             >
-                                Dismiss
+                                {language === 'english' ? "Dismiss" : "खारिज"}
                             </button>
                             <div className="px-6 py-2 bg-orange-600 rounded-xs text-[10px] font-bold text-white uppercase tracking-widest opacity-50 cursor-not-allowed">
-                                Decision Required Below
+                                {language === 'english' ? "Decision Required Below" : "नीचे निर्णय आवश्यक है"}
                             </div>
                         </div>
                     </div>
