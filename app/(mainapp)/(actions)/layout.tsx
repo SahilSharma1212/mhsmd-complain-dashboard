@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useUserStore } from '../../_store/userStore';
 import { useLanguageStore } from '@/app/_store/languageStore';
 import { useEffect, useState } from 'react';
+import { VscLoading } from 'react-icons/vsc';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface StatusCounts {
@@ -102,12 +103,12 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                         <div className="flex w-full flex-wrap gap-3">
 
                             {/* Total Card */}
-                            <div className="flex flex-1 min-w-[140px] flex-col items-center justify-center gap-1 border border-gray-300 rounded-sm p-3">
-                                <p className="text-xs text-gray-500">
+                            <div className="flex flex-1 min-w-[140px] flex-col items-center justify-center gap-1 border rounded-sm p-3">
+                                <p className="text-xs font-semibold text-black">
                                     {language === "english" ? "Total" : "कुल"}
                                 </p>
-                                <p className="font-bold text-gray-800 text-sm">
-                                    {statsLoading ? "—" : (stats?.total ?? 0)}
+                                <p className="font-medium text-black text-sm">
+                                    {statsLoading ? <VscLoading className='animate-spin' /> : (stats?.total ?? 0)}
                                 </p>
                             </div>
 
@@ -115,18 +116,21 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                             {complaintStatusColors.map((s) => (
                                 <div
                                     key={s.id}
-                                    className="relative flex flex-1 min-w-[140px] flex-col items-center justify-center gap-1 border border-gray-300 rounded-sm p-3"
+                                    className={`relative flex flex-1 min-w-[140px] flex-col items-center justify-center gap-1 border rounded-sm p-3`}
+                                    style={{
+                                        borderColor: s.indicatorColor
+                                    }}
                                 >
                                     <p
-                                        className="text-xs font-medium"
+                                        className="text-xs font-semibold"
                                         style={{ color: s.indicatorColor }}
                                     >
                                         {language === "english" ? s.labeleng : s.labelhindi}
                                     </p>
 
-                                    <p className="font-bold text-gray-800 text-sm">
+                                    <p className="font-medium text-gray-800 text-sm">
                                         {statsLoading
-                                            ? "—"
+                                            ? <VscLoading className='animate-spin' style={{ color: s.indicatorColor }} />
                                             : (stats?.statusCounts?.[s.id] ?? 0)}
                                     </p>
 
