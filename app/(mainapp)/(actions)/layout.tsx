@@ -99,43 +99,54 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                     </p>
 
                     <div className='flex flex-col items-start justify-start gap-2 w-full'>
-                        <div className='flex w-full justify-between gap-3 flex-wrap'>
+                        <div className="flex w-full flex-wrap gap-3">
 
-                            {/* Total card */}
-                            <div className='flex flex-col items-center justify-center gap-1 w-full border border-gray-300 rounded-xs p-2'>
-                                <p className='text-xs text-gray-500'>
+                            {/* Total Card */}
+                            <div className="flex flex-1 min-w-[140px] flex-col items-center justify-center gap-1 border border-gray-300 rounded-sm p-3">
+                                <p className="text-xs text-gray-500">
                                     {language === "english" ? "Total" : "कुल"}
                                 </p>
-                                <p className='font-bold text-gray-800'>
+                                <p className="font-bold text-gray-800 text-sm">
                                     {statsLoading ? "—" : (stats?.total ?? 0)}
                                 </p>
                             </div>
 
-                            {/* Status cards */}
+                            {/* Status Cards */}
                             {complaintStatusColors.map((s) => (
                                 <div
                                     key={s.id}
-                                    className='flex flex-col items-center justify-center gap-1 w-full rounded-xs border border-gray-300 p-2 relative'
+                                    className="relative flex flex-1 min-w-[140px] flex-col items-center justify-center gap-1 border border-gray-300 rounded-sm p-3"
                                 >
-                                    <p className='text-xs' style={{ color: s.indicatorColor }}>
+                                    <p
+                                        className="text-xs font-medium"
+                                        style={{ color: s.indicatorColor }}
+                                    >
                                         {language === "english" ? s.labeleng : s.labelhindi}
                                     </p>
-                                    <p className='font-bold text-gray-800 text-sm'>
-                                        {statsLoading ? "—" : (stats?.statusCounts?.[s.id] ?? 0)}
+
+                                    <p className="font-bold text-gray-800 text-sm">
+                                        {statsLoading
+                                            ? "—"
+                                            : (stats?.statusCounts?.[s.id] ?? 0)}
                                     </p>
 
-                                    {/* SP-only: expand button */}
+                                    {/* SP-only expand button */}
                                     {user?.role === "SP" && (
                                         <button
                                             onClick={() => setModalStatus(s.id)}
-                                            title={language === "english" ? "Thana breakdown" : "थाना विवरण"}
-                                            className='absolute top-1 right-1 text-gray-400 hover:text-gray-700 transition-colors text-[10px]'
+                                            title={
+                                                language === "english"
+                                                    ? "Thana breakdown"
+                                                    : "थाना विवरण"
+                                            }
+                                            className="absolute top-1 right-1 text-gray-400 hover:text-gray-700 transition-colors text-xs"
                                         >
                                             ⤢
                                         </button>
                                     )}
                                 </div>
                             ))}
+
                         </div>
                     </div>
                 </div>
