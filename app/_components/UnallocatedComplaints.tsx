@@ -88,7 +88,7 @@ export default function UnallocatedComplaints() {
                             {language === 'english' ? "Unallocated Complaints Queue" : "अनआवंटित शिकायतें"}
                         </h2>
                         <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
-                            {language === 'english' ? "TOTAL • " : "कुल • "}{totalCount} {language === 'english' ? "pending" : "लंबित"}
+                            {language === 'english' ? "TOTAL • " : "कुल • "}{totalCount} {language === 'english' ? "अप्रमाणित" : "लंबित"}
                         </span>
                     </div>
                 </div>

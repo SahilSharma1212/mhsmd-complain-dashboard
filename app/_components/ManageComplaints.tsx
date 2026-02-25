@@ -13,7 +13,7 @@ import { useLanguageStore } from '../_store/languageStore';
 
 export default function ManageComplaints() {
     const { complaints, setComplaints, setCurrentlyViewingComplaint } = useUserStore();
-    const { language, setLanguage } = useLanguageStore();
+    const { language } = useLanguageStore();
 
     // ─── Search & Pagination state ───
     const [filterAttribute, setFilterAttribute] = useState("");
@@ -93,12 +93,12 @@ export default function ManageComplaints() {
     };
 
     const complaintStatusColors: Record<string, { bg: string, text: string }> = {
-        "PENDING": { bg: "#0000ff20", text: "#0000ff" },
-        "FIR": { bg: "#ff5e0020", text: "#ff5e00" },
-        "NON FIR": { bg: "#7a00b320", text: "#7a00b3" },
-        "FILE": { bg: "#99999920", text: "#000" },
-        "NO CONTACT": { bg: "#ff000020", text: "#ff0000" },
-        "SOLVED": { bg: "#00ff0020", text: "#007d21" },
+        "संजेय": { bg: "#0000ff20", text: "#0000ff" },
+        "असंजेय": { bg: "#ff5e0020", text: "#ff5e00" },
+        "अप्रमाणित": { bg: "#7a00b320", text: "#7a00b3" },
+        "प्रतिबंधात्मक": { bg: "#99999920", text: "#000" },
+        "वापसी": { bg: "#ff000020", text: "#ff0000" },
+        "अन्य": { bg: "#00ff0020", text: "#007d21" },
     }
 
     const [activeComplaintId, setActiveComplaintId] = useState<string | null>(null);
@@ -132,7 +132,7 @@ export default function ManageComplaints() {
         try {
             const response = await axios.patch("/api/complaint", { id, status });
             if (response.data.success) {
-                toast.success("Status updated");
+                toast.success(language === "english" ? "Status updated" : "स्थिति अपडेट हुई");
                 if (complaints) {
                     const updatedComplaints = complaints.map((c) =>
                         c.id === id ? { ...c, status: status } : c
@@ -148,22 +148,22 @@ export default function ManageComplaints() {
                 const message = error.response?.data?.message;
 
                 if (statusCode === 401) {
-                    toast.error("Session expired. Please log in again.");
+                    toast.error(language === "english" ? "Session expired. Please log in again." : "सत्र समाप्त हो गया है। कृपया पुनः लॉग इन करें।");
                 } else if (statusCode === 403) {
                     toast.error(
                         message === "You are not authorised for this complaint"
-                            ? "You don't have access to this complaint."
-                            : "Action not allowed."
+                            ? language === "english" ? "You don't have access to this complaint." : "आपके पास इस शिकायत तक पहुंच नहीं है।"
+                            : language === "english" ? "Action not allowed." : "कार्रवाई की अनुमति नहीं है।"
                     );
                 } else if (statusCode === 404) {
-                    toast.error("Complaint not found.");
+                    toast.error(language === "english" ? "Complaint not found." : "शिकायत नहीं मिली।");
                 } else if (statusCode === 400) {
-                    toast.error("Invalid request. Check the status value.");
+                    toast.error(language === "english" ? "Invalid request. Check the status value." : "अमान्य अनुरोध। स्थिति मान की जाँच करें।");
                 } else {
-                    toast.error("Something went wrong. Try again.");
+                    toast.error(language === "english" ? "Something went wrong. Try again." : "कुछ गलत हो गया। कृपया पुनः प्रयास करें।");
                 }
             } else {
-                toast.error("Network error. Check your connection.");
+                toast.error(language === "english" ? "Network error. Check your connection." : "नेटवर्क त्रुटि। अपना कनेक्शन जांचें।");
             }
             console.error(error);
         } finally {
@@ -176,7 +176,7 @@ export default function ManageComplaints() {
         try {
             const response = await axios.delete(`/api/complaint?id=${id}`);
             if (response.data.success) {
-                toast.success("Complaint deleted successfully");
+                toast.success(language === "english" ? "Complaint deleted successfully" : "शिकायत सफलतापूर्वक हटा दी गई");
                 if (complaints) {
                     setComplaints(complaints.filter((c) => c.id !== id));
                 }
@@ -184,9 +184,9 @@ export default function ManageComplaints() {
             }
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message || "Failed to delete complaint");
+                toast.error(error.response?.data?.message || language === "english" ? "Failed to delete complaint" : "शिकायत हटाने में विफल");
             } else {
-                toast.error("Failed to delete complaint");
+                toast.error(language === "english" ? "Failed to delete complaint" : "शिकायत हटाने में विफल");
             }
             console.error(error);
         } finally {
@@ -256,12 +256,12 @@ export default function ManageComplaints() {
                                     className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                 >
                                     <option value="">{language === "english" ? "-- Select Status --" : "-- स्टेटस चुनें --"}</option>
-                                    <option value="PENDING">PENDING</option>
-                                    <option value="FIR">FIR</option>
-                                    <option value="NON FIR">NON FIR</option>
-                                    <option value="NO CONTACT">NO CONTACT</option>
-                                    <option value="FILE">FILE</option>
-                                    <option value="SOLVED">SOLVED</option>
+                                    <option value="संजेय">संजेय</option>
+                                    <option value="असंजेय">असंजेय</option>
+                                    <option value="अप्रमाणित">अप्रमाणित</option>
+                                    <option value="प्रतिबंधात्मक">प्रतिबंधात्मक</option>
+                                    <option value="वापसी">वापसी</option>
+                                    <option value="अन्य">अन्य</option>
                                 </select>
                             ) : filterAttribute === "role_addressed_to" ? (
                                 <select

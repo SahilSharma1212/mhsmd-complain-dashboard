@@ -19,7 +19,7 @@ const complaintPostSchema = z.object({
 
 const complaintPatchSchema = z.object({
     id: z.coerce.string().min(1),
-    status: z.enum(["PENDING", "FIR", "NON FIR", "FILE", "NO CONTACT", "SOLVED"]),
+    status: z.enum(["संजेय", "असंजेय", "अप्रमाणित", "प्रतिबंधात्मक", "वापसी", "अन्य"]),
 });
 
 // ─── Helper: verify JWT ───
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
             recipient_address,
             subject,
             date,
-            status: "PENDING",
+            status: "अप्रमाणित",
             complainant_name,
             complainant_contact,
             allocated_thana,
@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
         action: "CREATED",
         updated_by: decodedToken.name,
         prev_status: "NONE",
-        current_status: "PENDING",
+        current_status: "अप्रमाणित",
         reason: "INITIALISATION",
     });
 
@@ -296,6 +296,7 @@ export async function GET(request: NextRequest) {
 
     const filter = request.nextUrl.searchParams.get("filter");
     const value = request.nextUrl.searchParams.get("value");
+    const thana = request.nextUrl.searchParams.get("thana"); // optional: SP modal drill-down
     const page = parseInt(request.nextUrl.searchParams.get("page") || "1");
     const pageSize = 20;
     const from = (page - 1) * pageSize;
@@ -359,6 +360,11 @@ export async function GET(request: NextRequest) {
         } else if (filter === "id") {
             query = query.eq("id", value);
         }
+    }
+
+    // SP modal drill-down: further narrow by a specific thana
+    if (thana) {
+        query = query.eq("allocated_thana", thana);
     }
 
     const { data, error, count } = await query.range(from, to);

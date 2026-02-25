@@ -178,12 +178,12 @@ export default function LogsPage() {
     }
 
     const complaintStatusColors: Record<string, { bg: string, text: string }> = {
-        "PENDING": { bg: "bg-blue-50 text-blue-700", text: "text-blue-700" },
-        "FIR": { bg: "bg-amber-50 text-amber-700", text: "text-amber-700" },
-        "NON FIR": { bg: "bg-purple-50 text-purple-700", text: "text-purple-700" },
-        "FILE": { bg: "bg-slate-50 text-slate-700", text: "text-slate-700" },
-        "NO CONTACT": { bg: "bg-red-50 text-red-700", text: "text-red-700" },
-        "SOLVED": { bg: "bg-emerald-50 text-emerald-700", text: "text-emerald-700" },
+        "संजेय": { bg: "bg-blue-50 text-blue-700", text: "text-blue-700" },
+        "असंजेय": { bg: "bg-amber-50 text-amber-700", text: "text-amber-700" },
+        "अप्रमाणित": { bg: "bg-purple-50 text-purple-700", text: "text-purple-700" },
+        "प्रतिबंधात्मक": { bg: "bg-slate-50 text-slate-700", text: "text-slate-700" },
+        "वापसी": { bg: "bg-red-50 text-red-700", text: "text-red-700" },
+        "अन्य": { bg: "bg-emerald-50 text-emerald-700", text: "text-emerald-700" },
     }
 
     if (error)
@@ -263,7 +263,7 @@ export default function LogsPage() {
                             {language === "english" ? "Complaint Information" : "शिकायत जानकारी"}
                         </h2>
                         {currentlyViewingComplaint && (
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset ${currentlyViewingComplaint.status === 'PENDING' ? 'bg-blue-50 text-blue-700 ring-blue-700/10' :
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset ${currentlyViewingComplaint.status === 'अप्रमाणित' ? 'bg-blue-50 text-blue-700 ring-blue-700/10' :
                                 currentlyViewingComplaint.status === 'SOLVED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-700/10' :
                                     'bg-amber-50 text-amber-700 ring-amber-700/10'
                                 }`}>
