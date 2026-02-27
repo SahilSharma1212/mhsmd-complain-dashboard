@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await supabase
         .from("complaints")
         .select("*", { count: "exact" })
-        .or('allocated_thana.is.null,allocated_thana.eq.""')
+        .or('allocated_thana.is.null,allocated_thana.eq.')
         .order("created_at", { ascending: false })
         .range(from, to);
 

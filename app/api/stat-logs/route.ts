@@ -36,6 +36,7 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
         oneToThreeMonths: number;
         moreThan3Months: number;
     }>;
+    thanaAgeStatusBreakdown: Record<string, Record<string, StatusCounts>>;
 } {
     const statusCounts = zeroCounts();
     const thanaBreakdown: Record<string, StatusCounts> = {};
@@ -44,6 +45,7 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
         oneToThreeMonths: number;
         moreThan3Months: number;
     }> = {};
+    const thanaAgeStatusBreakdown: Record<string, Record<string, StatusCounts>> = {};
     const ageStats = {
         lessThan1Month: 0,
         oneToThreeMonths: 0,
@@ -100,11 +102,20 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
                     thanaBreakdown[t] = zeroCounts();
                 }
                 thanaBreakdown[t][s]++;
+
+                if (!thanaAgeStatusBreakdown[t]) {
+                    thanaAgeStatusBreakdown[t] = {
+                        lessThan1Month: zeroCounts(),
+                        oneToThreeMonths: zeroCounts(),
+                        moreThan3Months: zeroCounts(),
+                    };
+                }
+                thanaAgeStatusBreakdown[t][currentAge][s]++;
             }
         }
     }
 
-    return { statusCounts, thanaBreakdown, ageStats, thanaAgeBreakdown };
+    return { statusCounts, thanaBreakdown, ageStats, thanaAgeBreakdown, thanaAgeStatusBreakdown };
 }
 
 export async function GET(request: NextRequest) {
@@ -134,9 +145,9 @@ export async function GET(request: NextRequest) {
         }
 
         const rows = data ?? [];
-        const { statusCounts, ageStats } = aggregateCounts(rows as any);
+        const { statusCounts, ageStats, thanaAgeStatusBreakdown } = aggregateCounts(rows as any);
 
-        return NextResponse.json({ total: rows.length, statusCounts, ageStats });
+        return NextResponse.json({ total: rows.length, statusCounts, ageStats, thanaAgeStatusBreakdown });
     }
 
     // ── 3. SP: 2 queries → thana list + complaints with thana column ──────────
@@ -178,7 +189,7 @@ export async function GET(request: NextRequest) {
         }
 
         const rows = complaintData ?? [];
-        const { statusCounts, thanaBreakdown, ageStats, thanaAgeBreakdown } = aggregateCounts(rows as any);
+        const { statusCounts, thanaBreakdown, ageStats, thanaAgeBreakdown, thanaAgeStatusBreakdown } = aggregateCounts(rows as any);
 
         return NextResponse.json({
             total: rows.length,
@@ -186,6 +197,7 @@ export async function GET(request: NextRequest) {
             thanaBreakdown, // { thanaName: { "संजेय": 3, "वापसी": 1, ... } }
             ageStats,
             thanaAgeBreakdown, // { thanaName: { lessThan1Month: 2, ... } }
+            thanaAgeStatusBreakdown, // { thanaName: { ageGroup: { status: count } } }
         });
     }
 
