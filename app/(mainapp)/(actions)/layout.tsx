@@ -235,32 +235,32 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                                                             <div key={thana} className={`flex flex-col transition-all ${isExpanded ? 'bg-slate-50/40' : 'bg-white hover:bg-slate-50/20'}`}>
                                                                 <div
                                                                     onClick={() => setExpandedThana(isExpanded ? null : thana)}
-                                                                    className={`flex items-center justify-between px-4 py-3 cursor-pointer ${isExpanded ? 'bg-indigo-50/20' : ''}`}
+                                                                    className={`flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 cursor-pointer gap-3 sm:gap-4 ${isExpanded ? 'bg-indigo-50/20' : ''}`}
                                                                 >
-                                                                    <div className="flex items-center gap-8 flex-1">
-                                                                        <div className="w-32 truncate">
-                                                                            <span className="text-[11px] font-bold text-slate-700">{thana}</span>
+                                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-8 flex-1 min-w-0">
+                                                                        <div className="min-w-[120px] sm:w-32 lg:w-40 shrink-0">
+                                                                            <span className="text-[11px] font-bold text-slate-700 truncate block">{thana}</span>
                                                                         </div>
 
-                                                                        <div className="flex items-center gap-6 text-[10px] font-bold">
-                                                                            <div className="flex items-center gap-1.5 min-w-[60px]">
-                                                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                                                        <div className="flex items-center gap-4 sm:gap-6 text-[10px] font-bold overflow-x-auto no-scrollbar">
+                                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
                                                                                 <span className="text-slate-500">{ages.lessThan1Month}</span>
                                                                             </div>
-                                                                            <div className="flex items-center gap-1.5 min-w-[60px]">
-                                                                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
                                                                                 <span className="text-slate-500">{ages.oneToThreeMonths}</span>
                                                                             </div>
-                                                                            <div className="flex items-center gap-1.5 min-w-[60px]">
-                                                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                                                                                 <span className="text-slate-500">{ages.moreThan3Months}</span>
                                                                             </div>
-                                                                            <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+                                                                            <div className="flex items-center gap-2 border-l border-slate-200 pl-3 shrink-0">
                                                                                 <span className="text-[11px] font-black text-slate-800">{total}</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="flex items-center gap-4">
+                                                                    <div className="flex items-center self-end sm:self-center gap-4">
                                                                         <span className="text-slate-300 text-[8px]">{isExpanded ? '▲' : '▼'}</span>
                                                                     </div>
                                                                 </div>
@@ -277,7 +277,7 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                                                                                     <div className="flex items-center gap-2">
                                                                                         <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-[2px]"
                                                                                             style={{ backgroundColor: `${ageGroup.color}15`, color: ageGroup.color }}>
-                                                                                            {ageGroup.label} — {ages[ageGroup.key as keyof typeof ages]}
+                                                                                            {ageGroup.label} - {ages[ageGroup.key as keyof typeof ages]}
                                                                                         </span>
                                                                                     </div>
                                                                                     <div className="flex flex-col gap-1.5 pl-1">
@@ -285,14 +285,15 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                                                                                             const count = stats.thanaAgeStatusBreakdown?.[thana]?.[ageGroup.key]?.[s.id] ?? 0;
                                                                                             if (count === 0) return null;
                                                                                             return (
-                                                                                                <div key={s.id} className="flex items-center justify-between group/status">
+                                                                                                <div key={s.id} className="flex items-center justify-between group/status border-b pb-1 border-slate-300">
                                                                                                     <div className="flex items-center gap-2">
-                                                                                                        <div className="w-1 h-1 rounded-full" style={{ backgroundColor: s.indicatorColor }} />
-                                                                                                        <span className="text-[9px] font-bold text-slate-500 group-hover/status:text-slate-700 transition-colors">
+                                                                                                        <span className="text-[9px] font-bold text-slate-500 group-hover/status:text-slate-700 transition-colors px-2 py-1"
+                                                                                                            style={{ backgroundColor: s.indicatorColor + "15", color: s.indicatorColor }}>
                                                                                                             {language === "english" ? s.labeleng : s.labelhindi}
                                                                                                         </span>
                                                                                                     </div>
-                                                                                                    <span className="text-[10px] font-black text-slate-600 px-1.5 py-0.5 bg-slate-50 rounded-xs border border-transparent group-hover/status:border-slate-100 transition-all">
+                                                                                                    <span className="text-[10px] font-black text-slate-600 px-1.5 py-0.5 bg-slate-50 rounded-xs border border-transparent group-hover/status:border-slate-100 transition-all"
+                                                                                                        style={{ backgroundColor: s.indicatorColor + "15", color: s.indicatorColor }}>
                                                                                                         {count}
                                                                                                     </span>
                                                                                                 </div>
