@@ -120,7 +120,7 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                         <div className="flex w-full flex-wrap gap-3">
 
                             {/* Age & Status Integrated Box */}
-                            <div className={`flex flex-col flex-1 min-w-0 w-full overflow-hidden border border-slate-100 rounded-sm bg-white shadow-xs mb-3 transition-all duration-300 ${isAgeStatsExpanded ? 'ring-1 ring-slate-200' : ''}`}>
+                            <div className={`flex flex-col flex-1 min-w-0 w-full overflow-hidden border border-slate-200 rounded-xs bg-white mb-3 transition-all duration-300 ${isAgeStatsExpanded ? 'ring-1 ring-slate-200' : ''}`}>
                                 {/* Header / Collapsed Bar */}
                                 <div
                                     onClick={() => setIsAgeStatsExpanded(!isAgeStatsExpanded)}
