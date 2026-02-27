@@ -5,6 +5,7 @@ import { useUserStore } from '../../_store/userStore';
 import { useLanguageStore } from '@/app/_store/languageStore';
 import { useEffect, useState } from 'react';
 import { VscLoading } from 'react-icons/vsc';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface StatusCounts {
@@ -15,6 +16,11 @@ interface StatData {
     total: number;
     statusCounts: StatusCounts;
     thanaBreakdown?: Record<string, StatusCounts>; // SP only: { thanaName: { status: count } }
+    ageStats?: {
+        lessThan1Month: number;
+        lessThan3Months: number;
+        moreThan3Months: number;
+    };
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -150,6 +156,93 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                                     )}
                                 </div>
                             ))}
+
+                            {/* Age Stats Card */}
+                            <div className="flex flex-[2] min-w-[300px] flex-col overflow-hidden border border-indigo-100 rounded-xl bg-gradient-to-br from-white to-indigo-50/30 shadow-sm hover:shadow-md transition-all duration-300">
+                                <div className="px-4 py-2 border-b border-indigo-50 bg-white/50 flex justify-between items-center">
+                                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                                        {language === "english" ? "Complaint Age Distribution" : "शिकायत की अवधि वितरण"}
+                                    </p>
+                                    <div className="flex gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse delay-75" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse delay-150" />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between p-4 h-[120px]">
+                                    {/* Pie Chart */}
+                                    <div className="w-1/2 h-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: language === "english" ? "< 1 Month" : "< 1 म.", value: stats?.ageStats?.lessThan1Month ?? 0, color: "#4f46e5" },
+                                                        { name: language === "english" ? "< 3 Months" : "< 3 म.", value: (stats?.ageStats?.lessThan3Months ?? 0) - (stats?.ageStats?.lessThan1Month ?? 0), color: "#7c3aed" },
+                                                        { name: language === "english" ? "> 3 Months" : "> 3 म.", value: stats?.ageStats?.moreThan3Months ?? 0, color: "#db2777" },
+                                                    ].filter(d => d.value > 0)}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={25}
+                                                    outerRadius={40}
+                                                    paddingAngle={4}
+                                                    dataKey="value"
+                                                >
+                                                    {[
+                                                        { name: "< 1 Month", color: "#4f46e5" },
+                                                        { name: "< 3 Months", color: "#7c3aed" },
+                                                        { name: "> 3 Months", color: "#db2777" },
+                                                    ].map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip
+                                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+
+                                    {/* Legend / Stats */}
+                                    <div className="flex flex-col w-1/2 gap-1.5 pl-4 border-l border-indigo-50">
+                                        <div className="flex flex-col">
+                                            <div className="flex justify-between items-center text-[10px] font-semibold text-gray-500">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                                                    <span>{language === "english" ? "< 1 Month" : "< 1 महीना"}</span>
+                                                </div>
+                                                <span className="text-indigo-700">
+                                                    {statsLoading ? <VscLoading className='animate-spin' /> : (stats?.ageStats?.lessThan1Month ?? 0)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col">
+                                            <div className="flex justify-between items-center text-[10px] font-semibold text-gray-500">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-2 h-2 rounded-full bg-violet-600" />
+                                                    <span>{language === "english" ? "< 3 Months" : "< 3 महीने"}</span>
+                                                </div>
+                                                <span className="text-violet-700">
+                                                    {statsLoading ? <VscLoading className='animate-spin' /> : (stats?.ageStats?.lessThan3Months ?? 0)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col">
+                                            <div className="flex justify-between items-center text-[10px] font-semibold text-gray-500">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-2 h-2 rounded-full bg-pink-600" />
+                                                    <span>{language === "english" ? "> 3 Months" : "> 3 महीने"}</span>
+                                                </div>
+                                                <span className="text-pink-700">
+                                                    {statsLoading ? <VscLoading className='animate-spin' /> : (stats?.ageStats?.moreThan3Months ?? 0)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
                     </div>

@@ -20,13 +20,29 @@ function zeroCounts(): StatusCounts {
     return Object.fromEntries(STATUSES.map((s) => [s, 0])) as StatusCounts;
 }
 
-// Aggregate flat rows into total statusCounts + per-thana breakdown (for SP)
-function aggregateCounts(rows: { status: string; allocated_thana?: string }[]): {
+// Aggregate flat rows into total statusCounts + per-thana breakdown (for SP) + ageStats
+function aggregateCounts(rows: { status: string; created_at: string; allocated_thana?: string }[]): {
     statusCounts: StatusCounts;
     thanaBreakdown: Record<string, StatusCounts>;
+    ageStats: {
+        lessThan1Month: number;
+        lessThan3Months: number;
+        moreThan3Months: number;
+    };
 } {
     const statusCounts = zeroCounts();
     const thanaBreakdown: Record<string, StatusCounts> = {};
+    const ageStats = {
+        lessThan1Month: 0,
+        lessThan3Months: 0,
+        moreThan3Months: 0,
+    };
+
+    const now = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(now.getMonth() - 1);
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(now.getMonth() - 3);
 
     for (const row of rows) {
         const s = row.status as StatusKey;
@@ -34,6 +50,17 @@ function aggregateCounts(rows: { status: string; allocated_thana?: string }[]): 
 
         // Global total per status
         statusCounts[s]++;
+
+        // Age Stats
+        const createdAt = new Date(row.created_at);
+        if (createdAt > oneMonthAgo) {
+            ageStats.lessThan1Month++;
+        }
+        if (createdAt > threeMonthsAgo) {
+            ageStats.lessThan3Months++;
+        } else {
+            ageStats.moreThan3Months++;
+        }
 
         // Per-thana breakdown (only populated when allocated_thana is present)
         if (row.allocated_thana) {
@@ -44,7 +71,7 @@ function aggregateCounts(rows: { status: string; allocated_thana?: string }[]): 
         }
     }
 
-    return { statusCounts, thanaBreakdown };
+    return { statusCounts, thanaBreakdown, ageStats };
 }
 
 export async function GET(request: NextRequest) {
@@ -65,7 +92,7 @@ export async function GET(request: NextRequest) {
     if (user.role === "TI") {
         const { data, error } = await supabase
             .from("complaints")
-            .select("status")
+            .select("status, created_at")
             .eq("allocated_thana", user.thana);
 
         if (error) {
@@ -74,9 +101,9 @@ export async function GET(request: NextRequest) {
         }
 
         const rows = data ?? [];
-        const { statusCounts } = aggregateCounts(rows);
+        const { statusCounts, ageStats } = aggregateCounts(rows as any);
 
-        return NextResponse.json({ total: rows.length, statusCounts });
+        return NextResponse.json({ total: rows.length, statusCounts, ageStats });
     }
 
     // ── 3. SP: 2 queries → thana list + complaints with thana column ──────────
@@ -105,7 +132,7 @@ export async function GET(request: NextRequest) {
         // Round-trip 2: fetch status + allocated_thana for JS aggregation
         const { data: complaintData, error: complaintError } = await supabase
             .from("complaints")
-            .select("status, allocated_thana")
+            .select("status, allocated_thana, created_at")
             .in("allocated_thana", thanaList);
 
         if (complaintError) {
@@ -114,12 +141,13 @@ export async function GET(request: NextRequest) {
         }
 
         const rows = complaintData ?? [];
-        const { statusCounts, thanaBreakdown } = aggregateCounts(rows);
+        const { statusCounts, thanaBreakdown, ageStats } = aggregateCounts(rows as any);
 
         return NextResponse.json({
             total: rows.length,
             statusCounts,
             thanaBreakdown, // { thanaName: { "संजेय": 3, "वापसी": 1, ... } }
+            ageStats,
         });
     }
 
