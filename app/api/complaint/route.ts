@@ -320,7 +320,11 @@ export async function GET(request: NextRequest) {
             .eq("designated_sp", decodedToken.name);
 
         if (thanaFetchError) {
-            console.error("Thana fetch error for SP:", thanaFetchError.message);
+            console.error("Thana fetch error for SP:", {
+                message: thanaFetchError.message,
+                error: thanaFetchError,
+                url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'PRESENT' : 'MISSING'
+            });
             return NextResponse.json(
                 { message: "Failed to fetch thana data. Please try again.", success: false },
                 { status: 500 }
@@ -376,7 +380,6 @@ export async function GET(request: NextRequest) {
             { status: 500 }
         );
     }
-    console.log(data);
     return NextResponse.json(
         { message: "Complaints fetched successfully", success: true, data, totalCount: count },
         { status: 200 }

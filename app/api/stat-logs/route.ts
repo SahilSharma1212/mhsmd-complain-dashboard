@@ -10,6 +10,8 @@ const STATUSES = [
     "प्रतिबंधात्मक",
     "वापसी",
     "अन्य",
+    "PENDING",
+    "SOLVED",
 ] as const;
 
 type StatusKey = (typeof STATUSES)[number];
@@ -26,15 +28,25 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
     thanaBreakdown: Record<string, StatusCounts>;
     ageStats: {
         lessThan1Month: number;
-        lessThan3Months: number;
+        oneToThreeMonths: number;
         moreThan3Months: number;
     };
+    thanaAgeBreakdown: Record<string, {
+        lessThan1Month: number;
+        oneToThreeMonths: number;
+        moreThan3Months: number;
+    }>;
 } {
     const statusCounts = zeroCounts();
     const thanaBreakdown: Record<string, StatusCounts> = {};
+    const thanaAgeBreakdown: Record<string, {
+        lessThan1Month: number;
+        oneToThreeMonths: number;
+        moreThan3Months: number;
+    }> = {};
     const ageStats = {
         lessThan1Month: 0,
-        lessThan3Months: 0,
+        oneToThreeMonths: 0,
         moreThan3Months: 0,
     };
 
@@ -45,33 +57,54 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
     threeMonthsAgo.setMonth(now.getMonth() - 3);
 
     for (const row of rows) {
-        const s = row.status as StatusKey;
-        if (!(s in statusCounts)) continue;
-
-        // Global total per status
-        statusCounts[s]++;
-
-        // Age Stats
+        // 1. Age Stats (Process for ALL complaints)
         const createdAt = new Date(row.created_at);
+        let currentAge: 'lessThan1Month' | 'oneToThreeMonths' | 'moreThan3Months' = 'moreThan3Months';
+
         if (createdAt > oneMonthAgo) {
             ageStats.lessThan1Month++;
-        }
-        if (createdAt > threeMonthsAgo) {
-            ageStats.lessThan3Months++;
+            currentAge = 'lessThan1Month';
+        } else if (createdAt > threeMonthsAgo) {
+            ageStats.oneToThreeMonths++;
+            currentAge = 'oneToThreeMonths';
         } else {
             ageStats.moreThan3Months++;
+            currentAge = 'moreThan3Months';
         }
 
-        // Per-thana breakdown (only populated when allocated_thana is present)
+        // 2. Status Breakdown (Process only for known statuses)
+        const s = row.status as StatusKey;
+        const isValidStatus = STATUSES.includes(s);
+
+        if (isValidStatus) {
+            statusCounts[s]++;
+        }
+
+        // 3. Per-thana breakdown
         if (row.allocated_thana) {
-            if (!thanaBreakdown[row.allocated_thana]) {
-                thanaBreakdown[row.allocated_thana] = zeroCounts();
+            const t = row.allocated_thana;
+
+            // Age breakdown per thana (Process for ALL)
+            if (!thanaAgeBreakdown[t]) {
+                thanaAgeBreakdown[t] = {
+                    lessThan1Month: 0,
+                    oneToThreeMonths: 0,
+                    moreThan3Months: 0,
+                };
             }
-            thanaBreakdown[row.allocated_thana][s]++;
+            thanaAgeBreakdown[t][currentAge]++;
+
+            // Status breakdown per thana (Only if valid)
+            if (isValidStatus) {
+                if (!thanaBreakdown[t]) {
+                    thanaBreakdown[t] = zeroCounts();
+                }
+                thanaBreakdown[t][s]++;
+            }
         }
     }
 
-    return { statusCounts, thanaBreakdown, ageStats };
+    return { statusCounts, thanaBreakdown, ageStats, thanaAgeBreakdown };
 }
 
 export async function GET(request: NextRequest) {
@@ -115,7 +148,11 @@ export async function GET(request: NextRequest) {
             .eq("designated_sp", user.name);
 
         if (thanaError) {
-            console.error("stat-logs SP thana fetch error:", thanaError.message);
+            console.error("stat-logs SP thana fetch error:", {
+                message: thanaError.message,
+                error: thanaError,
+                url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'PRESENT' : 'MISSING'
+            });
             return NextResponse.json({ error: thanaError.message }, { status: 500 });
         }
 
@@ -141,13 +178,14 @@ export async function GET(request: NextRequest) {
         }
 
         const rows = complaintData ?? [];
-        const { statusCounts, thanaBreakdown, ageStats } = aggregateCounts(rows as any);
+        const { statusCounts, thanaBreakdown, ageStats, thanaAgeBreakdown } = aggregateCounts(rows as any);
 
         return NextResponse.json({
             total: rows.length,
             statusCounts,
             thanaBreakdown, // { thanaName: { "संजेय": 3, "वापसी": 1, ... } }
             ageStats,
+            thanaAgeBreakdown, // { thanaName: { lessThan1Month: 2, ... } }
         });
     }
 

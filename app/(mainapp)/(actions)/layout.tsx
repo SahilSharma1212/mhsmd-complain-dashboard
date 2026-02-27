@@ -5,7 +5,7 @@ import { useUserStore } from '../../_store/userStore';
 import { useLanguageStore } from '@/app/_store/languageStore';
 import { useEffect, useState } from 'react';
 import { VscLoading } from 'react-icons/vsc';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface StatusCounts {
@@ -18,9 +18,14 @@ interface StatData {
     thanaBreakdown?: Record<string, StatusCounts>; // SP only: { thanaName: { status: count } }
     ageStats?: {
         lessThan1Month: number;
-        lessThan3Months: number;
+        oneToThreeMonths: number;
         moreThan3Months: number;
     };
+    thanaAgeBreakdown?: Record<string, {
+        lessThan1Month: number;
+        oneToThreeMonths: number;
+        moreThan3Months: number;
+    }>;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -48,11 +53,15 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
     // ── Stats ────────────────────────────────────────────────────────────────
     const [stats, setStats] = useState<StatData | null>(null);
     const [statsLoading, setStatsLoading] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
 
     // ── SP modal ────────────────────────────────────────────────────────────
     const [modalStatus, setModalStatus] = useState<string | null>(null);
+    const [isAgeStatsExpanded, setIsAgeStatsExpanded] = useState(false);
+    const [isAgeStatsFullscreen, setIsAgeStatsFullscreen] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
         async function fetchStats() {
             try {
                 const res = await fetch("/api/stat-logs");
@@ -157,93 +166,141 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                                 </div>
                             ))}
 
-                            {/* Age Stats Card */}
-                            <div className="flex flex-[2] min-w-[300px] flex-col overflow-hidden border border-indigo-100 rounded-xl bg-gradient-to-br from-white to-indigo-50/30 shadow-sm hover:shadow-md transition-all duration-300">
-                                <div className="px-4 py-2 border-b border-indigo-50 bg-white/50 flex justify-between items-center">
-                                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
-                                        {language === "english" ? "Complaint Age Distribution" : "शिकायत की अवधि वितरण"}
+
+
+                        </div>
+                        {/* Age Stats Card - Minimal by default */}
+                        <div className={`flex w-full flex-col overflow-hidden border border-gray-100 rounded-xs bg-linear-to-br from-white to-gray-50/30 shadow-sm hover:shadow-md transition-all duration-300 ${isAgeStatsExpanded ? 'grow' : 'grow'}`}>
+                            <div className={`px-4 py-2 bg-white/50 flex justify-between items-center group ${!isAgeStatsExpanded ? 'h-10' : 'border-b border-gray-50'}`}>
+                                <div className="flex items-center gap-4 flex-1">
+                                    <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                        {language === "english" ? "Complaint Age" : "शिकायत अवधि"}
                                     </p>
-                                    <div className="flex gap-1">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                                        <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse delay-75" />
-                                        <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse delay-150" />
-                                    </div>
+
+                                    {/* Minimal Inline Bar & Stats */}
+                                    {!isAgeStatsExpanded && (
+                                        <div className="flex items-center gap-4 flex-1 max-w-2xl">
+                                            {/* Small Bar */}
+                                            <div className="flex flex-1 h-2 rounded-full overflow-hidden bg-slate-100/50 border border-slate-200/50 p-px">
+                                                {(() => {
+                                                    const v1 = stats?.ageStats?.lessThan1Month ?? 0;
+                                                    const v2 = stats?.ageStats?.oneToThreeMonths ?? 0;
+                                                    const v3 = stats?.ageStats?.moreThan3Months ?? 0;
+                                                    const total = v1 + v2 + v3 || 1;
+                                                    const p1 = (v1 / total) * 100;
+                                                    const p2 = (v2 / total) * 100;
+                                                    const p3 = (v3 / total) * 100;
+                                                    return (
+                                                        <>
+                                                            {v1 > 0 && <div style={{ width: `${p1}%` }} className="h-full bg-linear-to-r from-green-400 to-green-500" />}
+                                                            {v2 > 0 && <div style={{ width: `${p2}%` }} className="h-full bg-linear-to-r from-orange-400 to-orange-500" />}
+                                                            {v3 > 0 && <div style={{ width: `${p3}%` }} className="h-full bg-linear-to-r from-red-400 to-red-500" />}
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
+                                            {/* Mini Counts */}
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[9px] font-bold text-green-700">{stats?.ageStats?.lessThan1Month ?? 0}</span>
+                                                <span className="text-[9px] font-bold text-orange-700">{stats?.ageStats?.oneToThreeMonths ?? 0}</span>
+                                                <span className="text-[9px] font-bold text-red-700">{stats?.ageStats?.moreThan3Months ?? 0}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="flex items-center justify-between p-4 h-[120px]">
-                                    {/* Pie Chart */}
-                                    <div className="w-1/2 h-full">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={[
-                                                        { name: language === "english" ? "< 1 Month" : "< 1 म.", value: stats?.ageStats?.lessThan1Month ?? 0, color: "#4f46e5" },
-                                                        { name: language === "english" ? "< 3 Months" : "< 3 म.", value: (stats?.ageStats?.lessThan3Months ?? 0) - (stats?.ageStats?.lessThan1Month ?? 0), color: "#7c3aed" },
-                                                        { name: language === "english" ? "> 3 Months" : "> 3 म.", value: stats?.ageStats?.moreThan3Months ?? 0, color: "#db2777" },
-                                                    ].filter(d => d.value > 0)}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={25}
-                                                    outerRadius={40}
-                                                    paddingAngle={4}
-                                                    dataKey="value"
-                                                >
-                                                    {[
-                                                        { name: "< 1 Month", color: "#4f46e5" },
-                                                        { name: "< 3 Months", color: "#7c3aed" },
-                                                        { name: "> 3 Months", color: "#db2777" },
-                                                    ].map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip
-                                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
-                                                />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    </div>
-
-                                    {/* Legend / Stats */}
-                                    <div className="flex flex-col w-1/2 gap-1.5 pl-4 border-l border-indigo-50">
-                                        <div className="flex flex-col">
-                                            <div className="flex justify-between items-center text-[10px] font-semibold text-gray-500">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="w-2 h-2 rounded-full bg-indigo-600" />
-                                                    <span>{language === "english" ? "< 1 Month" : "< 1 महीना"}</span>
-                                                </div>
-                                                <span className="text-indigo-700">
-                                                    {statsLoading ? <VscLoading className='animate-spin' /> : (stats?.ageStats?.lessThan1Month ?? 0)}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col">
-                                            <div className="flex justify-between items-center text-[10px] font-semibold text-gray-500">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="w-2 h-2 rounded-full bg-violet-600" />
-                                                    <span>{language === "english" ? "< 3 Months" : "< 3 महीने"}</span>
-                                                </div>
-                                                <span className="text-violet-700">
-                                                    {statsLoading ? <VscLoading className='animate-spin' /> : (stats?.ageStats?.lessThan3Months ?? 0)}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col">
-                                            <div className="flex justify-between items-center text-[10px] font-semibold text-gray-500">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="w-2 h-2 rounded-full bg-pink-600" />
-                                                    <span>{language === "english" ? "> 3 Months" : "> 3 महीने"}</span>
-                                                </div>
-                                                <span className="text-pink-700">
-                                                    {statsLoading ? <VscLoading className='animate-spin' /> : (stats?.ageStats?.moreThan3Months ?? 0)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setIsAgeStatsExpanded(!isAgeStatsExpanded)}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                                        title={isAgeStatsExpanded ? (language === "english" ? "Collapse" : "समेटें") : (language === "english" ? "Expand" : "विस्तार करें")}
+                                    >
+                                        {isAgeStatsExpanded ? '▲' : '▼'}
+                                    </button>
+                                    {user?.role === "SP" && (
+                                        <button
+                                            onClick={() => setIsAgeStatsFullscreen(true)}
+                                            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                                            title={language === "english" ? "Fullscreen" : "पूर्ण स्क्रीन"}
+                                        >
+                                            ⤢
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
+                            {/* Full View Content */}
+                            {isAgeStatsExpanded && (
+                                <div className="flex flex-col p-4 animate-in fade-in slide-in-from-top-2 duration-500 min-h-[150px]">
+                                    <div className="space-y-4">
+                                        {/* Big Proportional Bar */}
+                                        <div className="flex w-full h-3 rounded-full overflow-hidden bg-slate-100/50 border border-slate-200/50 p-px shadow-sm">
+                                            {(() => {
+                                                const v1 = stats?.ageStats?.lessThan1Month ?? 0;
+                                                const v2 = stats?.ageStats?.oneToThreeMonths ?? 0;
+                                                const v3 = stats?.ageStats?.moreThan3Months ?? 0;
+                                                const total = v1 + v2 + v3 || 1;
+                                                const p1 = (v1 / total) * 100;
+                                                const p2 = (v2 / total) * 100;
+                                                const p3 = (v3 / total) * 100;
+                                                return (
+                                                    <>
+                                                        {v1 > 0 && <div style={{ width: `${p1}%` }} className="h-full bg-linear-to-r from-green-400 to-green-500 transition-all duration-1000 shadow-[inset_0_1px_rgba(255,255,255,0.2)]" />}
+                                                        {v2 > 0 && <div style={{ width: `${p2}%` }} className="h-full bg-linear-to-r from-orange-400 to-orange-500 transition-all duration-1000 shadow-[inset_0_1px_rgba(255,255,255,0.2)]" />}
+                                                        {v3 > 0 && <div style={{ width: `${p3}%` }} className="h-full bg-linear-to-r from-red-400 to-red-500 transition-all duration-1000 shadow-[inset_0_1px_rgba(255,255,255,0.2)]" />}
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        {/* Top 5 Thanas */}
+                                        {user?.role === "SP" && stats?.thanaAgeBreakdown && (
+                                            <div className="grid grid-cols-3 gap-6">
+                                                {[
+                                                    { key: 'lessThan1Month', label: language === "english" ? "< 1 Month" : "< 1 महीना", color: 'text-green-600', bg: 'bg-green-50' },
+                                                    { key: 'oneToThreeMonths', label: language === "english" ? "1-3 Months" : "1-3 महीने", color: 'text-orange-600', bg: 'bg-orange-50' },
+                                                    { key: 'moreThan3Months', label: language === "english" ? "> 3 Months" : "> 3 महीने", color: 'text-red-600', bg: 'bg-red-50' }
+                                                ].map((cat) => (
+                                                    <div key={cat.key} className="flex flex-col">
+                                                        <div className={`px-2 py-1.5 ${cat.bg} rounded-t-lg mb-2 flex justify-between items-center border-b border-white`}>
+                                                            <span className={`text-[10px] font-bold ${cat.color}`}>{cat.label}</span>
+                                                            <span className={`text-[10px] font-black ${cat.color}`}>
+                                                                {cat.key === 'oneToThreeMonths'
+                                                                    ? (stats?.ageStats?.oneToThreeMonths ?? 0)
+                                                                    : (stats?.ageStats?.[cat.key as keyof typeof stats.ageStats] ?? 0)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="space-y-1.5 px-1 pb-2">
+                                                            {Object.entries(stats?.thanaAgeBreakdown || {})
+                                                                .map(([thana, ages]) => ({
+                                                                    thana,
+                                                                    count: cat.key === 'oneToThreeMonths'
+                                                                        ? ages.oneToThreeMonths
+                                                                        : ages[cat.key as keyof typeof ages]
+                                                                }))
+                                                                .filter(item => item.count > 0)
+                                                                .sort((a, b) => b.count - a.count)
+                                                                .slice(0, 5)
+                                                                .map((item, idx) => (
+                                                                    <div key={idx} className="flex justify-between items-center text-[9px] group/item hover:bg-slate-50 transition-colors rounded px-1 py-0.5">
+                                                                        <span className="text-gray-600 truncate max-w-[70%]" title={item.thana}>{item.thana}</span>
+                                                                        <span className="font-bold text-gray-400 group-hover/item:text-indigo-600">{item.count}</span>
+                                                                    </div>
+                                                                ))
+                                                            }
+                                                            {Object.entries(stats.thanaAgeBreakdown || {}).filter(([_, ages]) => (cat.key === 'oneToThreeMonths' ? ages.oneToThreeMonths : ages[cat.key as keyof typeof ages]) > 0).length === 0 && (
+                                                                <div className="text-[8px] text-gray-300 italic text-center py-4">
+                                                                    {language === "english" ? "No complaints" : "कोई शिकायत नहीं"}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -333,6 +390,116 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                                         </span>
                                     </div>
                                 ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Age Stats Fullscreen Modal */}
+            {isAgeStatsFullscreen && user?.role === "SP" && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md transition-all duration-300"
+                    onClick={() => setIsAgeStatsFullscreen(false)}
+                >
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden m-4 animate-in zoom-in-95 duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-indigo-50 bg-linear-to-r from-indigo-600 to-violet-600 text-white">
+                            <div>
+                                <h3 className="text-lg font-bold">
+                                    {language === "english" ? "Comprehensive Age Statistics" : "विस्तृत शिकायत अवधि आंकड़े"}
+                                </h3>
+                                <p className="text-indigo-100 text-xs mt-1">
+                                    {language === "english" ? `All Thanas under ${user.name}` : `${user.name} के अंतर्गत सभी थाने`}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setIsAgeStatsFullscreen(false)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white text-xl font-light"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-auto p-6">
+                            <table className="w-full border-collapse">
+                                <thead className="sticky top-0 bg-white z-10">
+                                    <tr className="border-b-2 border-slate-100">
+                                        <th className="py-3 px-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                            {language === "english" ? "Thana Name" : "थाने का नाम"}
+                                        </th>
+                                        <th className="py-3 px-4 text-center text-xs font-bold text-green-600 uppercase tracking-wider bg-green-50/50 rounded-tl-lg">
+                                            {language === "english" ? "< 1 Month" : "< 1 महीना"}
+                                        </th>
+                                        <th className="py-3 px-4 text-center text-xs font-bold text-orange-600 uppercase tracking-wider bg-orange-50/50">
+                                            {language === "english" ? "1-3 Months" : "1-3 महीने"}
+                                        </th>
+                                        <th className="py-3 px-4 text-center text-xs font-bold text-red-600 uppercase tracking-wider bg-red-50/50 rounded-tr-lg">
+                                            {language === "english" ? "> 3 Months" : "> 3 महीने"}
+                                        </th>
+                                        <th className="py-3 px-4 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider border-l border-slate-100">
+                                            {language === "english" ? "Total" : "कुल"}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {stats?.thanaAgeBreakdown && Object.entries(stats.thanaAgeBreakdown)
+                                        .sort((a, b) => {
+                                            const totalA = a[1].lessThan1Month + a[1].oneToThreeMonths + a[1].moreThan3Months;
+                                            const totalB = b[1].lessThan1Month + b[1].oneToThreeMonths + b[1].moreThan3Months;
+                                            return totalB - totalA;
+                                        })
+                                        .map(([thana, ages], idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
+                                                <td className="py-3 px-4 text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors">
+                                                    {thana}
+                                                </td>
+                                                <td className="py-3 px-4 text-center text-sm font-bold text-green-600 bg-green-50/20">
+                                                    {ages.lessThan1Month}
+                                                </td>
+                                                <td className="py-3 px-4 text-center text-sm font-bold text-orange-600 bg-orange-50/20">
+                                                    {ages.oneToThreeMonths}
+                                                </td>
+                                                <td className="py-3 px-4 text-center text-sm font-bold text-red-600 bg-red-50/20">
+                                                    {ages.moreThan3Months}
+                                                </td>
+                                                <td className="py-3 px-4 text-center text-sm font-black text-indigo-700 border-l border-slate-50">
+                                                    {ages.lessThan1Month + ages.oneToThreeMonths + ages.moreThan3Months}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    }
+                                </tbody>
+                                <tfoot className="sticky bottom-0 bg-slate-50 font-bold border-t-2 border-indigo-100">
+                                    <tr>
+                                        <td className="py-4 px-4 text-sm text-slate-600 uppercase tracking-tight">
+                                            {language === "english" ? "Grand Totals" : "कुल योग"}
+                                        </td>
+                                        <td className="py-4 px-4 text-center text-lg text-green-700">
+                                            {stats?.ageStats?.lessThan1Month ?? 0}
+                                        </td>
+                                        <td className="py-4 px-4 text-center text-lg text-orange-700">
+                                            {stats?.ageStats?.oneToThreeMonths ?? 0}
+                                        </td>
+                                        <td className="py-4 px-4 text-center text-lg text-red-700">
+                                            {stats?.ageStats?.moreThan3Months ?? 0}
+                                        </td>
+                                        <td className="py-4 px-4 text-center text-xl text-indigo-800 border-l border-indigo-100">
+                                            {(stats?.ageStats?.lessThan1Month ?? 0) + (stats?.ageStats?.oneToThreeMonths ?? 0) + (stats?.ageStats?.moreThan3Months ?? 0)}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            {(!stats?.thanaAgeBreakdown || Object.keys(stats.thanaAgeBreakdown).length === 0) && (
+                                <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+                                    <span className="text-4xl mb-4">📊</span>
+                                    <p className="text-sm font-medium">
+                                        {language === "english" ? "No breakdown data available" : "कोई विवरण डेटा उपलब्ध नहीं है"}
+                                    </p>
+                                </div>
                             )}
                         </div>
                     </div>
