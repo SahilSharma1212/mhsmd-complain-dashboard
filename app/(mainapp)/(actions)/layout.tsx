@@ -170,7 +170,7 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
 
                         </div>
                         {/* Age Stats Card - Minimal by default */}
-                        <div className={`flex w-full flex-col overflow-hidden border border-gray-100 rounded-xs bg-linear-to-br from-white to-gray-50/30 shadow-sm hover:shadow-md transition-all duration-300 ${isAgeStatsExpanded ? 'grow' : 'grow'}`}>
+                        <div className={`flex w-full flex-col overflow-hidden border border-gray-700 rounded-xs bg-linear-to-br from-white to-gray-50/30 shadow-sm hover:shadow-md transition-all duration-300 ${isAgeStatsExpanded ? 'grow' : 'grow'}`}>
                             <div className={`px-4 py-2 bg-white/50 flex justify-between items-center group ${!isAgeStatsExpanded ? 'h-10' : 'border-b border-gray-50'}`}>
                                 <div className="flex items-center gap-4 flex-1">
                                     <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">
