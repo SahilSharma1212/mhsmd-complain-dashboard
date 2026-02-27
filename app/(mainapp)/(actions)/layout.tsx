@@ -120,11 +120,11 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                         <div className="flex w-full flex-wrap gap-3">
 
                             {/* Age & Status Integrated Box */}
-                            <div className={`flex flex-col flex-1 min-w-0 w-full overflow-hidden border border-slate-100 rounded-sm bg-white shadow-xs transition-all duration-300 ${isAgeStatsExpanded ? 'ring-1 ring-slate-200' : ''}`}>
+                            <div className={`flex flex-col flex-1 min-w-0 w-full overflow-hidden border border-slate-100 rounded-sm bg-white shadow-xs mb-3 transition-all duration-300 ${isAgeStatsExpanded ? 'ring-1 ring-slate-200' : ''}`}>
                                 {/* Header / Collapsed Bar */}
                                 <div
                                     onClick={() => setIsAgeStatsExpanded(!isAgeStatsExpanded)}
-                                    className="px-4 py-2.5 bg-slate-50/50 flex justify-between items-center cursor-pointer group hover:bg-slate-50 transition-colors"
+                                    className="px-4 py-2.5 bg-white flex justify-between items-center cursor-pointer group hover:bg-slate-50 transition-colors"
                                 >
                                     <div className="flex items-center gap-6 flex-1">
                                         <div className="flex flex-col">
@@ -152,23 +152,6 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                                                             <span className="text-[9px] font-bold text-slate-600">{(stats?.statusCounts?.[s.id] ?? 0)}</span>
                                                         </div>
                                                     ))}
-                                                </div>
-
-                                                {/* Mini Age Bar */}
-                                                <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-100/80 p-px">
-                                                    {(() => {
-                                                        const v1 = stats?.ageStats?.lessThan1Month ?? 0;
-                                                        const v2 = stats?.ageStats?.oneToThreeMonths ?? 0;
-                                                        const v3 = stats?.ageStats?.moreThan3Months ?? 0;
-                                                        const total = v1 + v2 + v3 || 1;
-                                                        return (
-                                                            <>
-                                                                {v1 > 0 && <div style={{ width: `${(v1 / total) * 100}%` }} className="h-full bg-green-500" />}
-                                                                {v2 > 0 && <div style={{ width: `${(v2 / total) * 100}%` }} className="h-full bg-orange-500" />}
-                                                                {v3 > 0 && <div style={{ width: `${(v3 / total) * 100}%` }} className="h-full bg-red-500" />}
-                                                            </>
-                                                        );
-                                                    })()}
                                                 </div>
                                             </div>
                                         )}
@@ -415,7 +398,7 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
                         onClick={() => setIsAgeStatsFullscreen(false)}
                     >
                         <div
-                            className="bg-white rounded-xs shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden m-4 animate-in zoom-in-95 duration-300"
+                            className="bg-white rounded-xs w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden m-4 animate-in zoom-in-95 duration-300"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
