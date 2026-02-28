@@ -303,16 +303,25 @@ export default function Home() {
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-slate-50">
-                            <div>
+                            <div className="flex flex-col gap-1">
                                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                     {language === "english" ? "Detailed Statistics" : "विस्तृत आंकड़े"}
                                     <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] rounded-full uppercase tracking-tighter">
                                         {selectedCategory}
                                     </span>
                                 </h3>
-                                <p className="text-slate-500 text-xs mt-1 uppercase tracking-widest font-bold">
-                                    {user?.role === "TI" ? (language === "english" ? `Thana: ${user.thana}` : `थाना: ${user.thana}`) : (language === "english" ? `District Overview: ${user?.name}` : `जिला विवरण: ${user?.name}`)}
-                                </p>
+                                <div className="flex items-center gap-3">
+                                    <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                                        {user?.role === "TI" ? (language === "english" ? `Thana: ${user.thana}` : `थाना: ${user.thana}`) : (language === "english" ? `District Overview: ${user?.name}` : `जिला विवरण: ${user?.name}`)}
+                                    </p>
+                                    <Link
+                                        href={selectedCategory === 'unallocated' ? '/unallocated-complaints' : '/manage-complaints'}
+                                        className="flex items-center gap-1 text-[10px] font-black text-indigo-600 hover:text-indigo-700 transition-colors uppercase border-l border-slate-200 pl-3"
+                                    >
+                                        {language === "english" ? "View All" : "सभी देखें"}
+                                        <IoArrowForwardCircleOutline className="text-sm" />
+                                    </Link>
+                                </div>
                             </div>
                             <button
                                 onClick={() => setShowStatsModal(false)}
@@ -331,9 +340,9 @@ export default function Home() {
                                 </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     {[
-                                        { id: 'lessThan15Days', label: language === "english" ? "0 - 15 Days" : "0 - 15 दिन", count: stats?.categoryAgeStats?.[selectedCategory]?.lessThan15Days ?? 0, color: "#22c55e", bg: "bg-green-50/50", border: "border-green-100" },
-                                        { id: 'fifteenToThirtyDays', label: language === "english" ? "15 - 30 Days" : "15 - 30 दिन", count: stats?.categoryAgeStats?.[selectedCategory]?.fifteenToThirtyDays ?? 0, color: "#f59e0b", bg: "bg-orange-50/50", border: "border-orange-100" },
-                                        { id: 'moreThan30Days', label: language === "english" ? "More Than A Month" : "एक महीने से अधिक", count: stats?.categoryAgeStats?.[selectedCategory]?.moreThan30Days ?? 0, color: "#ef4444", bg: "bg-red-50/50", border: "border-red-100" }
+                                        { id: 'lessThan15Days', label: language === "english" ? "0 - 15 Days" : "0 - 15 दिन", count: stats?.categoryAgeStats?.[selectedCategory]?.lessThan15Days ?? 0, color: "#22c55e", bg: "bg-green-50/50", border: "border-green-500" },
+                                        { id: 'fifteenToThirtyDays', label: language === "english" ? "15 - 30 Days" : "15 - 30 दिन", count: stats?.categoryAgeStats?.[selectedCategory]?.fifteenToThirtyDays ?? 0, color: "#f59e0b", bg: "bg-orange-50/50", border: "border-orange-500" },
+                                        { id: 'moreThan30Days', label: language === "english" ? "More Than A Month" : "एक महीने से अधिक", count: stats?.categoryAgeStats?.[selectedCategory]?.moreThan30Days ?? 0, color: "#ef4444", bg: "bg-red-50/50", border: "border-red-500" }
                                     ].map((age, idx) => {
                                         const isSelected = selectedAgeGroup === age.id;
                                         const totalInCategory = (stats?.categoryAgeStats?.[selectedCategory]?.lessThan15Days ?? 0) +

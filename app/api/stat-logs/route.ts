@@ -104,9 +104,10 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
         categoryAgeStats.total[currentAge]++;
 
         // 2. Category identification
-        const isPending = row.status === "PENDING" || row.status === "लंबित";
-        const isUnallocated = !row.allocated_thana;
-        const isNirakrit = !!row.status && row.status !== "PENDING" && row.status !== "लंबित";
+        const hasThana = !!row.allocated_thana;
+        const isUnallocated = !hasThana;
+        const isPending = hasThana && (row.status === "PENDING" || row.status === "लंबित");
+        const isNirakrit = hasThana && !!row.status && row.status !== "PENDING" && row.status !== "लंबित";
 
         if (isPending) categoryAgeStats.pending[currentAge]++;
         if (isUnallocated) categoryAgeStats.unallocated[currentAge]++;
@@ -235,35 +236,36 @@ export async function GET(request: NextRequest) {
 
         const thanaList: string[] = (thanaData ?? []).map((t) => t.name);
 
-        if (thanaList.length === 0) {
-            return NextResponse.json({
-                total: 0,
-                statusCounts: zeroCounts(),
-                thanaBreakdown: {},
-            });
-        }
-
-        // Round-trip 2: Optimized parallel fetches to avoid long/brittle .or() strings
-        // 1. Fetch complaints allocated to the SP's thanas
-        // 2. Fetch unallocated complaints
-        const [allocatedRes, unallocatedRes] = await Promise.all([
+        // Round-trip 2: Optimized parallel fetches
+        // We always fetch unallocated complaints. 
+        // We only fetch allocated complaints if the SP has assigned thanas.
+        const queries: any[] = [
             supabase
                 .from("complaints")
                 .select("status, allocated_thana, created_at")
-                .in("allocated_thana", thanaList),
-            supabase
-                .from("complaints")
-                .select("status, allocated_thana, created_at")
-                .is("allocated_thana", null)
-        ]);
+                .or('allocated_thana.is.null,allocated_thana.eq.')
+        ];
 
-        if (allocatedRes.error) {
-            console.error("stat-logs SP allocated fetch error:", allocatedRes.error.message);
-            return NextResponse.json({ error: allocatedRes.error.message }, { status: 500 });
+        if (thanaList.length > 0) {
+            queries.push(
+                supabase
+                    .from("complaints")
+                    .select("status, allocated_thana, created_at")
+                    .in("allocated_thana", thanaList)
+            );
         }
+
+        const results = await Promise.all(queries);
+        const unallocatedRes = results[0];
+        const allocatedRes = results[1] || { data: [], error: null };
+
         if (unallocatedRes.error) {
             console.error("stat-logs SP unallocated fetch error:", unallocatedRes.error.message);
             return NextResponse.json({ error: unallocatedRes.error.message }, { status: 500 });
+        }
+        if (allocatedRes.error) {
+            console.error("stat-logs SP allocated fetch error:", allocatedRes.error.message);
+            return NextResponse.json({ error: allocatedRes.error.message }, { status: 500 });
         }
 
         const rows = [...(allocatedRes.data ?? []), ...(unallocatedRes.data ?? [])];
