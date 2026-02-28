@@ -9,25 +9,25 @@ import { MdOutlineSubject, MdOutlineTrackChanges } from "react-icons/md"
 import toast from "react-hot-toast"
 import { IoIosDocument } from "react-icons/io"
 import { useLanguageStore } from "@/app/_store/languageStore"
-
-type Log = {
-    id: number
-    created_at: string
-    complaint_id: number
-    updated_by: string
-    prev_status: string
-    current_status: string
-    reason: string
-    action: string
-}
+import { useLogStore, Log } from "@/app/_store/logStore"
+import { useStatsStore } from "@/app/_store/statsStore"
+import { useComplaintStore } from "@/app/_store/complaintStore"
+import { useRef } from "react"
 
 export default function LogsPage() {
     const params = useParams()
     const router = useRouter()
     const complaintId = Number(params.id)
 
-    const [logs, setLogs] = useState<Log[]>([])
-    const [loading, setLoading] = useState(true)
+    const { logsByComplaint, setLogs: setCachedLogs, clearLogs: clearCachedLogs } = useLogStore()
+    const { fetchStats } = useStatsStore()
+    const { clearCache: clearComplaintCache } = useComplaintStore()
+
+    const cachedData = logsByComplaint[complaintId]
+    const logs = cachedData?.logs || []
+    const loadingInitially = !cachedData
+
+    const [isLoading, setIsLoading] = useState(false)
     const [detailsLoading, setDetailsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -53,11 +53,29 @@ export default function LogsPage() {
     })
     const [isEditingComplaint, setIsEditingComplaint] = useState(false)
 
+    // IO Allocation State
+    const [isIOModalOpen, setIsIOModalOpen] = useState(false)
+    const [ioOfficerName, setIoOfficerName] = useState("")
+    const [isAllocatingIO, setIsAllocatingIO] = useState(false)
+
+    const isFetchingRef = useRef(false)
+
     const { user, thana, currentlyViewingComplaint, setCurrentlyViewingComplaint } = useUserStore()
     const { language } = useLanguageStore()
 
     const fetchLogs = async (isManualRefresh = false) => {
-        if (!isManualRefresh) setLoading(true)
+        if (isFetchingRef.current) return
+
+        // TTL: 5 minutes
+        const isCacheValid = cachedData && (Date.now() - cachedData.lastFetched < 5 * 60 * 1000)
+        if (!isManualRefresh && isCacheValid) {
+            setCurrentlyViewingComplaint(cachedData.complaint)
+            return
+        }
+
+        isFetchingRef.current = true
+        if (!isManualRefresh && !cachedData) setIsLoading(true)
+
         try {
             const response = await axios.get(
                 `/api/logs`,
@@ -66,36 +84,29 @@ export default function LogsPage() {
                     withCredentials: true,
                 }
             )
-            // Combined data from backend
             const { logs: logsData, complaint: complaintData } = response.data.data
-            setLogs(logsData)
+            setCachedLogs(complaintId, logsData, complaintData)
             setCurrentlyViewingComplaint(complaintData)
-
+            setError(null)
         } catch (err: any) {
             console.error(language === "english" ? "Failed to fetch logs" : "लॉग प्राप्त करने में विफल", err)
-            if (!isManualRefresh) {
-                if (err.response) {
-                    setError(err.response.data.message)
-                } else {
-                    setError(language === "english" ? "Failed to fetch logs" : "लॉग प्राप्त करने में विफल")
-                }
+            if (!cachedData) {
+                setError(err.response?.data?.message || (language === "english" ? "Failed to fetch logs" : "लॉग प्राप्त करने में विफल"))
             }
         } finally {
-            if (!isManualRefresh) setLoading(false)
+            setIsLoading(false)
+            isFetchingRef.current = false
         }
     }
 
     useEffect(() => {
-        if (!params?.id) return
-
-        if (isNaN(complaintId)) {
-            setError(language === "english" ? "Invalid complaint ID" : "अमान्य शिकायत आईडी")
-            setLoading(false)
+        if (!params?.id || isNaN(complaintId)) {
+            if (params?.id) setError(language === "english" ? "Invalid complaint ID" : "अमान्य शिकायत आईडी")
             return
         }
 
         fetchLogs()
-    }, [params?.id, complaintId])
+    }, [complaintId])
 
 
     const handleAddLog = async (e: React.FormEvent) => {
@@ -118,7 +129,11 @@ export default function LogsPage() {
                 setNewLogReason("")
                 setIsModalOpen(false)
 
-                fetchLogs() // This now refreshes both logs and complaint details
+                fetchLogs(true) // This now refreshes both logs and complaint details
+
+                // Sync other stores
+                fetchStats(true)
+                clearComplaintCache()
             }
         } catch (err: any) {
             toast.error(language === "english" ? "Failed to add log" : "लॉग जोड़ने में विफल")
@@ -145,7 +160,11 @@ export default function LogsPage() {
                 toast.success(language === "english" ? "Complaint updated successfully" : "शिकायत सफलतापूर्वक अपडेट की गई")
                 setIsEditModalOpen(false)
 
-                fetchLogs() // This now refreshes both logs and complaint details including changes
+                fetchLogs(true) // This now refreshes both logs and complaint details including changes
+
+                // Sync other stores
+                fetchStats(true)
+                clearComplaintCache()
             }
         } catch (err: any) {
             toast.error(language === "english" ? "Failed to update complaint" : "शिकायत अपडेट करने में विफल")
@@ -168,12 +187,45 @@ export default function LogsPage() {
                 toast.success(language === "english" ? "Log deleted successfully" : "लॉग सफलतापूर्वक हटाया गया")
                 setIsDeleteModalOpen(false)
                 setLogToDelete(null)
-                fetchLogs() // Refresh logs
+                fetchLogs(true) // Refresh logs
             }
         } catch (err: any) {
             toast.error(language === "english" ? "Failed to delete log" : "लॉग हटाने में विफल")
         } finally {
             setIsDeleting(false)
+        }
+    }
+
+    const handleAllocateIO = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!ioOfficerName.trim()) {
+            toast.error(language === "english" ? "Please enter IO Officer name" : "कृपया आईओ अधिकारी का नाम दर्ज करें")
+            return
+        }
+
+        setIsAllocatingIO(true)
+        try {
+            const response = await axios.patch("/api/logs", {
+                id: complaintId,
+                io_officer: ioOfficerName.trim()
+            }, { withCredentials: true })
+
+            if (response.data.success) {
+                toast.success(language === "english" ? "IO Officer allocated successfully" : "आईओ अधिकारी सफलतापूर्वक आवंटित किया गया")
+                setIsIOModalOpen(false)
+                setIoOfficerName("")
+
+                // Refresh local data
+                await fetchLogs(true)
+
+                // Sync other stores
+                fetchStats(true)
+                clearComplaintCache()
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || (language === "english" ? "Failed to allocate IO" : "आईओ आवंटित करने में विफल"))
+        } finally {
+            setIsAllocatingIO(false)
         }
     }
 
@@ -240,6 +292,16 @@ export default function LogsPage() {
                     >
                         <IoCreateOutline size={20} />
                         {language === "english" ? "Edit Case" : "केस संपादित करें"}
+                    </button>
+                    <button
+                        onClick={() => {
+                            setIoOfficerName(currentlyViewingComplaint?.io_officer || "")
+                            setIsIOModalOpen(true)
+                        }}
+                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-sm transition-all hover:-translate-y-0.5"
+                    >
+                        <IoPersonOutline size={20} />
+                        {language === "english" ? "Allocate IO" : "आईओ आवंटित करें"}
                     </button>
                     <button
                         onClick={() => {
@@ -314,6 +376,17 @@ export default function LogsPage() {
                                                 {new Date(currentlyViewingComplaint.date || currentlyViewingComplaint.created_at!).toLocaleDateString('en-IN', {
                                                     dateStyle: 'full'
                                                 })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2 bg-emerald-50 rounded-lg">
+                                            <IoPersonOutline className="text-emerald-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-600 uppercase">{language === "english" ? "IO Officer" : "आईओ अधिकारी"}</p>
+                                            <p className="text-sm text-slate-900 font-bold">
+                                                {currentlyViewingComplaint.io_officer || (language === "english" ? "Not Allocated" : "आवंटित नहीं")}
                                             </p>
                                         </div>
                                     </div>
@@ -405,7 +478,7 @@ export default function LogsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
-                            {loading ? (
+                            {isLoading ? (
                                 // Skeleton rows
                                 Array.from({ length: 5 }).map((_, idx) => (
                                     <tr key={idx} className="animate-pulse">
@@ -448,7 +521,8 @@ export default function LogsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-tight uppercase border ${log.action === 'CREATED' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                log.action === 'IO_ALLOCATED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                    'bg-amber-50 text-amber-900 border-amber-100'
                                                 }`}>
                                                 {log.action}
                                             </span>
@@ -746,6 +820,76 @@ export default function LogsPage() {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* IO Allocation Modal */}
+            {isIOModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xs shadow-2xl w-full max-w-md border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="bg-emerald-50 px-6 py-4 border-b border-emerald-100 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-emerald-900 flex items-center gap-2">
+                                <IoPersonOutline className="text-emerald-600" size={24} />
+                                {language === "english" ? "Allocate IO Officer" : "आईओ अधिकारी आवंटित करें"}
+                            </h2>
+                            <button
+                                onClick={() => setIsIOModalOpen(false)}
+                                className="text-emerald-400 hover:text-emerald-600 p-1 hover:bg-emerald-200 rounded-full transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <form onSubmit={handleAllocateIO} className="p-6 space-y-5">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-slate-800">
+                                    {language === "english" ? "IO Officer Name" : "आईओ अधिकारी का नाम"}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={ioOfficerName}
+                                    onChange={(e) => setIoOfficerName(e.target.value)}
+                                    placeholder={language === "english" ? "Enter officer name..." : "अधिकारी का नाम दर्ज करें..."}
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-900 font-medium"
+                                    required
+                                />
+                            </div>
+                            <div className="flex items-center gap-4 bg-emerald-50 p-4 rounded-xs border border-emerald-100">
+                                <div className="p-2 bg-white rounded-lg shadow-sm">
+                                    <MdOutlineTrackChanges className="text-emerald-600" />
+                                </div>
+                                <p className="text-[11px] text-emerald-800 leading-tight font-medium">
+                                    {language === "english" ? "Allocating an IO officer will be recorded in the timeline. This helps track who is responsible for this case." : "आईओ अधिकारी को आवंटित करना टाइमलाइन में दर्ज किया जाएगा। यह ट्रैक करने में मदद करता है कि इस मामले के लिए कौन जिम्मेदार है।"}
+                                </p>
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsIOModalOpen(false)}
+                                    className="px-5 py-2 text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors"
+                                >
+                                    {language === "english" ? "Cancel" : "रद्द करें"}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isAllocatingIO}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xs font-bold shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isAllocatingIO ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            {language === "english" ? "Allocating..." : "आवंटित कर रहा है..."}
+                                        </>
+                                    ) : (
+                                        language === "english" ? "Allocate Officer" : "अधिकारी आवंटित करें"
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

@@ -31,6 +31,7 @@ export interface Complaint {
     accused_details?: string;
     source?: string;
     submitted_by_name?: string;
+    io_officer?: string;
 }
 
 export interface Thana {

@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         // 3️⃣ Check complaint exists
         const { data: complaint, error: complaintError } = await supabase
             .from("complaints")
-            .select("*")
+            .select("id, status, subject, message, complainant_name, complainant_contact, date, created_at, role_addressed_to, allocated_thana, file_urls, phone, submitted_by, io_officer")
             .eq("id", complaintId)
             .single()
 
@@ -381,5 +381,92 @@ export async function DELETE(request: NextRequest) {
             { message: "Internal server error", success: false },
             { status: 500 }
         )
+    }
+}
+
+export async function PATCH(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { id, io_officer } = body;
+
+        if (!id || !io_officer) {
+            return NextResponse.json({ message: "ID and IO Officer name are required", success: false }, { status: 400 });
+        }
+
+        // 1. Authenticate
+        const token = request.cookies.get("token");
+        if (!token) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+
+        let user: User;
+        try {
+            const decoded = jwt.verify(token.value, process.env.JWT_SECRET!) as JwtPayload;
+            user = decoded as User;
+        } catch {
+            return NextResponse.json({ message: "Invalid or expired token", success: false }, { status: 401 });
+        }
+
+        // 2. Fetch complaint for auth & current IO
+        const { data: complaint, error: fetchError } = await supabase
+            .from("complaints")
+            .select("status, allocated_thana, io_officer")
+            .eq("id", id)
+            .single();
+
+        if (fetchError || !complaint) {
+            return NextResponse.json({ message: "Complaint not found", success: false }, { status: 404 });
+        }
+
+        // 3. Authorization check
+        if (user.role === "TI" && complaint.allocated_thana !== user.thana) {
+            return NextResponse.json({ message: "Unauthorized", success: false }, { status: 403 });
+        }
+        if (user.role === "SP") {
+            const { data: designatedThana } = await supabase
+                .from("thana")
+                .select("*")
+                .eq("designated_sp", user.name)
+                .eq("name", complaint.allocated_thana)
+                .single();
+            if (!designatedThana) {
+                return NextResponse.json({ message: "Unauthorized", success: false }, { status: 403 });
+            }
+        }
+
+        const prevIO = complaint.io_officer || "NOT_ALLOCATED";
+
+        // 4. Update complaint
+        const { error: updateError } = await supabase
+            .from("complaints")
+            .update({
+                io_officer: io_officer,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", id);
+
+        if (updateError) {
+            return NextResponse.json({ message: "Failed to update IO", success: false, error: updateError.message }, { status: 500 });
+        }
+
+        // 5. Insert log
+        const { error: logError } = await supabase
+            .from("complaint_logs")
+            .insert({
+                complaint_id: id,
+                action: "IO_ALLOCATED",
+                prev_status: prevIO,
+                current_status: io_officer,
+                reason: `IO Officer allocated: ${io_officer} (Replaced: ${prevIO})`,
+                updated_by: user.name
+            });
+
+        if (logError) {
+            return NextResponse.json({ message: "IO updated but logging failed", success: false, error: logError.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ message: "IO Officer allocated successfully", success: true });
+
+    } catch (error) {
+        console.error("IO Allocation Error:", error);
+        return NextResponse.json({ message: "Internal server error", success: false }, { status: 500 });
     }
 }
