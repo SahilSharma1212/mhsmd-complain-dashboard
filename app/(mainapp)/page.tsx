@@ -49,8 +49,9 @@ export default function Home() {
 
     // ── SP modal ────────────────────────────────────────────────────────────
     const [modalStatus, setModalStatus] = useState<string | null>(null);
-    const [isAgeStatsExpanded, setIsAgeStatsExpanded] = useState(false);
-    const [isAgeStatsFullscreen, setIsAgeStatsFullscreen] = useState(false);
+    const [showStatsModal, setShowStatsModal] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<'total' | 'pending' | 'unallocated' | 'nirakrit'>('total');
+    const [selectedAgeGroup, setSelectedAgeGroup] = useState<'lessThan15Days' | 'fifteenToThirtyDays' | 'moreThan30Days' | null>(null);
     const [expandedThana, setExpandedThana] = useState<string | null>(null);
 
 
@@ -130,7 +131,14 @@ export default function Home() {
                     <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
                         <FaHourglass size={80} className="text-white" />
                     </div>
-                    <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div
+                        onClick={() => {
+                            setSelectedCategory('total');
+                            setSelectedAgeGroup(null);
+                            setShowStatsModal(true);
+                        }}
+                        className="cursor-pointer relative z-10 flex flex-col h-full justify-between"
+                    >
                         <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
                             {language === "english" ? "Total Complaints" : "कुल शिकायतें"}
                         </p>
@@ -146,33 +154,47 @@ export default function Home() {
                 </div>
 
                 {/* PENDING COMPLAINTS */}
-                <div className='relative overflow-hidden group bg-linear-to-br from-amber-400 to-orange-500 p-5 rounded-xs hover:shadow-orange-200/50 transition-all duration-300'>
+                <div
+                    onClick={() => {
+                        setSelectedCategory('pending');
+                        setSelectedAgeGroup(null);
+                        setShowStatsModal(true);
+                    }}
+                    className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-amber-400 to-orange-500 p-5 rounded-xs hover:shadow-orange-200/50 transition-all duration-300'
+                >
                     <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
                         <IoMdTimer size={80} className="text-white" />
                     </div>
                     <div className="relative z-10 flex flex-col h-full justify-between">
                         <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "Pending Complaints" : "लंबित शिकायतें"}
+                            {language === "english" ? "Pending" : "लंबित"}
                         </p>
                         <div className="flex items-baseline gap-2">
                             <h3 className="text-3xl font-black text-white">
-                                {stats?.statusCounts?.PENDING ?? 0}
+                                {stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0}
                             </h3>
                             <span className="text-[10px] font-bold text-orange-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                {stats?.total ? `${Math.round(((stats.statusCounts?.PENDING ?? 0) / stats.total) * 100)}%` : '0%'}
+                                {stats?.total ? `${Math.round(((stats.statusCounts?.लंबित ?? stats.statusCounts?.PENDING ?? 0) / stats.total) * 100)}%` : '0%'}
                             </span>
                         </div>
                     </div>
                 </div>
 
                 {/* UNALLOCATED COMPLAINTS */}
-                <div className='relative overflow-hidden group bg-linear-to-br from-rose-500 to-red-600 p-5 rounded-xs hover:shadow-red-200/50 transition-all duration-300'>
+                <div
+                    onClick={() => {
+                        setSelectedCategory('unallocated');
+                        setSelectedAgeGroup(null);
+                        setShowStatsModal(true);
+                    }}
+                    className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-rose-500 to-red-600 p-5 rounded-xs hover:shadow-red-200/50 transition-all duration-300'
+                >
                     <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
                         <MdOutlineWrongLocation size={80} className="text-white" />
                     </div>
                     <div className="relative z-10 flex flex-col h-full justify-between">
                         <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "Unallocated Complaints" : "अनाबंटित शिकायतें"}
+                            {language === "english" ? "Unallocated" : "अनाबंटित"}
                         </p>
                         <div className="flex items-baseline gap-2">
                             <h3 className="text-3xl font-black text-white">
@@ -180,6 +202,33 @@ export default function Home() {
                             </h3>
                             <span className="text-[10px] font-bold text-rose-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
                                 {stats?.total ? `${Math.round(((stats.unallocatedCount ?? 0) / stats.total) * 100)}%` : '0%'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* NIRAKRIT COMPLAINTS */}
+                <div
+                    onClick={() => {
+                        setSelectedCategory('nirakrit');
+                        setSelectedAgeGroup(null);
+                        setShowStatsModal(true);
+                    }}
+                    className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-emerald-500 to-teal-600 p-5 rounded-xs hover:shadow-emerald-200/50 transition-all duration-300'
+                >
+                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                        <IoLayersOutline size={80} className="text-white" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full justify-between">
+                        <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
+                            {language === "english" ? "NIRAKRIT" : "निराकृत"}
+                        </p>
+                        <div className="flex items-baseline gap-2">
+                            <h3 className="text-3xl font-black text-white">
+                                {stats?.nirakritCount ?? 0}
+                            </h3>
+                            <span className="text-[10px] font-bold text-emerald-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
+                                {stats?.total ? `${Math.round(((stats?.nirakritCount ?? 0) / stats.total) * 100)}%` : '0%'}
                             </span>
                         </div>
                     </div>
@@ -203,9 +252,9 @@ export default function Home() {
                             <PieChart>
                                 <Pie
                                     data={[
-                                        { name: 'Pending', value: stats?.statusCounts?.PENDING ?? 0, color: '#f59e0b' },
+                                        { name: 'Pending', value: stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0, color: '#f59e0b' },
                                         { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
-                                        { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' }
+                                        { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' }
                                     ]}
                                     innerRadius={25}
                                     outerRadius={40}
@@ -227,7 +276,7 @@ export default function Home() {
 
                     <div className="flex justify-around mt-1">
                         <div className="flex flex-col items-center">
-                            <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.statusCounts?.PENDING ?? 0}</span>
+                            <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0}</span>
                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Pend</span>
                         </div>
                         <div className="flex flex-col items-center border-x border-slate-100 px-4">
@@ -235,393 +284,176 @@ export default function Home() {
                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Unall</span>
                         </div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[9px] font-black text-slate-800 uppercase">{(stats?.total ?? 0) - (stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0)}</span>
+                            <span className="text-[9px] font-black text-slate-800 uppercase">{(stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0)}</span>
                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Other</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className='flex flex-col w-full'>
-                <div className='flex w-full justify-start gap-2 flex-col'>
-                    <div className="flex items-center justify-between mb-2">
-                        <h1 className='text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2'>
-                            <RiDashboardLine className="text-blue-500" strokeWidth={0.5} />
-                            {user?.role === "TI"
-                                ? language === "english" ? "Thana Complaint Overview" : "थाना शिकायत अवलोकन"
-                                : user?.role === "SP"
-                                    ? language === "english" ? "District Complaint Overview" : "जिला शिकायत अवलोकन"
-                                    : language === "english" ? "Complaint Overview" : "शिकायत अवलोकन"
-                            }
-                        </h1>
-                    </div>
+            {/* Stats Modal */}
+            {showStatsModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md transition-all duration-300 p-4"
+                    onClick={() => setShowStatsModal(false)}
+                >
+                    <div
+                        className="bg-white rounded-xs w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-slate-50">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                    {language === "english" ? "Detailed Statistics" : "विस्तृत आंकड़े"}
+                                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] rounded-full uppercase tracking-tighter">
+                                        {selectedCategory}
+                                    </span>
+                                </h3>
+                                <p className="text-slate-500 text-xs mt-1 uppercase tracking-widest font-bold">
+                                    {user?.role === "TI" ? (language === "english" ? `Thana: ${user.thana}` : `थाना: ${user.thana}`) : (language === "english" ? `District Overview: ${user?.name}` : `जिला विवरण: ${user?.name}`)}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowStatsModal(false)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors text-slate-400 text-xl font-light"
+                            >
+                                ✕
+                            </button>
+                        </div>
 
-                    <div className='flex flex-col items-start justify-start gap-2 w-full'>
-                        <div className="flex w-full flex-wrap gap-3">
+                        {/* Content */}
+                        <div className="flex-1 overflow-auto p-6 space-y-8">
+                            {/* Row 1: Age Distribution */}
+                            <div className="space-y-4">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 pb-2">
+                                    {language === "english" ? `COMPLAINT AGE DISTRIBUTION (${selectedCategory.toUpperCase()})` : `शिकायत अवधि वितरण (${selectedCategory.toUpperCase()})`}
+                                </p>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                    {[
+                                        { id: 'lessThan15Days', label: language === "english" ? "0 - 15 Days" : "0 - 15 दिन", count: stats?.categoryAgeStats?.[selectedCategory]?.lessThan15Days ?? 0, color: "#22c55e", bg: "bg-green-50/50", border: "border-green-100" },
+                                        { id: 'fifteenToThirtyDays', label: language === "english" ? "15 - 30 Days" : "15 - 30 दिन", count: stats?.categoryAgeStats?.[selectedCategory]?.fifteenToThirtyDays ?? 0, color: "#f59e0b", bg: "bg-orange-50/50", border: "border-orange-100" },
+                                        { id: 'moreThan30Days', label: language === "english" ? "More Than A Month" : "एक महीने से अधिक", count: stats?.categoryAgeStats?.[selectedCategory]?.moreThan30Days ?? 0, color: "#ef4444", bg: "bg-red-50/50", border: "border-red-100" }
+                                    ].map((age, idx) => {
+                                        const isSelected = selectedAgeGroup === age.id;
+                                        const totalInCategory = (stats?.categoryAgeStats?.[selectedCategory]?.lessThan15Days ?? 0) +
+                                            (stats?.categoryAgeStats?.[selectedCategory]?.fifteenToThirtyDays ?? 0) +
+                                            (stats?.categoryAgeStats?.[selectedCategory]?.moreThan30Days ?? 0);
 
-                            {/* Age & Status Integrated Box */}
-                            <div className={`flex flex-col flex-1 min-w-0 w-full overflow-hidden border border-slate-200 rounded-xs bg-white mb-3 transition-all duration-300 ${isAgeStatsExpanded ? 'ring-1 ring-slate-200' : ''}`}>
-                                {/* Header / Collapsed Bar */}
-                                <div
-                                    onClick={() => setIsAgeStatsExpanded(!isAgeStatsExpanded)}
-                                    className="px-4 py-2.5 bg-white flex justify-between items-center cursor-pointer group hover:bg-slate-50 transition-colors"
-                                >
-                                    <div className="flex items-center gap-6 flex-1">
-
-
-                                        <p className='text-xs font-bold text-slate-700 uppercase tracking-wider'>
-                                            {language === "english" ? "View Detailed Stats" : "विस्तृत आँकड़े देखें"}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                        <button className="text-slate-400 group-hover:text-slate-600 transition-colors">
-                                            {isAgeStatsExpanded ? '▲' : '▼'}
-                                        </button>
-                                        {user?.role === "SP" && (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); setIsAgeStatsFullscreen(true); }}
-                                                className="text-slate-400 hover:text-indigo-600 transition-colors"
+                                        return (
+                                            <div
+                                                key={idx}
+                                                onClick={() => setSelectedAgeGroup(isSelected ? null : age.id as any)}
+                                                className={`cursor-pointer transition-all duration-300 flex flex-col p-4 rounded-xs border ${isSelected ? age.border + ' ring-2 ring-offset-2 ring-opacity-50 ring-slate-200 shadow-md transform scale-[1.02]' : 'border-slate-100'} ${age.bg}`}
                                             >
-                                                ⤢
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Expanded Content */}
-                                {isAgeStatsExpanded && (
-                                    <div className="p-5 bg-white space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        {/* Row 1: Status Overview (Minimal) */}
-                                        <div className="space-y-3">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 pb-2">
-                                                {language === "english" ? "COMPLAINT STATUS DISTRIBUTION" : "शिकायत स्थिति वितरण"}
-                                            </p>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                                                {complaintStatusColors.map((s) => (
-                                                    <div
-                                                        key={s.id}
-                                                        className="flex flex-col p-2.5 rounded-xs hover:border-slate-200 transition-all bg-slate-50/30"
-                                                        style={{ backgroundColor: `${s.indicatorColor}20`, color: s.indicatorColor }}
-                                                    >
-                                                        <span className="text-[9px] font-bold uppercase truncate">
-                                                            {language === "english" ? s.labeleng : s.labelhindi}
-                                                        </span>
-                                                        <div className="flex items-baseline gap-1 mt-1">
-                                                            <span className="text-lg font-black">
-                                                                {stats?.statusCounts?.[s.id] ?? 0}
-                                                            </span>
-                                                            <span className="text-[9px] font-bold">
-                                                                {stats?.total ? `(${Math.round(((stats.statusCounts?.[s.id] ?? 0) / stats.total) * 100)}%)` : '(0%)'}
-                                                            </span>
-                                                        </div>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{age.label}</span>
+                                                    {isSelected && <span className="text-[8px] bg-slate-800 text-white px-1 rounded-sm font-bold">ACTIVE</span>}
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-3xl font-black text-slate-800">{age.count}</span>
+                                                    <div className="flex-1 h-2 bg-white rounded-full overflow-hidden border border-slate-100/50">
+                                                        <div
+                                                            className="h-full transition-all duration-700"
+                                                            style={{
+                                                                width: `${totalInCategory ? (age.count / totalInCategory) * 100 : 0}%`,
+                                                                backgroundColor: age.color
+                                                            }}
+                                                        />
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Row 1.5: Age Overview for TI */}
-                                        {user?.role === "TI" && stats?.ageStats && (
-                                            <div className="space-y-3">
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 pb-2">
-                                                    {language === "english" ? "COMPLAINT AGE DISTRIBUTION" : "शिकायत अवधि वितरण"}
-                                                </p>
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                                    {[
-                                                        { label: language === "english" ? "< 1 Month" : "< 1 महीना", count: stats.ageStats.lessThan1Month, color: "#22c55e" },
-                                                        { label: language === "english" ? "1 - 3 Months" : "1 - 3 महीने", count: stats.ageStats.oneToThreeMonths, color: "#f59e0b" },
-                                                        { label: language === "english" ? "> 3 Months" : "> 3 महीने", count: stats.ageStats.moreThan3Months, color: "#ef4444" }
-                                                    ].map((age, idx) => (
-                                                        <div key={idx} className="flex flex-col p-3 rounded-xs border border-slate-100 bg-slate-50/20">
-                                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{age.label}</span>
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="text-2xl font-black text-slate-800">{age.count}</span>
-                                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                                    <div
-                                                                        className="h-full transition-all duration-500"
-                                                                        style={{
-                                                                            width: `${stats?.total ? (age.count / stats.total) * 100 : 0}%`,
-                                                                            backgroundColor: age.color
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                                <span className="text-[10px] font-bold text-slate-400">
-                                                                    {stats?.total ? `${Math.round((age.count / stats.total) * 100)}%` : '0%'}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                                    <span className="text-[11px] font-black text-slate-400 min-w-[35px]">
+                                                        {totalInCategory ? `${Math.round((age.count / totalInCategory) * 100)}%` : '0%'}
+                                                    </span>
                                                 </div>
                                             </div>
-                                        )}
-
-                                        {/* Row 2: Thana Drill-down (Minimal Full-width) */}
-                                        <div className="space-y-3">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 pb-2">
-                                                {language === "english" ? "THANA-WISE ANALYTICS" : "थाना-वार विश्लेषण"}
-                                            </p>
-                                            <div className="flex flex-col border border-slate-100 rounded-sm divide-y divide-slate-50">
-                                                {stats?.thanaAgeBreakdown && Object.entries(stats.thanaAgeBreakdown)
-                                                    .sort((a, b) => (b[1].lessThan1Month + b[1].oneToThreeMonths + b[1].moreThan3Months) - (a[1].lessThan1Month + a[1].oneToThreeMonths + a[1].moreThan3Months))
-                                                    .map(([thana, ages]) => {
-                                                        const isExpanded = expandedThana === thana;
-                                                        const total = ages.lessThan1Month + ages.oneToThreeMonths + ages.moreThan3Months;
-                                                        return (
-                                                            <div key={thana} className={`flex flex-col transition-all ${isExpanded ? 'bg-slate-50/40' : 'bg-white hover:bg-slate-50/20'}`}>
-                                                                <div
-                                                                    onClick={() => setExpandedThana(isExpanded ? null : thana)}
-                                                                    className={`flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 cursor-pointer gap-3 sm:gap-4 ${isExpanded ? 'bg-indigo-50/20' : ''}`}
-                                                                >
-                                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-8 flex-1 min-w-0">
-                                                                        <div className="min-w-[120px] sm:w-32 lg:w-40 shrink-0">
-                                                                            <span className="text-[11px] font-bold text-slate-700 truncate block">{thana}</span>
-                                                                        </div>
-
-                                                                        <div className="flex items-center gap-4 sm:gap-6 text-[10px] font-bold overflow-x-auto no-scrollbar">
-                                                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
-                                                                                <span className="text-slate-500">{ages.lessThan1Month}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
-                                                                                <span className="text-slate-500">{ages.oneToThreeMonths}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                                                                                <span className="text-slate-500">{ages.moreThan3Months}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-2 border-l border-slate-200 pl-3 shrink-0">
-                                                                                <span className="text-[11px] font-black text-slate-800">{total}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="flex items-center self-end sm:self-center gap-4">
-                                                                        <span className="text-slate-300 text-[8px]">{isExpanded ? '▲' : '▼'}</span>
-                                                                    </div>
-                                                                </div>
-
-                                                                {isExpanded && stats.thanaAgeStatusBreakdown?.[thana] && (
-                                                                    <div className="px-6 py-5 border-t border-slate-100 bg-white/50 animate-in slide-in-from-top-1 duration-200">
-                                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                                                                            {[
-                                                                                { key: 'lessThan1Month', label: '< 1 Month', color: '#008000' },
-                                                                                { key: 'oneToThreeMonths', label: '1 - 3 Months', color: '#FFA500' },
-                                                                                { key: 'moreThan3Months', label: '> 3 Months', color: '#FF0000' }
-                                                                            ].map(ageGroup => (
-                                                                                <div key={ageGroup.key} className="space-y-3">
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-[2px]"
-                                                                                            style={{ backgroundColor: `${ageGroup.color}15`, color: ageGroup.color }}>
-                                                                                            {ageGroup.label} - {ages[ageGroup.key as keyof typeof ages]}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className="flex flex-col gap-1.5 pl-1">
-                                                                                        {complaintStatusColors.map(s => {
-                                                                                            const count = stats.thanaAgeStatusBreakdown?.[thana]?.[ageGroup.key]?.[s.id] ?? 0;
-                                                                                            if (count === 0) return null;
-                                                                                            return (
-                                                                                                <div key={s.id} className="flex items-center justify-between group/status border-b pb-1 border-slate-300">
-                                                                                                    <div className="flex items-center gap-2">
-                                                                                                        <span className="text-[9px] font-bold text-slate-500 group-hover/status:text-slate-700 transition-colors px-2 py-1"
-                                                                                                            style={{ backgroundColor: s.indicatorColor + "15", color: s.indicatorColor }}>
-                                                                                                            {language === "english" ? s.labeleng : s.labelhindi}
-                                                                                                        </span>
-                                                                                                    </div>
-                                                                                                    <span className="text-[10px] font-black text-slate-600 px-1.5 py-0.5 bg-slate-50 rounded-xs border border-transparent group-hover/status:border-slate-100 transition-all"
-                                                                                                        style={{ backgroundColor: s.indicatorColor + "15", color: s.indicatorColor }}>
-                                                                                                        {count}
-                                                                                                    </span>
-                                                                                                </div>
-                                                                                            );
-                                                                                        })}
-                                                                                        {ages[ageGroup.key as keyof typeof ages] === 0 && <span className="text-[8px] text-slate-300 italic">No activity</span>}
-                                                                                    </div>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                                        );
+                                    })}
+                                </div>
                             </div>
+
+                            {/* Age Group Specific Status Distribution */}
+                            {selectedAgeGroup && stats?.ageStatusBreakdown?.[selectedAgeGroup] && (
+                                <div className="space-y-4 pt-4 animate-in slide-in-from-top-4 duration-300">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 pb-2 flex justify-between items-center">
+                                        <span>{language === "english" ? "STATUS BREAKDOWN FOR SELECTED AGE" : "चयनित अवधि के लिए स्थिति विवरण"}</span>
+                                        <button
+                                            onClick={() => setSelectedAgeGroup(null)}
+                                            className="text-[9px] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full text-slate-500 transition-colors"
+                                        >
+                                            CLOSE
+                                        </button>
+                                    </p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                                        {Object.entries(stats.ageStatusBreakdown[selectedAgeGroup])
+                                            .filter(([_, count]) => count > 0)
+                                            .sort((a, b) => b[1] - a[1])
+                                            .map(([status, count], idx) => {
+                                                const statusMeta = complaintStatusColors.find(s => s.id === status);
+                                                return (
+                                                    <div key={idx} className="bg-white border border-slate-100 p-3 rounded-xs flex flex-col gap-1 shadow-xs">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div
+                                                                className="w-2 h-2 rounded-full"
+                                                                style={{ backgroundColor: statusMeta?.indicatorColor ?? '#cbd5e1' }}
+                                                            />
+                                                            <span className="text-[9px] font-bold text-slate-500 uppercase truncate">
+                                                                {language === "english" ? statusMeta?.labeleng ?? status : statusMeta?.labelhindi ?? status}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-xl font-black text-slate-800">{count}</span>
+                                                    </div>
+                                                );
+                                            })
+                                        }
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Row 2: Thana-wise Age Distribution (SP Only) */}
+                            {user?.role === "SP" && stats?.thanaAgeBreakdown && (
+                                <div className="space-y-4 pt-4">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 pb-2">
+                                        {language === "english" ? "THANA-WISE AGE ANALYTICS" : "थाना-वार अवधि विश्लेषण"}
+                                    </p>
+                                    <div className="border border-slate-100 rounded-xs overflow-hidden">
+                                        <table className="w-full border-collapse">
+                                            <thead>
+                                                <tr className="bg-slate-50/80 border-b border-slate-100">
+                                                    <th className="py-3 px-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Thana Name</th>
+                                                    <th className="py-3 px-4 text-center text-[10px] font-bold text-green-600 uppercase tracking-wider">0-15 Days</th>
+                                                    <th className="py-3 px-4 text-center text-[10px] font-bold text-orange-600 uppercase tracking-wider">15-30 Days</th>
+                                                    <th className="py-3 px-4 text-center text-[10px] font-bold text-red-600 uppercase tracking-wider">{"> 30 Days"}</th>
+                                                    <th className="py-3 px-4 text-center text-[10px] font-bold text-slate-800 uppercase tracking-wider border-l border-slate-100">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {Object.entries(stats.thanaAgeBreakdown)
+                                                    .sort((a, b) => {
+                                                        const totalA = a[1].lessThan15Days + a[1].fifteenToThirtyDays + a[1].moreThan30Days;
+                                                        const totalB = b[1].lessThan15Days + b[1].fifteenToThirtyDays + b[1].moreThan30Days;
+                                                        return totalB - totalA;
+                                                    })
+                                                    .map(([thana, ages], idx) => (
+                                                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="py-2.5 px-4 text-xs font-bold text-slate-700">{thana}</td>
+                                                            <td className="py-2.5 px-4 text-center text-xs font-black text-green-600/70">{ages.lessThan15Days}</td>
+                                                            <td className="py-2.5 px-4 text-center text-xs font-black text-orange-600/70">{ages.fifteenToThirtyDays}</td>
+                                                            <td className="py-2.5 px-4 text-center text-xs font-black text-red-600/70">{ages.moreThan30Days}</td>
+                                                            <td className="py-2.5 px-4 text-center text-xs font-black text-slate-800 border-l border-slate-50 bg-slate-50/30">
+                                                                {ages.lessThan15Days + ages.fifteenToThirtyDays + ages.moreThan30Days}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-
-                {/* SP Thana Breakdown Modal */}
-                {modalStatus && user?.role === "SP" && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-                        onClick={() => setModalStatus(null)}
-                    >
-                        <div
-                            className="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {/* Header */}
-                            <div
-                                className="flex items-center justify-between px-5 py-4 border-b border-gray-100"
-                                style={{ borderLeftColor: activeStatusMeta?.indicatorColor, borderLeftWidth: 4 }}
-                            >
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                        {language === "english" ? "Thana Breakdown" : "थाना विवरण"}
-                                    </p>
-                                    <p className="font-bold" style={{ color: activeStatusMeta?.indicatorColor }}>
-                                        {language === "english" ? activeStatusMeta?.labeleng : activeStatusMeta?.labelhindi}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => setModalStatus(null)}
-                                    className="text-gray-400 hover:text-gray-700 text-xl font-light"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-
-                            {/* Thana rows */}
-                            <div className="px-5 py-3 divide-y divide-gray-100 max-h-[60vh] overflow-y-auto">
-                                {thanaRows.length === 0 ? (
-                                    <p className="text-sm text-gray-400 text-center py-6">
-                                        {language === "english" ? "No thanas assigned." : "कोई थाना नहीं मिला।"}
-                                    </p>
-                                ) : (
-                                    thanaRows.map(({ thana, count }) => (
-                                        <div key={thana} className="flex items-center justify-between py-3">
-                                            <p className="text-sm font-medium text-gray-700 capitalize">{thana}</p>
-                                            <span
-                                                className="text-sm font-bold px-3 py-0.5 rounded-full"
-                                                style={{
-                                                    color: activeStatusMeta?.indicatorColor,
-                                                    backgroundColor: `${activeStatusMeta?.indicatorColor}15`,
-                                                }}
-                                            >
-                                                {count}
-                                            </span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-                {/* Age Stats Fullscreen Modal */}
-                {isAgeStatsFullscreen && user?.role === "SP" && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md transition-all duration-300"
-                        onClick={() => setIsAgeStatsFullscreen(false)}
-                    >
-                        <div
-                            className="bg-white rounded-xs w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden m-4 animate-in zoom-in-95 duration-300"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {/* Header */}
-                            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50 bg-linear-to-r from-gray-600 to-gray-600 text-white">
-                                <div>
-                                    <h3 className="text-lg font-bold">
-                                        {language === "english" ? "Comprehensive Age Statistics" : "विस्तृत शिकायत अवधि आंकड़े"}
-                                    </h3>
-                                    <p className="text-indigo-100 text-xs mt-1">
-                                        {language === "english" ? `All Thanas under ${user.name}` : `${user.name} के अंतर्गत सभी थाने`}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => setIsAgeStatsFullscreen(false)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white text-xl font-light"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 overflow-auto p-6">
-                                <table className="w-full border-collapse">
-                                    <thead className="sticky top-0 bg-white z-10">
-                                        <tr className="border-b-2 border-slate-100">
-                                            <th className="py-3 px-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                                {language === "english" ? "Thana Name" : "थाने का नाम"}
-                                            </th>
-                                            <th className="py-3 px-4 text-center text-xs font-bold text-green-600 uppercase tracking-wider bg-green-50/50 rounded-tl-lg">
-                                                {language === "english" ? "< 1 Month" : "< 1 महीना"}
-                                            </th>
-                                            <th className="py-3 px-4 text-center text-xs font-bold text-orange-600 uppercase tracking-wider bg-orange-50/50">
-                                                {language === "english" ? "1-3 Months" : "1-3 महीने"}
-                                            </th>
-                                            <th className="py-3 px-4 text-center text-xs font-bold text-red-600 uppercase tracking-wider bg-red-50/50 rounded-tr-lg">
-                                                {language === "english" ? "> 3 Months" : "> 3 महीने"}
-                                            </th>
-                                            <th className="py-3 px-4 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider border-l border-slate-100">
-                                                {language === "english" ? "Total" : "कुल"}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {stats?.thanaAgeBreakdown && Object.entries(stats.thanaAgeBreakdown)
-                                            .sort((a, b) => {
-                                                const totalA = a[1].lessThan1Month + a[1].oneToThreeMonths + a[1].moreThan3Months;
-                                                const totalB = b[1].lessThan1Month + b[1].oneToThreeMonths + b[1].moreThan3Months;
-                                                return totalB - totalA;
-                                            })
-                                            .map(([thana, ages], idx) => (
-                                                <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
-                                                    <td className="py-3 px-4 text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors">
-                                                        {thana}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-center text-sm font-bold text-green-600 bg-green-50/20">
-                                                        {ages.lessThan1Month}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-center text-sm font-bold text-orange-600 bg-orange-50/20">
-                                                        {ages.oneToThreeMonths}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-center text-sm font-bold text-red-600 bg-red-50/20">
-                                                        {ages.moreThan3Months}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-center text-sm font-black text-indigo-700 border-l border-slate-50">
-                                                        {ages.lessThan1Month + ages.oneToThreeMonths + ages.moreThan3Months}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        }
-                                    </tbody>
-                                    <tfoot className="sticky bottom-0 bg-slate-50 font-bold border-t-2 border-indigo-100">
-                                        <tr>
-                                            <td className="py-4 px-4 text-sm text-slate-600 uppercase tracking-tight">
-                                                {language === "english" ? "Grand Totals" : "कुल योग"}
-                                            </td>
-                                            <td className="py-4 px-4 text-center text-lg text-green-700">
-                                                {stats?.ageStats?.lessThan1Month ?? 0}
-                                            </td>
-                                            <td className="py-4 px-4 text-center text-lg text-orange-700">
-                                                {stats?.ageStats?.oneToThreeMonths ?? 0}
-                                            </td>
-                                            <td className="py-4 px-4 text-center text-lg text-red-700">
-                                                {stats?.ageStats?.moreThan3Months ?? 0}
-                                            </td>
-                                            <td className="py-4 px-4 text-center text-xl text-indigo-800 border-l border-indigo-100">
-                                                {(stats?.ageStats?.lessThan1Month ?? 0) + (stats?.ageStats?.oneToThreeMonths ?? 0) + (stats?.ageStats?.moreThan3Months ?? 0)}
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                                {(!stats?.thanaAgeBreakdown || Object.keys(stats.thanaAgeBreakdown).length === 0) && (
-                                    <div className="flex flex-col items-center justify-center py-20 text-slate-300">
-                                        <span className="text-4xl mb-4">📊</span>
-                                        <p className="text-sm font-medium">
-                                            {language === "english" ? "No breakdown data available" : "कोई विवरण डेटा उपलब्ध नहीं है"}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+            )}
 
 
             <div className="flex items-center justify-between mb-2">

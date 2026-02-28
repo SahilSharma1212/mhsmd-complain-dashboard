@@ -53,17 +53,29 @@ export interface StatusCounts {
 export interface StatData {
     total: number;
     unallocatedCount?: number;
+    nirakritCount?: number;
     statusCounts: StatusCounts;
     thanaBreakdown?: Record<string, StatusCounts>;
     ageStats?: {
-        lessThan1Month: number;
-        oneToThreeMonths: number;
-        moreThan3Months: number;
+        lessThan15Days: number;
+        fifteenToThirtyDays: number;
+        moreThan30Days: number;
+    };
+    categoryAgeStats?: {
+        total: { lessThan15Days: number; fifteenToThirtyDays: number; moreThan30Days: number };
+        pending: { lessThan15Days: number; fifteenToThirtyDays: number; moreThan30Days: number };
+        unallocated: { lessThan15Days: number; fifteenToThirtyDays: number; moreThan30Days: number };
+        nirakrit: { lessThan15Days: number; fifteenToThirtyDays: number; moreThan30Days: number };
+    };
+    ageStatusBreakdown?: {
+        lessThan15Days: StatusCounts;
+        fifteenToThirtyDays: StatusCounts;
+        moreThan30Days: StatusCounts;
     };
     thanaAgeBreakdown?: Record<string, {
-        lessThan1Month: number;
-        oneToThreeMonths: number;
-        moreThan3Months: number;
+        lessThan15Days: number;
+        fifteenToThirtyDays: number;
+        moreThan30Days: number;
     }>;
     thanaAgeStatusBreakdown?: Record<string, Record<string, StatusCounts>>;
 }
