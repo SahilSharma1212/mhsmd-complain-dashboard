@@ -73,13 +73,6 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    if (decodedToken.role === "TI") {
-        return NextResponse.json(
-            { message: "Unauthorised Access", success: false },
-            { status: 403 }
-        );
-    }
-
     // 2. Parse FormData
     let formData: FormData;
     try {
@@ -102,6 +95,16 @@ export async function POST(request: NextRequest) {
         allocated_thana: formData.get("allocated_thana") as string,
         message: formData.get("message") as string | undefined,
     };
+
+    // ─── Security Check: TI Jurisdiction ───
+    if (decodedToken.role === "TI") {
+        if (rawFields.allocated_thana !== decodedToken.thana) {
+            return NextResponse.json(
+                { message: `Authorisation Failed: You can only register complaints for your assigned station ("${decodedToken.thana}").`, success: false },
+                { status: 403 }
+            );
+        }
+    }
 
     // 3. Validate with Zod (was defined but never used before — now it is)
     const parsed = complaintPostSchema.safeParse(rawFields);
@@ -137,7 +140,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle(); // use maybeSingle to avoid error on no rows
 
     if (thanaError) {
-        console.error("Thana lookup error:", thanaError.message);
+        console.log("Thana lookup error:", thanaError.message);
         return NextResponse.json(
             { message: "Error verifying thana. Please try again.", success: false },
             { status: 500 }
@@ -196,7 +199,7 @@ export async function POST(request: NextRequest) {
                 const arrayBuffer = await file.arrayBuffer();
                 buffer = Buffer.from(arrayBuffer);
             } catch (err) {
-                console.error("File read error:", err);
+                console.log("File read error:", err);
                 return NextResponse.json(
                     { message: `Failed to read file: "${file.name}". Please try again.`, success: false },
                     { status: 500 }
@@ -211,7 +214,7 @@ export async function POST(request: NextRequest) {
                 });
 
             if (uploadError) {
-                console.error("Storage upload error:", uploadError.message);
+                console.log("Storage upload error:", uploadError.message);
                 return NextResponse.json(
                     {
                         message: `Failed to upload file "${file.name}": ${uploadError.message}`,
@@ -250,7 +253,7 @@ export async function POST(request: NextRequest) {
         .single();
 
     if (error) {
-        console.error("Complaint insert error:", error.message);
+        console.log("Complaint insert error:", error.message);
         return NextResponse.json(
             { message: "Failed to submit complaint. Please try again.", error: error.message, success: false },
             { status: 500 }
@@ -320,7 +323,7 @@ export async function GET(request: NextRequest) {
             .eq("designated_sp", decodedToken.name);
 
         if (thanaFetchError) {
-            console.error("Thana fetch error for SP:", {
+            console.log("Thana fetch error for SP:", {
                 message: thanaFetchError.message,
                 error: thanaFetchError,
                 url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'PRESENT' : 'MISSING'
@@ -361,6 +364,8 @@ export async function GET(request: NextRequest) {
             query = query.eq("status", value);
         } else if (filter === "role_addressed_to") {
             query = query.eq("role_addressed_to", value);
+        } else if (filter === "allocated_thana") {
+            query = query.eq("allocated_thana", value);
         } else if (filter === "id") {
             query = query.eq("id", value);
         }
@@ -374,7 +379,7 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query.range(from, to);
 
     if (error) {
-        console.error("Complaints fetch error:", error.message);
+        console.log("Complaints fetch error:", error.message);
         return NextResponse.json(
             { message: "Failed to fetch complaints. Please try again.", success: false },
             { status: 500 }

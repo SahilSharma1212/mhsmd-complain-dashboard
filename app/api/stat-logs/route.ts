@@ -58,15 +58,19 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(now.getMonth() - 3);
 
+    // Pre-calculate timestamps for faster comparison
+    const oneMonthTs = oneMonthAgo.getTime();
+    const threeMonthsTs = threeMonthsAgo.getTime();
+
     for (const row of rows) {
         // 1. Age Stats (Process for ALL complaints)
-        const createdAt = new Date(row.created_at);
+        const createdAtTs = new Date(row.created_at).getTime();
         let currentAge: 'lessThan1Month' | 'oneToThreeMonths' | 'moreThan3Months' = 'moreThan3Months';
 
-        if (createdAt > oneMonthAgo) {
+        if (createdAtTs > oneMonthTs) {
             ageStats.lessThan1Month++;
             currentAge = 'lessThan1Month';
-        } else if (createdAt > threeMonthsAgo) {
+        } else if (createdAtTs > threeMonthsTs) {
             ageStats.oneToThreeMonths++;
             currentAge = 'oneToThreeMonths';
         } else {
@@ -147,7 +151,9 @@ export async function GET(request: NextRequest) {
         const rows = data ?? [];
         const { statusCounts, ageStats, thanaAgeStatusBreakdown } = aggregateCounts(rows as any);
 
-        return NextResponse.json({ total: rows.length, statusCounts, ageStats, thanaAgeStatusBreakdown });
+        const response = NextResponse.json({ total: rows.length, statusCounts, ageStats, thanaAgeStatusBreakdown });
+        response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=30');
+        return response;
     }
 
     // ── 3. SP: 2 queries → thana list + complaints with thana column ──────────
@@ -177,28 +183,47 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        // Round-trip 2: fetch status + allocated_thana for JS aggregation
-        const { data: complaintData, error: complaintError } = await supabase
-            .from("complaints")
-            .select("status, allocated_thana, created_at")
-            .in("allocated_thana", thanaList);
+        // Round-trip 2: Optimized parallel fetches to avoid long/brittle .or() strings
+        // 1. Fetch complaints allocated to the SP's thanas
+        // 2. Fetch unallocated complaints
+        const [allocatedRes, unallocatedRes] = await Promise.all([
+            supabase
+                .from("complaints")
+                .select("status, allocated_thana, created_at")
+                .in("allocated_thana", thanaList),
+            supabase
+                .from("complaints")
+                .select("status, allocated_thana, created_at")
+                .is("allocated_thana", null)
+        ]);
 
-        if (complaintError) {
-            console.error("stat-logs SP complaint fetch error:", complaintError.message);
-            return NextResponse.json({ error: complaintError.message }, { status: 500 });
+        if (allocatedRes.error) {
+            console.error("stat-logs SP allocated fetch error:", allocatedRes.error.message);
+            return NextResponse.json({ error: allocatedRes.error.message }, { status: 500 });
+        }
+        if (unallocatedRes.error) {
+            console.error("stat-logs SP unallocated fetch error:", unallocatedRes.error.message);
+            return NextResponse.json({ error: unallocatedRes.error.message }, { status: 500 });
         }
 
-        const rows = complaintData ?? [];
+        const rows = [...(allocatedRes.data ?? []), ...(unallocatedRes.data ?? [])];
+        const unallocatedCount = unallocatedRes.data?.length ?? 0;
+
         const { statusCounts, thanaBreakdown, ageStats, thanaAgeBreakdown, thanaAgeStatusBreakdown } = aggregateCounts(rows as any);
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             total: rows.length,
+            unallocatedCount,
             statusCounts,
-            thanaBreakdown, // { thanaName: { "संजेय": 3, "वापसी": 1, ... } }
+            thanaBreakdown,
             ageStats,
-            thanaAgeBreakdown, // { thanaName: { lessThan1Month: 2, ... } }
-            thanaAgeStatusBreakdown, // { thanaName: { ageGroup: { status: count } } }
+            thanaAgeBreakdown,
+            thanaAgeStatusBreakdown,
         });
+
+        // Add Cache-Control header for better reuse & less origin load
+        response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=30');
+        return response;
     }
 
     return NextResponse.json({ error: "Role not authorised" }, { status: 403 });

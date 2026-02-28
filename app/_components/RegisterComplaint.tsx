@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Complaint, Thana } from '../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -10,7 +10,7 @@ import { useLanguageStore } from '../_store/languageStore';
 
 export default function RegisterComplaint() {
     const { language } = useLanguageStore();
-    const { thana } = useUserStore();
+    const { thana, user } = useUserStore();
     const [loading, setLoading] = useState(false);
     const [complaintDetails, setComplaintDetails] = useState<Complaint>({
         role_addressed_to: "",
@@ -26,6 +26,13 @@ export default function RegisterComplaint() {
     });
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Auto-fill thana for TI users
+    useEffect(() => {
+        if (user?.role === 'TI' && user.thana) {
+            setComplaintDetails(prev => ({ ...prev, allocated_thana: user.thana as string }));
+        }
+    }, [user]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -130,6 +137,35 @@ export default function RegisterComplaint() {
                         </select>
                     </div>
 
+                    {/* Thana */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="thana" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
+                            {language === "english" ? "Allocate to Station (Thana)" : "स्टेशन (थाना) को आवंटित करें"}
+                        </label>
+                        <select
+                            id="thana"
+                            value={complaintDetails.allocated_thana}
+                            disabled={user?.role === 'TI'}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, allocated_thana: e.target.value })}
+                            className={`w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden ${user?.role === 'TI' ? 'opacity-70 cursor-not-allowed bg-slate-100' : ''}`} >
+                            {user?.role === 'TI' ? (
+                                <option value={user.thana}>{user.thana}</option>
+                            ) : (
+                                <>
+                                    <option value="">{language === "english" ? "-- Select Thana --" : "-- थाना चुनें --"}</option>
+                                    {thana?.map((th: Thana, index: number) => (
+                                        <option key={index} value={th.name}>{th.name}</option>
+                                    ))}
+                                </>
+                            )}
+                        </select>
+                        {user?.role === 'TI' && (
+                            <p className="text-[10px] font-bold text-blue-600 mt-1 uppercase tracking-tight">
+                                {language === "english" ? "Locked to your jurisdiction" : "आपके अधिकार क्षेत्र के लिए लॉक किया गया"}
+                            </p>
+                        )}
+                    </div>
+
                     {/* Recipient Address */}
                     <div className="space-y-1.5">
                         <label htmlFor="recipient_address" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
@@ -199,24 +235,7 @@ export default function RegisterComplaint() {
                                 className='w-full px-4 py-2.5 bg-transparent text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:bg-white transition-all outline-none' />
                         </div>
                     </div>
-
-                    {/* Thana */}
-                    <div className="space-y-1.5">
-                        <label htmlFor="thana" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
-                            {language === "english" ? "Allocate to Station (Thana)" : "स्टेशन (थाना) को आवंटित करें"}
-                        </label>
-                        <select
-                            id="thana"
-                            value={complaintDetails.allocated_thana}
-                            onChange={(e) => setComplaintDetails({ ...complaintDetails, allocated_thana: e.target.value })}
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
-                            <option value="">{language === "english" ? "-- Select Thana --" : "-- थाना चुनें --"}</option>
-                            {thana?.map((th: Thana, index: number) => (
-                                <option key={index} value={th.name}>{th.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
+                    {/* Message */}
                     <div className="space-y-1.5 md:col-span-2">
                         <label htmlFor="description" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
                             {language === "english" ? "Detailed Description / Message" : "विस्तृत विवरण / संदेश"}
@@ -230,7 +249,7 @@ export default function RegisterComplaint() {
                             className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden resize-none'
                         />
                     </div>
-
+                    {/* Files */}
                     <div className="space-y-4 md:col-span-2 lg:col-span-3 border-t border-slate-100 pt-6 mt-4">
                         <div className="flex items-center justify-between">
                             <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5'>

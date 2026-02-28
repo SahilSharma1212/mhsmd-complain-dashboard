@@ -7,32 +7,60 @@ import { IoLayersOutline, IoReloadOutline, IoBusinessOutline, IoExpand, IoCloseO
 import { MdAttachFile } from 'react-icons/md';
 import { Complaint } from '../types';
 import { useLanguageStore } from '../_store/languageStore';
+import { useUnallocatedStore } from '../_store/unallocatedStore';
+import { useStatsStore } from '../_store/statsStore';
+import { useComplaintStore } from '../_store/complaintStore';
+import { useRef } from 'react';
 
 export default function UnallocatedComplaints() {
     const { thana, user } = useUserStore();
-    const [complaints, setComplaints] = useState<Complaint[]>([]);
-    const [loading, setLoading] = useState(true);
+    const {
+        complaints,
+        totalCount,
+        currentPage: cachedPage,
+        lastFetched,
+        setCachedData,
+        clearCache: clearUnallocatedCache
+    } = useUnallocatedStore();
+    const { fetchStats } = useStatsStore();
+    const { clearCache: clearComplaintCache } = useComplaintStore();
+
+    const [loading, setLoading] = useState(false);
     const [allocatingId, setAllocatingId] = useState<string | null>(null);
-    const [page, setPage] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
+    const [page, setPage] = useState(cachedPage);
     const [selectedThanas, setSelectedThanas] = useState<{ [key: string]: string }>({});
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const { language } = useLanguageStore();
-    const fetchUnallocated = useCallback(async () => {
+
+    const isFetchingRef = useRef(false);
+    const fetchUnallocated = useCallback(async (force = false) => {
+        if (isFetchingRef.current) return;
+
+        const CACHE_DURATION = 5 * 60 * 1000;
+        if (!force && lastFetched && Date.now() - lastFetched < CACHE_DURATION && complaints && page === cachedPage) {
+            setLoading(false);
+            return;
+        }
+
         try {
+            isFetchingRef.current = true;
             setLoading(true);
             const response = await axios.get(`/api/complaint-allocation?page=${page}`);
             if (response.data.success) {
-                setComplaints(response.data.data);
-                setTotalCount(response.data.totalCount);
+                setCachedData({
+                    complaints: response.data.data,
+                    totalCount: response.data.totalCount,
+                    currentPage: page
+                });
             }
         } catch (error) {
             toast.error("Failed to fetch unallocated complaints");
         } finally {
             setLoading(false);
+            isFetchingRef.current = false;
         }
-    }, [page]);
+    }, [page, lastFetched, complaints, cachedPage, setCachedData]);
 
     useEffect(() => {
         if (user?.role === "SP") {
@@ -56,9 +84,18 @@ export default function UnallocatedComplaints() {
 
             if (response.data.success) {
                 toast.success(language === "english" ? "Complaint allocated successfully" : "शिकायत सफलतापूर्वक आवंटित की गई");
-                // Remove from local list
-                setComplaints(prev => prev.filter(c => c.id !== id));
-                setTotalCount(prev => prev - 1);
+                // Remove from cached list
+                if (complaints) {
+                    const updatedList = complaints.filter(c => c.id !== id);
+                    setCachedData({
+                        complaints: updatedList,
+                        totalCount: totalCount - 1,
+                        currentPage: page
+                    });
+                }
+                // Sync other stores
+                fetchStats(true);
+                clearComplaintCache();
             }
         } catch (error) {
             toast.error("Allocation failed");
@@ -95,7 +132,7 @@ export default function UnallocatedComplaints() {
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={fetchUnallocated}
+                        onClick={() => fetchUnallocated(true)}
                         className='p-2 rounded-xs bg-slate-50 border border-slate-200 text-slate-400 hover:text-orange-600 hover:border-orange-200 hover:bg-white transition-all cursor-pointer shadow-xs group'
                         title="Refresh Queue"
                     >
@@ -120,7 +157,7 @@ export default function UnallocatedComplaints() {
                             </tr>
                         </thead>
                         <tbody className='divide-y divide-slate-100'>
-                            {loading ? (
+                            {loading || !complaints ? (
                                 Array.from({ length: 5 }).map((_, idx) => (
                                     <tr key={idx} className="animate-pulse">
                                         {Array.from({ length: 7 }).map((_, i) => (
@@ -229,7 +266,7 @@ export default function UnallocatedComplaints() {
                 </div>
 
                 {/* PAGINATION */}
-                {totalCount > 20 && (
+                {complaints && totalCount > 20 && (
                     <div className='flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xs'>
                         <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
                             Showing {complaints.length} of {totalCount} entries

@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     // Fetch complaints where allocated_thana is null or empty
     const { data, error, count } = await supabase
         .from("complaints")
-        .select("*", { count: "exact" })
+        .select("id, complainant_name, complainant_contact, date, created_at, role_addressed_to, subject, message, file_urls, complainant_details", { count: "exact" })
         .or('allocated_thana.is.null,allocated_thana.eq.')
         .order("created_at", { ascending: false })
         .range(from, to);

@@ -10,21 +10,34 @@ import { CgNotes } from 'react-icons/cg';
 import { Complaint } from '../types';
 import Link from 'next/link';
 import { useLanguageStore } from '../_store/languageStore';
+import { useComplaintStore } from '../_store/complaintStore';
 
 export default function ManageComplaints() {
-    const { complaints, setComplaints, setCurrentlyViewingComplaint } = useUserStore();
+    const { user, thana, setCurrentlyViewingComplaint } = useUserStore();
+    const {
+        complaints,
+        totalCount,
+        currentPage,
+        filterAttribute: cachedFilterAttribute,
+        filterValue: cachedFilterValue,
+        lastFetched,
+        setCachedData,
+        clearCache
+    } = useComplaintStore();
     const { language } = useLanguageStore();
 
-    // ─── Search & Pagination state ───
-    const [filterAttribute, setFilterAttribute] = useState("");
-    const [filterValue, setFilterValue] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
+    // ─── Search & Pagination state (Local sync with store) ───
+    const [filterAttribute, setFilterAttribute] = useState(cachedFilterAttribute);
+    const [filterValue, setFilterValue] = useState(cachedFilterValue);
     const [searchLoading, setSearchLoading] = useState(false);
+    const isFetchingRef = useRef(false);
     const pageSize = 20;
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-    const fetchComplaints = useCallback(async (page = 1, filter = "", value = "") => {
+    const fetchComplaints = useCallback(async (page = 1, filter = "", value = "", force = false) => {
+        if (isFetchingRef.current && !force) return;
+
+        isFetchingRef.current = true;
         setSearchLoading(true);
         try {
             const params = new URLSearchParams();
@@ -36,13 +49,15 @@ export default function ManageComplaints() {
             const response = await axios.get(`/api/complaint?${params.toString()}`);
             if (response.data && response.data.success) {
                 const complaintData = response.data.data;
-                if (Array.isArray(complaintData)) {
-                    setComplaints(complaintData);
-                } else {
-                    setComplaints([complaintData]);
-                }
-                setTotalCount(response.data.totalCount ?? 0);
-                setCurrentPage(page);
+                const normalizedData = Array.isArray(complaintData) ? complaintData : [complaintData];
+
+                setCachedData({
+                    complaints: normalizedData,
+                    totalCount: response.data.totalCount ?? 0,
+                    currentPage: page,
+                    filterAttribute: filter,
+                    filterValue: value
+                });
             }
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -58,13 +73,20 @@ export default function ManageComplaints() {
             console.error(error);
         } finally {
             setSearchLoading(false);
+            isFetchingRef.current = false;
         }
-    }, [setComplaints]);
+    }, [setCachedData]);
 
-    // Initial load
+    // Initial load with caching logic
     useEffect(() => {
-        fetchComplaints(1);
-    }, [fetchComplaints]);
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        const isCacheValid = lastFetched && (Date.now() - lastFetched < CACHE_DURATION);
+
+        if (!complaints || !isCacheValid) {
+            fetchComplaints(currentPage, filterAttribute, filterValue);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Reset filterValue when changing filterAttribute
     useEffect(() => {
@@ -88,8 +110,8 @@ export default function ManageComplaints() {
     const handleRefresh = () => {
         setFilterAttribute("");
         setFilterValue("");
-        setCurrentPage(1);
-        fetchComplaints(1);
+        clearCache();
+        fetchComplaints(1, "", "", true);
     };
 
     const complaintStatusColors: Record<string, { bg: string, text: string }> = {
@@ -137,7 +159,13 @@ export default function ManageComplaints() {
                     const updatedComplaints = complaints.map((c) =>
                         c.id === id ? { ...c, status: status } : c
                     );
-                    setComplaints(updatedComplaints);
+                    setCachedData({
+                        complaints: updatedComplaints,
+                        totalCount,
+                        currentPage,
+                        filterAttribute,
+                        filterValue
+                    });
                 }
                 setActiveComplaintId(null);
                 setPopupPosition(null);
@@ -178,7 +206,14 @@ export default function ManageComplaints() {
             if (response.data.success) {
                 toast.success(language === "english" ? "Complaint deleted successfully" : "शिकायत सफलतापूर्वक हटा दी गई");
                 if (complaints) {
-                    setComplaints(complaints.filter((c) => c.id !== id));
+                    const updatedComplaints = complaints.filter((c) => c.id !== id);
+                    setCachedData({
+                        complaints: updatedComplaints,
+                        totalCount: totalCount - 1,
+                        currentPage,
+                        filterAttribute,
+                        filterValue
+                    });
                 }
                 setShowDeleteConfirm(null);
             }
@@ -242,7 +277,12 @@ export default function ManageComplaints() {
                             <option value="">{language === "english" ? "-- Select Attribute --" : "-- विशेषता चुनें --"}</option>
                             <option value="status">{language === "english" ? "Status" : "स्टेटस"}</option>
                             <option value="complainant_name">{language === "english" ? "Name of Complainer" : "शिकायतकर्ता का नाम"}</option>
-                            <option value="role_addressed_to">{language === "english" ? "Addressed To" : "किसको संबोधित"}</option>
+                            {user?.role === 'SP' && (
+                                <option value="allocated_thana">{language === "english" ? "Search by Thana" : "थाना द्वारा खोजें"}</option>
+                            )}
+                            {user?.role !== 'TI' && user?.role !== 'SP' && (
+                                <option value="role_addressed_to">{language === "english" ? "Addressed To" : "किसको संबोधित"}</option>
+                            )}
                         </select>
                     </div>
 
@@ -262,6 +302,17 @@ export default function ManageComplaints() {
                                     <option value="प्रतिबंधात्मक">प्रतिबंधात्मक</option>
                                     <option value="वापसी">वापसी</option>
                                     <option value="अन्य">अन्य</option>
+                                </select>
+                            ) : filterAttribute === "allocated_thana" ? (
+                                <select
+                                    value={filterValue}
+                                    onChange={(e) => setFilterValue(e.target.value)}
+                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
+                                >
+                                    <option value="">{language === "english" ? "ALL" : "सभी"}</option>
+                                    {thana?.map((th, idx) => (
+                                        <option key={idx} value={th.name}>{th.name}</option>
+                                    ))}
                                 </select>
                             ) : filterAttribute === "role_addressed_to" ? (
                                 <select

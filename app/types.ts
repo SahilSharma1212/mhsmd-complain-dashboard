@@ -44,3 +44,25 @@ export interface addThanaDetails {
     city: string,
     contact_number: string,
 }
+
+export interface StatusCounts {
+    [status: string]: number;
+}
+
+export interface StatData {
+    total: number;
+    unallocatedCount?: number;
+    statusCounts: StatusCounts;
+    thanaBreakdown?: Record<string, StatusCounts>;
+    ageStats?: {
+        lessThan1Month: number;
+        oneToThreeMonths: number;
+        moreThan3Months: number;
+    };
+    thanaAgeBreakdown?: Record<string, {
+        lessThan1Month: number;
+        oneToThreeMonths: number;
+        moreThan3Months: number;
+    }>;
+    thanaAgeStatusBreakdown?: Record<string, Record<string, StatusCounts>>;
+}
