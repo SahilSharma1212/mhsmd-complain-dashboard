@@ -425,6 +425,20 @@ export default function LogsPage() {
                                         </div>
                                     </div>
                                 )}
+
+                                {currentlyViewingComplaint.feedback && (
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                            <IoChatbubbleOutline className="text-emerald-500" />
+                                            {language === "english" ? "User Feedback" : "उपयोगकर्ता प्रतिक्रिया"}
+                                        </h3>
+                                        <div className="bg-emerald-50/50 p-4 rounded-xs border border-emerald-100/50">
+                                            <p className="text-sm text-emerald-900 font-medium leading-relaxed italic">
+                                                "{currentlyViewingComplaint.feedback}"
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <p className="text-slate-600 text-sm italic">{language === "english" ? "Failed to load complaint details" : "शिकायत विवरण लोड करने में विफल"}.</p>
@@ -563,7 +577,7 @@ export default function LogsPage() {
                                             </p>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {log.action !== 'CREATED' && (
+                                            {log.action !== 'CREATED' && user?.role === 'SP' && (
                                                 <button
                                                     onClick={() => {
                                                         setLogToDelete(log.id)

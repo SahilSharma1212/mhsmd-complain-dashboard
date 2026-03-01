@@ -116,10 +116,9 @@ export default function ManageComplaints() {
 
     const complaintStatusColors = COMPLAINT_STATUS_COLORS;
 
-    const [activeComplaintId, setActiveComplaintId] = useState<string | null>(null);
     const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
-    const [popupPosition, setPopupPosition] = useState<{ top: number; left: number } | null>(null);
-    const popupRef = useRef<HTMLDivElement>(null);
+    const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false);
+    const [complaintToUpdateStatus, setComplaintToUpdateStatus] = useState<Complaint | null>(null);
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -127,19 +126,7 @@ export default function ManageComplaints() {
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-    // Close popup on outside click
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-                setActiveComplaintId(null);
-                setPopupPosition(null);
-            }
-        };
-        if (activeComplaintId) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [activeComplaintId]);
+
 
     const handleStatusChange = async (id: string, status: string) => {
         if (updatingStatusId) return;
@@ -160,8 +147,8 @@ export default function ManageComplaints() {
                         filterValue
                     });
                 }
-                setActiveComplaintId(null);
-                setPopupPosition(null);
+                setShowStatusUpdateModal(false);
+                setComplaintToUpdateStatus(null);
             }
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -193,6 +180,10 @@ export default function ManageComplaints() {
     }
 
     const handleDeleteComplaint = async (id: string) => {
+        if (user?.role !== 'SP') {
+            toast.error(language === "english" ? "Only SP users can delete complaints" : "केवल SP उपयोगकर्ता ही शिकायतें हटा सकते हैं");
+            return;
+        }
         setDeletingId(id);
         try {
             const response = await axios.delete(`/api/complaint?id=${id}`);
@@ -381,9 +372,15 @@ export default function ManageComplaints() {
                                     <tr key={complaint.id} className='hover:bg-slate-50/50 transition-colors group'>
                                         {/* ID */}
                                         <td className='px-4 py-4'>
-                                            <span className="text-[10px] font-mono text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100" title={complaint.id}>
-                                                #{String(complaint.id).slice(0, 8)}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className={`w-2 h-2 rounded-full shrink-0 ${complaint.feedback?.trim() ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]'}`}
+                                                    title={complaint.feedback?.trim() ? (language === "english" ? "Feedback Received" : "प्रतिक्रिया प्राप्त हुई") : (language === "english" ? "Pending Feedback" : "प्रतिक्रिया लंबित")}
+                                                />
+                                                <span className="text-[10px] font-mono text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100" title={complaint.id}>
+                                                    #{String(complaint.id).slice(0, 8)}
+                                                </span>
+                                            </div>
                                         </td>
                                         {/* Complainer */}
                                         <td className='px-4 py-4'>
@@ -464,18 +461,14 @@ export default function ManageComplaints() {
                                         </td>
                                         {/* Status */}
                                         <td className='px-4 py-4 text-center'>
-                                            <div ref={activeComplaintId === complaint.id ? popupRef : undefined} className="inline-block relative">
+                                            <div className="inline-block relative">
                                                 <button
                                                     onClick={(e) => {
-                                                        if (activeComplaintId === complaint.id) {
-                                                            setActiveComplaintId(null); setPopupPosition(null);
-                                                        } else {
-                                                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                                            setPopupPosition({ top: rect.top, left: rect.left + rect.width / 2 });
-                                                            setActiveComplaintId(complaint.id || null);
-                                                        }
+                                                        e.stopPropagation();
+                                                        setComplaintToUpdateStatus(complaint);
+                                                        setShowStatusUpdateModal(true);
                                                     }}
-                                                    className="inline-flex items-center px-3 py-1 rounded-xs text-[10px] font-bold cursor-pointer whitespace-nowrap uppercase tracking-wider shadow-xs hover:contrast-125 transition-all"
+                                                    className="inline-flex items-center px-3 py-1 rounded-xs text-[10px] font-bold cursor-pointer whitespace-nowrap uppercase tracking-wider shadow-xs hover:contrast-125 transition-all outline-none"
                                                     style={{
                                                         color: complaintStatusColors[complaint.status]?.text,
                                                         backgroundColor: complaintStatusColors[complaint.status]?.bg,
@@ -486,20 +479,6 @@ export default function ManageComplaints() {
                                                     ) : null}
                                                     {complaint.status}
                                                 </button>
-                                                {activeComplaintId === complaint.id && popupPosition && (
-                                                    <div className='fixed p-1.5 flex flex-col gap-1 bg-white/95 backdrop-blur-md shadow-2xl rounded-xs border border-slate-200 z-50 w-36 scale-in-center'
-                                                        style={{ top: popupPosition.top - 8, left: popupPosition.left, transform: 'translate(-50%, -100%)' }}>
-                                                        <p className='text-[8px] font-bold text-slate-600 uppercase tracking-widest text-center py-1 border-b border-slate-100 mb-1'>Update Status</p>
-                                                        {Object.keys(complaintStatusColors).map((status) => (
-                                                            <button key={status} disabled={updatingStatusId !== null}
-                                                                onClick={(e) => { e.stopPropagation(); handleStatusChange(complaint.id!, status); }}
-                                                                className='w-full px-3 py-1.5 text-[10px] font-bold rounded-xs transition-all text-center uppercase tracking-tighter hover:scale-[1.02] active:scale-[0.98]'
-                                                                style={{ color: complaintStatusColors[status].text, backgroundColor: complaintStatusColors[status].bg }}>
-                                                                {status}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
                                             </div>
                                         </td>
                                         {/* Actions */}
@@ -511,12 +490,14 @@ export default function ManageComplaints() {
                                                     title="View Detailed Logs">
                                                     <CgNotes size={16} />
                                                 </Link>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(complaint.id!); }}
-                                                    className='w-8 h-8 flex items-center justify-center text-red-500 hover:text-white hover:bg-red-600 rounded-xs transition-all border border-red-100 bg-red-50 shadow-xs'
-                                                    title="Permanently Delete">
-                                                    <IoTrashOutline size={16} />
-                                                </button>
+                                                {user?.role === 'SP' && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(complaint.id!); }}
+                                                        className='w-8 h-8 flex items-center justify-center text-red-500 hover:text-white hover:bg-red-600 rounded-xs transition-all border border-red-100 bg-red-50 shadow-xs'
+                                                        title="Permanently Delete">
+                                                        <IoTrashOutline size={16} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -741,6 +722,21 @@ export default function ManageComplaints() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Feedback Section */}
+                            <div className="pt-6 border-t border-slate-100 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${selectedComplaint.feedback?.trim() ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.3)]' : 'bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.3)]'}`} />
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                                        {language === "english" ? "User Feedback" : "उपयोगकर्ता प्रतिक्रिया"}
+                                    </p>
+                                </div>
+                                <div className={`p-4 rounded-xs border transition-all duration-300 ${selectedComplaint.feedback?.trim() ? 'bg-emerald-50/40 border-emerald-100 shadow-sm' : 'bg-slate-50/50 border-slate-100'}`}>
+                                    <p className={`text-sm leading-relaxed ${selectedComplaint.feedback?.trim() ? 'text-emerald-900 font-medium' : 'text-slate-500 italic'}`}>
+                                        {selectedComplaint.feedback?.trim() || (language === "english" ? "No feedback has been submitted for this complaint yet." : "इस शिकायत के लिए अभी तक कोई प्रतिक्रिया नहीं दी गई है।")}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Modal Footer */}
@@ -750,6 +746,74 @@ export default function ManageComplaints() {
                                 className="px-6 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xs"
                             >
                                 {language === "english" ? "Dismiss" : "dismiss"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* STATUS UPDATE MODAL */}
+            {showStatusUpdateModal && complaintToUpdateStatus && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-110 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xs border border-slate-200 shadow-2xl w-full max-w-sm scale-in-center overflow-hidden flex flex-col">
+                        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${complaintStatusColors[complaintToUpdateStatus.status]?.bg}` }}>
+                                    <IoReloadOutline className="text-xl" style={{ color: `${complaintStatusColors[complaintToUpdateStatus.status]?.text}` }} />
+                                </div>
+                                <div>
+                                    <h2 className="text-[11px] font-bold text-slate-800 uppercase tracking-widest">{language === "english" ? "Update Status" : "स्थिति अपडेट करें"}</h2>
+                                    <p className="text-[9px] font-mono text-slate-500">#{String(complaintToUpdateStatus.id).slice(0, 12)}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowStatusUpdateModal(false)} className="p-1 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                                <IoCloseOutline size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-4">
+                            <div className="p-3 bg-slate-50 border border-slate-100 rounded-xs">
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">{language === "english" ? "Current Status" : "वर्तमान स्थिति"}</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: complaintStatusColors[complaintToUpdateStatus.status]?.indicatorColor }} />
+                                    <span className="text-xs font-bold text-slate-900 uppercase">{complaintToUpdateStatus.status}</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">{language === "english" ? "Select New Status" : "नई स्थिति चुनें"}</p>
+                                <div className="grid grid-cols-1 gap-1.5">
+                                    {Object.keys(complaintStatusColors).map((status) => (
+                                        <button
+                                            key={status}
+                                            disabled={updatingStatusId !== null}
+                                            onClick={() => handleStatusChange(complaintToUpdateStatus.id!, status)}
+                                            className={`group relative flex items-center justify-between px-4 py-2.5 rounded-xs border transition-all duration-200 ${complaintToUpdateStatus.status === status ? 'bg-slate-50 border-slate-300 ring-2 ring-blue-500/10' : 'bg-white border-slate-100 hover:border-slate-300 hover:shadow-xs'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full ring-4 ring-white shadow-sm" style={{ backgroundColor: complaintStatusColors[status].indicatorColor }} />
+                                                <span className={`text-[11px] font-bold tracking-tight ${complaintToUpdateStatus.status === status ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-900'}`}>{status}</span>
+                                            </div>
+                                            {complaintToUpdateStatus.status === status && (
+                                                <span className="text-[8px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full uppercase tracking-widest">{language === "english" ? "Active" : "सक्रिय"}</span>
+                                            )}
+                                            {updatingStatusId === complaintToUpdateStatus.id && (
+                                                <div className="absolute inset-0 bg-white/60 flex items-center justify-center rounded-xs">
+                                                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+                            <button
+                                onClick={() => setShowStatusUpdateModal(false)}
+                                className="px-4 py-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-slate-900 transition-colors"
+                            >
+                                {language === "english" ? "Close" : "बंद करें"}
                             </button>
                         </div>
                     </div>

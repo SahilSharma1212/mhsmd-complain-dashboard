@@ -7,6 +7,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MdOutlineDashboardCustomize } from "react-icons/md";
 import { useLanguageStore } from "../_store/languageStore";
+import { useUserStore } from "../_store/userStore";
+import { useComplaintStore } from "../_store/complaintStore";
+import { useLogStore } from "../_store/logStore";
+import { useStatsStore } from "../_store/statsStore";
+import { useUnallocatedStore } from "../_store/unallocatedStore";
 
 export default function DashboardLayout({
     children,
@@ -14,10 +19,25 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const router = useRouter();
+    const { clearUser, clearThana, setCurrentlyViewingComplaint } = useUserStore();
+    const { clearCache: clearComplaintCache } = useComplaintStore();
+    const { clearLogs } = useLogStore();
+    const { clearStats } = useStatsStore();
+    const { clearCache: clearUnallocatedCache } = useUnallocatedStore();
+
     const handleLogout = async () => {
         try {
             const response = await axios.get("/api/user/logout");
             if (response.status === 200) {
+                // Clear all stores
+                clearUser();
+                clearThana();
+                setCurrentlyViewingComplaint(null);
+                clearComplaintCache();
+                clearLogs();
+                clearStats();
+                clearUnallocatedCache();
+
                 toast.success("Logout successful");
                 router.push("/sign-in");
             }

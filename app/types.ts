@@ -51,6 +51,7 @@ export interface Complaint {
     source?: string;
     submitted_by_name?: string;
     io_officer?: string;
+    feedback?: string | null;
 }
 
 export interface Thana {

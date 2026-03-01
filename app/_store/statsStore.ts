@@ -8,6 +8,7 @@ interface StatsState {
     error: string | null;
     lastFetched: number | null;
     fetchStats: (force?: boolean) => Promise<void>;
+    clearStats: () => void;
 }
 
 export const useStatsStore = create<StatsState>((set, get) => ({
@@ -40,5 +41,12 @@ export const useStatsStore = create<StatsState>((set, get) => ({
             console.error("Stats fetch failed:", error);
             set({ loading: false, error: "Failed to load statistics" });
         }
-    }
+    },
+
+    clearStats: () => set({
+        stats: null,
+        loading: false,
+        error: null,
+        lastFetched: null
+    })
 }));

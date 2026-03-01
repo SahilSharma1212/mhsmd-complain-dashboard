@@ -329,27 +329,25 @@ export async function DELETE(request: NextRequest) {
         }
 
         // 5. Authorization
-        if (user.role === "TI") {
-            if (complaint.allocated_thana !== user.thana) {
-                return NextResponse.json(
-                    { message: "You are not authorized to delete logs for this thana", success: false },
-                    { status: 403 }
-                )
-            }
-        } else if (user.role === "SP") {
-            const { data: designatedThana } = await supabase
-                .from("thana")
-                .select("*")
-                .eq("designated_sp", user.name)
-                .eq("name", complaint.allocated_thana)
-                .single()
+        if (user.role !== "SP") {
+            return NextResponse.json(
+                { message: "Only SP users are authorized to delete logs", success: false },
+                { status: 403 }
+            )
+        }
 
-            if (!designatedThana) {
-                return NextResponse.json(
-                    { message: "You are not authorized for this complaint", success: false },
-                    { status: 403 }
-                )
-            }
+        const { data: designatedThana } = await supabase
+            .from("thana")
+            .select("*")
+            .eq("designated_sp", user.name)
+            .eq("name", complaint.allocated_thana)
+            .single()
+
+        if (!designatedThana) {
+            return NextResponse.json(
+                { message: "You are not authorized for this complaint", success: false },
+                { status: 403 }
+            )
         }
 
         // 6. Delete log
@@ -444,7 +442,7 @@ export async function PATCH(request: NextRequest) {
                 action: "IO_ALLOCATED",
                 prev_status: prevIO,
                 current_status: io_officer,
-                reason: `IO Officer allocated: ${io_officer} (Replaced: ${prevIO})`,
+                reason: `विवेचना अधिकारी अलॉट हो गया: ${io_officer} ${(prevIO !== "NOT_ALLOCATED" || prevIO !== "" || prevIO !== undefined) || prevIO !== null ? `(बदल दिया गया: ${prevIO})` : ""}`,
                 updated_by: user.name
             });
 

@@ -554,29 +554,28 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Authorization check
-    let isAuthorised = false;
-
-    if (user.role === "TI") {
-        isAuthorised = complaint.allocated_thana === user.thana;
-    } else if (user.role === "SP") {
-        const { data: thanaRecord, error: thanaError } = await supabase
-            .from("thana")
-            .select("designated_sp")
-            .eq("name", complaint.allocated_thana)
-            .maybeSingle();
-
-        if (thanaError) {
-            console.error("Thana auth lookup error:", thanaError.message);
-            return NextResponse.json(
-                { message: "Error verifying authorisation. Please try again.", success: false },
-                { status: 500 }
-            );
-        }
-
-        isAuthorised = thanaRecord?.designated_sp === user.name;
+    if (user.role !== "SP") {
+        return NextResponse.json(
+            { message: "Only SP users are authorized to delete complaints.", success: false },
+            { status: 403 }
+        );
     }
 
-    if (!isAuthorised) {
+    const { data: thanaRecord, error: thanaError } = await supabase
+        .from("thana")
+        .select("designated_sp")
+        .eq("name", complaint.allocated_thana)
+        .maybeSingle();
+
+    if (thanaError) {
+        console.error("Thana auth lookup error:", thanaError.message);
+        return NextResponse.json(
+            { message: "Error verifying authorisation. Please try again.", success: false },
+            { status: 500 }
+        );
+    }
+
+    if (thanaRecord?.designated_sp !== user.name) {
         return NextResponse.json(
             { message: "You are not authorised to delete this complaint.", success: false },
             { status: 403 }
