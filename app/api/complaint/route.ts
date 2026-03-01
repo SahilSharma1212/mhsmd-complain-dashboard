@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { User } from "@/app/types";
+import { User, COMPLAINT_STATUSES } from "@/app/types";
 import supabase from "@/app/_config/supabase";
 import { z } from "zod";
 import supabaseAdmin from "@/app/_config/supabaseAdmin";
@@ -19,7 +19,7 @@ const complaintPostSchema = z.object({
 
 const complaintPatchSchema = z.object({
     id: z.coerce.string().min(1),
-    status: z.enum(["संजेय", "असंजेय", "अप्रमाणित", "प्रतिबंधात्मक", "वापसी", "अन्य"]),
+    status: z.enum(COMPLAINT_STATUSES),
 });
 
 // ─── Helper: verify JWT ───
@@ -368,6 +368,8 @@ export async function GET(request: NextRequest) {
             query = query.eq("allocated_thana", value);
         } else if (filter === "id") {
             query = query.eq("id", value);
+        } else if (filter === "accused") {
+            query = query.ilike("accused_details", `%${value}%`);
         }
     }
 

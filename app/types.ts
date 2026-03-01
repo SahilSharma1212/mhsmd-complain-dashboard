@@ -12,6 +12,25 @@ export interface User {
     address: string
 }
 
+// ─── Centralized Complaint Statuses ─────────────────────────────────────
+export const COMPLAINT_STATUSES = ["अपराध", "फ़ैना", "अप्रमाणित", "प्रतिबंधात्मक", "वापसी", "अन्य"] as const;
+export type ComplaintStatus = typeof COMPLAINT_STATUSES[number];
+
+export const COMPLAINT_STATUS_COLORS: Record<string, {
+    indicatorColor: string;
+    labeleng: string;
+    labelhindi: string;
+    bg: string;
+    text: string;
+}> = {
+    "अपराध": { indicatorColor: "#0000ff", labeleng: "Apradh", labelhindi: "अपराध", bg: "#0000ff20", text: "#0000ff" },
+    "फ़ैना": { indicatorColor: "#ff5e00", labeleng: "Faina", labelhindi: "फ़ैना", bg: "#ff5e0020", text: "#ff5e00" },
+    "अप्रमाणित": { indicatorColor: "#7a00b3", labeleng: "Apramanit", labelhindi: "अप्रमाणित", bg: "#7a00b320", text: "#7a00b3" },
+    "प्रतिबंधात्मक": { indicatorColor: "#000000", labeleng: "Pratibandhatmak", labelhindi: "प्रतिबंधात्मक", bg: "#99999920", text: "#000" },
+    "वापसी": { indicatorColor: "#ff0000", labeleng: "Vapsi", labelhindi: "वापसी", bg: "#ff000020", text: "#ff0000" },
+    "अन्य": { indicatorColor: "#007d21", labeleng: "Anya", labelhindi: "अन्य", bg: "#00ff0020", text: "#007d21" },
+};
+
 export interface Complaint {
     id?: string;
     created_at?: string;
@@ -78,4 +97,8 @@ export interface StatData {
         moreThan30Days: number;
     }>;
     thanaAgeStatusBreakdown?: Record<string, Record<string, StatusCounts>>;
+    latestUnallocatedComplaints?: Complaint[];
+    latestPendingComplaints?: Complaint[];
+    latestNirakritComplaints?: Complaint[];
+    latestTotalComplaints?: Complaint[];
 }

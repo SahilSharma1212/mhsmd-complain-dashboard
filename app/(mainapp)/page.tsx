@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { useEffect, useState } from 'react'
 import { useUserStore } from '../_store/userStore'
 import { useStatsStore } from '../_store/statsStore'
-import { StatusCounts, StatData } from '../types'
+import { StatusCounts, StatData, COMPLAINT_STATUS_COLORS } from '../types'
 import { RiDashboardLine } from 'react-icons/ri'
 import { IoLayersOutline, IoCreateOutline, IoSettingsOutline, IoArrowForwardCircleOutline, IoBusinessOutline, IoTimerOutline } from 'react-icons/io5'
 
@@ -19,14 +19,12 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 // Shared interfaces imported from ../types.ts
 
 // ─── Constants ──────────────────────────────────────────────────────────────
-const complaintStatusColors = [
-    { id: "संजेय", labeleng: "Sanjay", labelhindi: "संजेय", indicatorColor: "#0000ff" },
-    { id: "असंजेय", labeleng: "Asanjay", labelhindi: "असंजेय", indicatorColor: "#ff5e00" },
-    { id: "अप्रमाणित", labeleng: "Apramanit", labelhindi: "अप्रमाणित", indicatorColor: "#7a00b3" },
-    { id: "प्रतिबंधात्मक", labeleng: "Pratibandhatmak", labelhindi: "प्रतिबंधात्मक", indicatorColor: "#000000" },
-    { id: "वापसी", labeleng: "Vapsi", labelhindi: "वापसी", indicatorColor: "#ff0000" },
-    { id: "अन्य", labeleng: "Anya", labelhindi: "अन्य", indicatorColor: "#007d21" },
-];
+const complaintStatusColors = Object.entries(COMPLAINT_STATUS_COLORS).map(([id, c]) => ({
+    id,
+    labeleng: c.labeleng,
+    labelhindi: c.labelhindi,
+    indicatorColor: c.indicatorColor,
+}));
 
 const tabs = [
     { id: "manage", labeleng: "Manage Complaints", labelhindi: "शिकायत प्रबंधन", href: "/manage-complaints", color: "#7a00b3", indicatorColor: "#dd00ff" },
@@ -44,7 +42,7 @@ export default function Home() {
 
 
     const pathname = usePathname();
-    const { stats, loading: statsLoading, fetchStats } = useStatsStore();
+    const { stats, loading: statsLoading, error: statsError, fetchStats } = useStatsStore();
     const [isMounted, setIsMounted] = useState(false);
 
     // ── SP modal ────────────────────────────────────────────────────────────
@@ -126,169 +124,184 @@ export default function Home() {
             {/* BIG DESCRIPTION OF COMPLAINTS */}
 
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 w-full px-3 gap-6 mb-2'>
-                {/* TOTAL COMPLAINTS */}
-                <div className='relative overflow-hidden group bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-xs hover:shadow-indigo-200/50 transition-all duration-300'>
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                        <FaHourglass size={80} className="text-white" />
-                    </div>
-                    <div
-                        onClick={() => {
-                            setSelectedCategory('total');
-                            setSelectedAgeGroup(null);
-                            setShowStatsModal(true);
-                        }}
-                        className="cursor-pointer relative z-10 flex flex-col h-full justify-between"
-                    >
-                        <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "Total Complaints" : "कुल शिकायतें"}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-3xl font-black text-white">
-                                {stats?.total ?? 0}
-                            </h3>
-                            <span className="text-[10px] font-bold text-indigo-200 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                {language === "english" ? "Total" : "कुल"}
-                            </span>
+                {statsLoading ? (
+                    <>
+                        {/* Skeleton loaders for 4 stat cards */}
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                            <div key={idx} className='animate-pulse bg-slate-100 p-5 rounded-xs'>
+                                <div className='h-4 bg-slate-200 rounded w-2/3 mb-4'></div>
+                                <div className='h-8 bg-slate-200 rounded w-1/3 mb-2'></div>
+                                <div className='h-3 bg-slate-200 rounded w-1/4'></div>
+                            </div>
+                        ))}
+                    </>
+                ) : (
+                    <>
+                        {/* TOTAL COMPLAINTS */}
+                        <div className='relative overflow-hidden group bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-xs hover:shadow-indigo-200/50 transition-all duration-300'>
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                                <FaHourglass size={80} className="text-white" />
+                            </div>
+                            <div
+                                onClick={() => {
+                                    setSelectedCategory('total');
+                                    setSelectedAgeGroup(null);
+                                    setShowStatsModal(true);
+                                }}
+                                className="cursor-pointer relative z-10 flex flex-col h-full justify-between"
+                            >
+                                <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
+                                    {language === "english" ? "Total Complaints" : "कुल शिकायतें"}
+                                </p>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-3xl font-black text-white">
+                                        {stats?.total ?? 0}
+                                    </h3>
+                                    <span className="text-[10px] font-bold text-indigo-200 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
+                                        {language === "english" ? "Total" : "कुल"}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* PENDING COMPLAINTS */}
-                <div
-                    onClick={() => {
-                        setSelectedCategory('pending');
-                        setSelectedAgeGroup(null);
-                        setShowStatsModal(true);
-                    }}
-                    className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-amber-400 to-orange-500 p-5 rounded-xs hover:shadow-orange-200/50 transition-all duration-300'
-                >
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                        <IoMdTimer size={80} className="text-white" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full justify-between">
-                        <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "Pending" : "लंबित"}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-3xl font-black text-white">
-                                {stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0}
-                            </h3>
-                            <span className="text-[10px] font-bold text-orange-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                {stats?.total ? `${Math.round(((stats.statusCounts?.लंबित ?? stats.statusCounts?.PENDING ?? 0) / stats.total) * 100)}%` : '0%'}
-                            </span>
+                        {/* PENDING COMPLAINTS */}
+                        <div
+                            onClick={() => {
+                                setSelectedCategory('pending');
+                                setSelectedAgeGroup(null);
+                                setShowStatsModal(true);
+                            }}
+                            className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-amber-400 to-orange-500 p-5 rounded-xs hover:shadow-orange-200/50 transition-all duration-300'
+                        >
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                                <IoMdTimer size={80} className="text-white" />
+                            </div>
+                            <div className="relative z-10 flex flex-col h-full justify-between">
+                                <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
+                                    {language === "english" ? "Pending" : "लंबित"}
+                                </p>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-3xl font-black text-white">
+                                        {stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0}
+                                    </h3>
+                                    <span className="text-[10px] font-bold text-orange-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
+                                        {stats?.total ? `${Math.round(((stats.statusCounts?.लंबित ?? stats.statusCounts?.PENDING ?? 0) / stats.total) * 100)}%` : '0%'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* UNALLOCATED COMPLAINTS */}
-                <div
-                    onClick={() => {
-                        setSelectedCategory('unallocated');
-                        setSelectedAgeGroup(null);
-                        setShowStatsModal(true);
-                    }}
-                    className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-rose-500 to-red-600 p-5 rounded-xs hover:shadow-red-200/50 transition-all duration-300'
-                >
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                        <MdOutlineWrongLocation size={80} className="text-white" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full justify-between">
-                        <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "Unallocated" : "अनाबंटित"}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-3xl font-black text-white">
-                                {stats?.unallocatedCount ?? 0}
-                            </h3>
-                            <span className="text-[10px] font-bold text-rose-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                {stats?.total ? `${Math.round(((stats.unallocatedCount ?? 0) / stats.total) * 100)}%` : '0%'}
-                            </span>
+                        {/* UNALLOCATED COMPLAINTS */}
+                        <div
+                            onClick={() => {
+                                setSelectedCategory('unallocated');
+                                setSelectedAgeGroup(null);
+                                setShowStatsModal(true);
+                            }}
+                            className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-rose-500 to-red-600 p-5 rounded-xs hover:shadow-red-200/50 transition-all duration-300'
+                        >
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                                <MdOutlineWrongLocation size={80} className="text-white" />
+                            </div>
+                            <div className="relative z-10 flex flex-col h-full justify-between">
+                                <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
+                                    {language === "english" ? "Unallocated" : "अनाबंटित"}
+                                </p>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-3xl font-black text-white">
+                                        {stats?.unallocatedCount ?? 0}
+                                    </h3>
+                                    <span className="text-[10px] font-bold text-rose-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
+                                        {stats?.total ? `${Math.round(((stats.unallocatedCount ?? 0) / stats.total) * 100)}%` : '0%'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* NIRAKRIT COMPLAINTS */}
-                <div
-                    onClick={() => {
-                        setSelectedCategory('nirakrit');
-                        setSelectedAgeGroup(null);
-                        setShowStatsModal(true);
-                    }}
-                    className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-emerald-500 to-teal-600 p-5 rounded-xs hover:shadow-emerald-200/50 transition-all duration-300'
-                >
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                        <IoLayersOutline size={80} className="text-white" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full justify-between">
-                        <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "NIRAKRIT" : "निराकृत"}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-3xl font-black text-white">
-                                {stats?.nirakritCount ?? 0}
-                            </h3>
-                            <span className="text-[10px] font-bold text-emerald-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                {stats?.total ? `${Math.round(((stats?.nirakritCount ?? 0) / stats.total) * 100)}%` : '0%'}
-                            </span>
+                        {/* NIRAKRIT COMPLAINTS */}
+                        <div
+                            onClick={() => {
+                                setSelectedCategory('nirakrit');
+                                setSelectedAgeGroup(null);
+                                setShowStatsModal(true);
+                            }}
+                            className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-emerald-500 to-teal-600 p-5 rounded-xs hover:shadow-emerald-200/50 transition-all duration-300'
+                        >
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                                <IoLayersOutline size={80} className="text-white" />
+                            </div>
+                            <div className="relative z-10 flex flex-col h-full justify-between">
+                                <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
+                                    {language === "english" ? "NIRAKRIT" : "निराकृत"}
+                                </p>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-3xl font-black text-white">
+                                        {stats?.nirakritCount ?? 0}
+                                    </h3>
+                                    <span className="text-[10px] font-bold text-emerald-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
+                                        {stats?.total ? `${Math.round(((stats?.nirakritCount ?? 0) / stats.total) * 100)}%` : '0%'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* DISTRIBUTION CHART */}
-                <div className='relative group bg-white p-4 rounded-xs border border-slate-300 flex flex-col justify-between overflow-hidden'>
-                    <div className="flex justify-between items-center mb-2">
-                        <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
-                            {language === "english" ? "Status Mix" : "स्थिति मिश्रण"}
-                        </p>
-                        <div className="flex gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                            <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                            <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                        </div>
-                    </div>
+                        {/* DISTRIBUTION CHART */}
+                        <div className='relative group bg-white p-4 rounded-xs border border-slate-300 flex flex-col justify-between overflow-hidden'>
+                            <div className="flex justify-between items-center mb-2">
+                                <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
+                                    {language === "english" ? "Status Mix" : "स्थिति मिश्रण"}
+                                </p>
+                                <div className="flex gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                </div>
+                            </div>
 
-                    <div className="h-24 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={[
-                                        { name: 'Pending', value: stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0, color: '#f59e0b' },
-                                        { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
-                                        { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' }
-                                    ]}
-                                    innerRadius={25}
-                                    outerRadius={40}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    stroke="none"
-                                >
-                                    {[0, 1, 2].map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={['#f59e0b', '#f43f5e', '#6366f1'][index]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }}
-                                    itemStyle={{ padding: '0px' }}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                            <div className="h-24 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={[
+                                                { name: 'Pending', value: stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0, color: '#f59e0b' },
+                                                { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
+                                                { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' }
+                                            ]}
+                                            innerRadius={25}
+                                            outerRadius={40}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {[0, 1, 2].map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={['#f59e0b', '#f43f5e', '#6366f1'][index]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }}
+                                            itemStyle={{ padding: '0px' }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
 
-                    <div className="flex justify-around mt-1">
-                        <div className="flex flex-col items-center">
-                            <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Pend</span>
+                            <div className="flex justify-around mt-1">
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0}</span>
+                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Pend</span>
+                                </div>
+                                <div className="flex flex-col items-center border-x border-slate-100 px-4">
+                                    <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.unallocatedCount ?? 0}</span>
+                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Unall</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[9px] font-black text-slate-800 uppercase">{(stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0)}</span>
+                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Other</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex flex-col items-center border-x border-slate-100 px-4">
-                            <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.unallocatedCount ?? 0}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Unall</span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                            <span className="text-[9px] font-black text-slate-800 uppercase">{(stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0)}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Other</span>
-                        </div>
-                    </div>
-                </div>
+                    </>
+                )}
             </div>
 
             {/* Stats Modal */}
@@ -414,6 +427,77 @@ export default function Home() {
                                                 );
                                             })
                                         }
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Latest Complaints for Category */}
+                            {stats && (
+                                <div className="space-y-4 pt-4 animate-in fade-in duration-500">
+                                    <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                                            {selectedCategory === 'unallocated'
+                                                ? (language === "english" ? "Latest Unallocated Complaints" : "नवीनतम अनाबंटित शिकायतें")
+                                                : selectedCategory === 'pending'
+                                                    ? (language === "english" ? "Latest Pending Complaints" : "नवीनतम लंबित शिकायतें")
+                                                    : selectedCategory === 'nirakrit'
+                                                        ? (language === "english" ? "Latest Nirakrit Complaints" : "नवीनतम निराकृत शिकायतें")
+                                                        : (language === "english" ? "Latest Total Complaints" : "नवीनतम कुल शिकायतें")
+                                            }
+                                        </p>
+                                        <Link
+                                            href={selectedCategory === 'unallocated' ? '/unallocated-complaints' : '/manage-complaints'}
+                                            className="text-sm font-black text-white p-3 py-1 bg-indigo-700 hover:underline uppercase"
+                                        >
+                                            {language === "english" ? "Open Full List" : "पूरी सूची खोलें"}
+                                        </Link>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {(() => {
+                                            const list = selectedCategory === 'unallocated' ? stats.latestUnallocatedComplaints :
+                                                selectedCategory === 'pending' ? stats.latestPendingComplaints :
+                                                    selectedCategory === 'nirakrit' ? stats.latestNirakritComplaints :
+                                                        stats.latestTotalComplaints;
+
+                                            if (!list || list.length === 0) {
+                                                return (
+                                                    <div className="py-8 text-center border border-dashed border-slate-100 rounded-xs">
+                                                        <p className="text-slate-400 text-xs font-medium italic">
+                                                            {language === "english" ? "No complaints found in this category" : "इस श्रेणी में कोई शिकायत नहीं मिली"}
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            return list.map((complaint, idx) => (
+                                                <div key={idx} className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100/50 rounded-xs hover:bg-white hover:shadow-sm transition-all group">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[11px] font-bold text-slate-700 leading-tight group-hover:text-indigo-600 transition-colors">
+                                                            {complaint.complainant_name || (language === "english" ? "Unknown Complainant" : "अज्ञात शिकायतकर्ता")}
+                                                        </span>
+                                                        <span className="text-[9px] text-slate-400 font-medium line-clamp-1 max-w-[250px] sm:max-w-md">
+                                                            {complaint.subject || (language === "english" ? "No Subject" : "कोई विषय नहीं")}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-[9px] font-bold text-slate-500">
+                                                                {complaint.created_at ? new Date(complaint.created_at).toLocaleDateString() : 'N/A'}
+                                                            </span>
+                                                            <span className="text-[8px] text-slate-300 font-bold uppercase tracking-tighter">
+                                                                ID: {String(complaint.id ?? '').slice(0, 8)}
+                                                            </span>
+                                                        </div>
+                                                        <Link
+                                                            href={`/manage-complaints?id=${complaint.id}`}
+                                                            className="p-1.5 bg-white border border-slate-100 rounded-full text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all opacity-0 group-hover:opacity-100"
+                                                        >
+                                                            <IoArrowForwardCircleOutline size={16} />
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            ));
+                                        })()}
                                     </div>
                                 </div>
                             )}

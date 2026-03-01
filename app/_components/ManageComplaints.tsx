@@ -7,7 +7,7 @@ import { useUserStore } from '../_store/userStore';
 import { MdNavigateNext, MdNavigateBefore, MdAttachFile } from 'react-icons/md';
 import { IoLayersOutline, IoFilterOutline, IoReloadOutline, IoTrashOutline, IoExpand, IoCloseOutline } from 'react-icons/io5';
 import { CgNotes } from 'react-icons/cg';
-import { Complaint } from '../types';
+import { Complaint, COMPLAINT_STATUS_COLORS, COMPLAINT_STATUSES } from '../types';
 import Link from 'next/link';
 import { useLanguageStore } from '../_store/languageStore';
 import { useComplaintStore } from '../_store/complaintStore';
@@ -114,14 +114,7 @@ export default function ManageComplaints() {
         fetchComplaints(1, "", "", true);
     };
 
-    const complaintStatusColors: Record<string, { bg: string, text: string }> = {
-        "संजेय": { bg: "#0000ff20", text: "#0000ff" },
-        "असंजेय": { bg: "#ff5e0020", text: "#ff5e00" },
-        "अप्रमाणित": { bg: "#7a00b320", text: "#7a00b3" },
-        "प्रतिबंधात्मक": { bg: "#99999920", text: "#000" },
-        "वापसी": { bg: "#ff000020", text: "#ff0000" },
-        "अन्य": { bg: "#00ff0020", text: "#007d21" },
-    }
+    const complaintStatusColors = COMPLAINT_STATUS_COLORS;
 
     const [activeComplaintId, setActiveComplaintId] = useState<string | null>(null);
     const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
@@ -277,6 +270,7 @@ export default function ManageComplaints() {
                             <option value="">{language === "english" ? "-- Select Attribute --" : "-- विशेषता चुनें --"}</option>
                             <option value="status">{language === "english" ? "Status" : "स्टेटस"}</option>
                             <option value="complainant_name">{language === "english" ? "Name of Complainer" : "शिकायतकर्ता का नाम"}</option>
+                            <option value="accused">{language === "english" ? "Accused (आरोपी)" : "आरोपी"}</option>
                             {user?.role === 'SP' && (
                                 <option value="allocated_thana">{language === "english" ? "Search by Thana" : "थाना द्वारा खोजें"}</option>
                             )}
@@ -296,12 +290,9 @@ export default function ManageComplaints() {
                                     className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
                                 >
                                     <option value="">{language === "english" ? "-- Select Status --" : "-- स्टेटस चुनें --"}</option>
-                                    <option value="संजेय">संजेय</option>
-                                    <option value="असंजेय">असंजेय</option>
-                                    <option value="अप्रमाणित">अप्रमाणित</option>
-                                    <option value="प्रतिबंधात्मक">प्रतिबंधात्मक</option>
-                                    <option value="वापसी">वापसी</option>
-                                    <option value="अन्य">अन्य</option>
+                                    {COMPLAINT_STATUSES.map((s) => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
                                 </select>
                             ) : filterAttribute === "allocated_thana" ? (
                                 <select
@@ -360,6 +351,7 @@ export default function ManageComplaints() {
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Letter To" : "पत्र किसको"}</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>{language === "english" ? "Jurisdiction" : "अधिकार क्षेत्र"}</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>{language === "english" ? "Subject & Details" : "विषय और विवरण"}</th>
+                                <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest'>{language === "english" ? "Accused" : "आरोपी"}</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Source" : "स्रोत"}</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Files" : "फाइलें"}</th>
                                 <th className='px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center'>{language === "english" ? "Status" : "स्टेटस"}</th>
@@ -370,14 +362,14 @@ export default function ManageComplaints() {
                             {searchLoading ? (
                                 Array.from({ length: 8 }).map((_, idx) => (
                                     <tr key={idx} className="animate-pulse">
-                                        {Array.from({ length: 10 }).map((_, i) => (
+                                        {Array.from({ length: 11 }).map((_, i) => (
                                             <td key={i} className="px-4 py-4"><div className="h-2 bg-slate-50 rounded-full w-full"></div></td>
                                         ))}
                                     </tr>
                                 ))
                             ) : complaints?.length === 0 ? (
                                 <tr>
-                                    <td colSpan={10} className='text-center py-16'>
+                                    <td colSpan={11} className='text-center py-16'>
                                         <div className='flex flex-col items-center gap-2 opacity-20'>
                                             <IoLayersOutline size={48} />
                                             <p className='text-sm font-bold uppercase tracking-widest'>{language === "english" ? "No records found in database" : "डेटाबेस में कोई रिकॉर्ड नहीं मिला"}</p>
@@ -441,6 +433,12 @@ export default function ManageComplaints() {
                                                     <IoExpand size={14} />
                                                 </button>
                                             </div>
+                                        </td>
+                                        {/* Accused */}
+                                        <td className='px-4 py-4'>
+                                            <span className='text-xs font-medium text-slate-700 truncate max-w-[120px] block' title={complaint.accused_details || ''}>
+                                                {complaint.accused_details || <span className='text-slate-300 text-[10px] font-bold'>—</span>}
+                                            </span>
                                         </td>
                                         {/* Source */}
                                         <td className='px-4 py-4 text-center'>

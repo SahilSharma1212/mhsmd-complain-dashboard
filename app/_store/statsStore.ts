@@ -5,6 +5,7 @@ import { StatusCounts, StatData } from "../types";
 interface StatsState {
     stats: StatData | null;
     loading: boolean;
+    error: string | null;
     lastFetched: number | null;
     fetchStats: (force?: boolean) => Promise<void>;
 }
@@ -12,6 +13,7 @@ interface StatsState {
 export const useStatsStore = create<StatsState>((set, get) => ({
     stats: null,
     loading: false,
+    error: null,
     lastFetched: null,
 
     fetchStats: async (force = false) => {
@@ -23,19 +25,20 @@ export const useStatsStore = create<StatsState>((set, get) => ({
             return;
         }
 
-        set({ loading: true });
+        set({ loading: true, error: null });
         try {
             const response = await axios.get("/api/stat-logs");
             if (response.data) {
                 set({
                     stats: response.data,
                     lastFetched: Date.now(),
-                    loading: false
+                    loading: false,
+                    error: null
                 });
             }
         } catch (error) {
             console.error("Stats fetch failed:", error);
-            set({ loading: false });
+            set({ loading: false, error: "Failed to load statistics" });
         }
     }
 }));

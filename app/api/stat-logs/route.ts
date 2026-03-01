@@ -23,8 +23,7 @@ function zeroCounts(): StatusCounts {
     return Object.fromEntries(STATUSES.map((s) => [s, 0])) as StatusCounts;
 }
 
-// Aggregate flat rows into total statusCounts + per-thana breakdown (for SP) + ageStats
-function aggregateCounts(rows: { status: string; created_at: string; allocated_thana?: string }[]): {
+function aggregateCounts(rows: { id: string; status: string; created_at: string; allocated_thana?: string; complainant_name?: string; subject?: string }[]): {
     statusCounts: StatusCounts;
     nirakritCount: number;
     thanaBreakdown: Record<string, StatusCounts>;
@@ -50,6 +49,10 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
         moreThan30Days: number;
     }>;
     thanaAgeStatusBreakdown: Record<string, Record<string, StatusCounts>>;
+    latestTotalComplaints: any[];
+    latestPendingComplaints: any[];
+    latestUnallocatedComplaints: any[];
+    latestNirakritComplaints: any[];
 } {
     const statusCounts = zeroCounts();
     let nirakritCount = 0;
@@ -78,6 +81,13 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
         lessThan15Days: zeroCounts(),
         fifteenToThirtyDays: zeroCounts(),
         moreThan30Days: zeroCounts(),
+    };
+
+    const latestComplaints: Record<string, any[]> = {
+        total: [],
+        pending: [],
+        unallocated: [],
+        nirakrit: [],
     };
 
     const now = new Date();
@@ -109,12 +119,20 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
         const isPending = hasThana && (row.status === "PENDING" || row.status === "लंबित");
         const isNirakrit = hasThana && !!row.status && row.status !== "PENDING" && row.status !== "लंबित";
 
-        if (isPending) categoryAgeStats.pending[currentAge]++;
-        if (isUnallocated) categoryAgeStats.unallocated[currentAge]++;
+        if (isPending) {
+            categoryAgeStats.pending[currentAge]++;
+            latestComplaints.pending.push(row);
+        }
+        if (isUnallocated) {
+            categoryAgeStats.unallocated[currentAge]++;
+            latestComplaints.unallocated.push(row);
+        }
         if (isNirakrit) {
             categoryAgeStats.nirakrit[currentAge]++;
+            latestComplaints.nirakrit.push(row);
             nirakritCount++;
         }
+        latestComplaints.total.push(row);
 
         // 3. Status Breakdown
         const s = row.status as StatusKey;
@@ -156,6 +174,8 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
         }
     }
 
+    const sortFn = (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+
     return {
         statusCounts,
         nirakritCount,
@@ -164,7 +184,11 @@ function aggregateCounts(rows: { status: string; created_at: string; allocated_t
         categoryAgeStats,
         ageStatusBreakdown,
         thanaAgeBreakdown,
-        thanaAgeStatusBreakdown
+        thanaAgeStatusBreakdown,
+        latestTotalComplaints: latestComplaints.total.sort(sortFn).slice(0, 10),
+        latestPendingComplaints: latestComplaints.pending.sort(sortFn).slice(0, 10),
+        latestUnallocatedComplaints: latestComplaints.unallocated.sort(sortFn).slice(0, 10),
+        latestNirakritComplaints: latestComplaints.nirakrit.sort(sortFn).slice(0, 10),
     };
 }
 
@@ -186,7 +210,7 @@ export async function GET(request: NextRequest) {
     if (user.role === "TI") {
         const { data, error } = await supabase
             .from("complaints")
-            .select("status, created_at")
+            .select("id, status, created_at, complainant_name, subject")
             .eq("allocated_thana", user.thana);
 
         if (error) {
@@ -201,7 +225,11 @@ export async function GET(request: NextRequest) {
             ageStats,
             categoryAgeStats,
             ageStatusBreakdown,
-            thanaAgeStatusBreakdown
+            thanaAgeStatusBreakdown,
+            latestTotalComplaints,
+            latestPendingComplaints,
+            latestUnallocatedComplaints,
+            latestNirakritComplaints
         } = aggregateCounts(rows as any);
 
         const response = NextResponse.json({
@@ -211,7 +239,11 @@ export async function GET(request: NextRequest) {
             ageStats,
             categoryAgeStats,
             ageStatusBreakdown,
-            thanaAgeStatusBreakdown
+            thanaAgeStatusBreakdown,
+            latestTotalComplaints,
+            latestPendingComplaints,
+            latestUnallocatedComplaints,
+            latestNirakritComplaints
         });
         response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=30');
         return response;
@@ -242,7 +274,7 @@ export async function GET(request: NextRequest) {
         const queries: any[] = [
             supabase
                 .from("complaints")
-                .select("status, allocated_thana, created_at")
+                .select("id, status, allocated_thana, created_at, complainant_name, subject")
                 .or('allocated_thana.is.null,allocated_thana.eq.')
         ];
 
@@ -250,7 +282,7 @@ export async function GET(request: NextRequest) {
             queries.push(
                 supabase
                     .from("complaints")
-                    .select("status, allocated_thana, created_at")
+                    .select("id, status, allocated_thana, created_at, complainant_name, subject")
                     .in("allocated_thana", thanaList)
             );
         }
@@ -279,7 +311,11 @@ export async function GET(request: NextRequest) {
             categoryAgeStats,
             ageStatusBreakdown,
             thanaAgeBreakdown,
-            thanaAgeStatusBreakdown
+            thanaAgeStatusBreakdown,
+            latestTotalComplaints,
+            latestPendingComplaints,
+            latestUnallocatedComplaints,
+            latestNirakritComplaints
         } = aggregateCounts(rows as any);
 
         const response = NextResponse.json({
@@ -293,6 +329,10 @@ export async function GET(request: NextRequest) {
             ageStatusBreakdown,
             thanaAgeBreakdown,
             thanaAgeStatusBreakdown,
+            latestTotalComplaints,
+            latestPendingComplaints,
+            latestUnallocatedComplaints,
+            latestNirakritComplaints
         });
 
         // Add Cache-Control header for better reuse & less origin load

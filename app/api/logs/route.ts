@@ -50,10 +50,10 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // 3️⃣ Check complaint exists
+        // 3️⃣ Check complaint exists (needed for authorization + when no logs exist yet)
         const { data: complaint, error: complaintError } = await supabase
             .from("complaints")
-            .select("id, status, subject, message, complainant_name, complainant_contact, date, created_at, role_addressed_to, allocated_thana, file_urls, phone, submitted_by, io_officer")
+            .select("id, status, subject, message, complainant_name, complainant_contact, date, created_at, role_addressed_to, allocated_thana, file_urls, phone, submitted_by, io_officer, accused_details")
             .eq("id", complaintId)
             .single()
 
@@ -83,8 +83,6 @@ export async function GET(request: NextRequest) {
         // ROLE: SP
         // =====================
         if (user.role === "SP") {
-            // Allow access if complaint is unallocated (SP manages unallocated queue)
-            // or if it's allocated to one of this SP's thanas
             if (complaint.allocated_thana) {
                 const { data: designatedThana, error: thanaError } = await supabase
                     .from("thana")
@@ -105,7 +103,7 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // 4️⃣ Fetch logs
+        // 4️⃣ Fetch logs using FK join
         const { data: logs, error: logsError } = await supabase
             .from("complaint_logs")
             .select("*")
@@ -118,8 +116,6 @@ export async function GET(request: NextRequest) {
                 { status: 500 }
             )
         }
-        console.log(logs)
-        console.log(complaint)
 
         return NextResponse.json(
             {
@@ -258,8 +254,7 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        console.log(logData)
-        console.log(complaint)
+
         return NextResponse.json({
             message: "Log added successfully",
             success: true,
@@ -416,20 +411,14 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ message: "Complaint not found", success: false }, { status: 404 });
         }
 
-        // 3. Authorization check
-        if (user.role === "TI" && complaint.allocated_thana !== user.thana) {
-            return NextResponse.json({ message: "Unauthorized", success: false }, { status: 403 });
+        // 3. Role check — only TI can allocate IO
+        if (user.role !== "TI") {
+            return NextResponse.json({ message: "Only TI can allocate IO Officer", success: false }, { status: 403 });
         }
-        if (user.role === "SP") {
-            const { data: designatedThana } = await supabase
-                .from("thana")
-                .select("*")
-                .eq("designated_sp", user.name)
-                .eq("name", complaint.allocated_thana)
-                .single();
-            if (!designatedThana) {
-                return NextResponse.json({ message: "Unauthorized", success: false }, { status: 403 });
-            }
+
+        // 4. Authorization check — TI must own the thana
+        if (complaint.allocated_thana !== user.thana) {
+            return NextResponse.json({ message: "Unauthorized", success: false }, { status: 403 });
         }
 
         const prevIO = complaint.io_officer || "NOT_ALLOCATED";

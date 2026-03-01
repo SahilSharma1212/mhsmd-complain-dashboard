@@ -13,6 +13,7 @@ import { useLogStore, Log } from "@/app/_store/logStore"
 import { useStatsStore } from "@/app/_store/statsStore"
 import { useComplaintStore } from "@/app/_store/complaintStore"
 import { useRef } from "react"
+import { COMPLAINT_STATUS_COLORS, COMPLAINT_STATUSES } from "@/app/types"
 
 export default function LogsPage() {
     const params = useParams()
@@ -229,14 +230,7 @@ export default function LogsPage() {
         }
     }
 
-    const complaintStatusColors: Record<string, { bg: string, text: string }> = {
-        "संजेय": { bg: "bg-blue-50 text-blue-700", text: "text-blue-700" },
-        "असंजेय": { bg: "bg-amber-50 text-amber-700", text: "text-amber-700" },
-        "अप्रमाणित": { bg: "bg-purple-50 text-purple-700", text: "text-purple-700" },
-        "प्रतिबंधात्मक": { bg: "bg-slate-50 text-slate-700", text: "text-slate-700" },
-        "वापसी": { bg: "bg-red-50 text-red-700", text: "text-red-700" },
-        "अन्य": { bg: "bg-emerald-50 text-emerald-700", text: "text-emerald-700" },
-    }
+    const complaintStatusColors = COMPLAINT_STATUS_COLORS;
 
     if (error)
         return (
@@ -293,16 +287,21 @@ export default function LogsPage() {
                         <IoCreateOutline size={20} />
                         {language === "english" ? "Edit Case" : "केस संपादित करें"}
                     </button>
-                    <button
-                        onClick={() => {
-                            setIoOfficerName(currentlyViewingComplaint?.io_officer || "")
-                            setIsIOModalOpen(true)
-                        }}
-                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-sm transition-all hover:-translate-y-0.5"
-                    >
-                        <IoPersonOutline size={20} />
-                        {language === "english" ? "Allocate IO" : "आईओ आवंटित करें"}
-                    </button>
+                    {user?.role === "TI" && (
+                        <button
+                            onClick={() => {
+                                setIoOfficerName(currentlyViewingComplaint?.io_officer || "")
+                                setIsIOModalOpen(true)
+                            }}
+                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-sm transition-all hover:-translate-y-0.5"
+                        >
+                            <IoPersonOutline size={20} />
+                            {currentlyViewingComplaint?.io_officer
+                                ? (language === "english" ? "Edit IO" : "आईओ संपादित करें")
+                                : (language === "english" ? "Allocate IO" : "आईओ आवंटित करें")
+                            }
+                        </button>
+                    )}
                     <button
                         onClick={() => {
                             setSelectedStatus(currentlyViewingComplaint?.status || "")
@@ -390,6 +389,19 @@ export default function LogsPage() {
                                             </p>
                                         </div>
                                     </div>
+                                    {currentlyViewingComplaint.accused_details && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-red-50 rounded-lg">
+                                                <IoPersonOutline className="text-red-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-600 uppercase">{language === "english" ? "Accused (आरोपी)" : "आरोपी"}</p>
+                                                <p className="text-sm text-slate-900 font-medium">
+                                                    {currentlyViewingComplaint.accused_details}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {currentlyViewingComplaint.file_urls && currentlyViewingComplaint.file_urls.length > 0 && (
@@ -609,7 +621,7 @@ export default function LogsPage() {
                                         onChange={(e) => setSelectedStatus(e.target.value)}
                                         className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-semibold text-slate-700"
                                     >
-                                        {Object.keys(complaintStatusColors).map((status) => (
+                                        {COMPLAINT_STATUSES.map((status) => (
                                             <option key={status} value={status}>
                                                 {status} {status === currentlyViewingComplaint?.status ? '(Current)' : ''}
                                             </option>
