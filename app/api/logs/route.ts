@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         // 3️⃣ Check complaint exists (needed for authorization + when no logs exist yet)
         const { data: complaint, error: complaintError } = await supabase
             .from("complaints")
-            .select("id, status, subject, message, complainant_name, complainant_contact, date, created_at, role_addressed_to, allocated_thana, file_urls, phone, submitted_by, io_officer, accused_details")
+            .select("id, status, subject, message, complainant_name, complainant_contact, date, created_at, role_addressed_to, allocated_thana, file_urls, phone, submitted_by, io_officer, accused_details, feedback")
             .eq("id", complaintId)
             .single()
 
