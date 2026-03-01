@@ -123,7 +123,7 @@ export default function Home() {
 
             {/* BIG DESCRIPTION OF COMPLAINTS */}
 
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 w-full px-3 gap-6 mb-2'>
+            <div className={`grid grid-cols-1 sm:grid-cols-2 ${user?.role === 'SP' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} w-full px-3 gap-6 mb-2`}>
                 {statsLoading ? (
                     <>
                         {/* Skeleton loaders for 4 stat cards */}
@@ -191,32 +191,34 @@ export default function Home() {
                             </div>
                         </div>
 
-                        {/* UNALLOCATED COMPLAINTS */}
-                        <div
-                            onClick={() => {
-                                setSelectedCategory('unallocated');
-                                setSelectedAgeGroup(null);
-                                setShowStatsModal(true);
-                            }}
-                            className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-rose-500 to-red-600 p-5 rounded-xs hover:shadow-red-200/50 transition-all duration-300'
-                        >
-                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                                <MdOutlineWrongLocation size={80} className="text-white" />
-                            </div>
-                            <div className="relative z-10 flex flex-col h-full justify-between">
-                                <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                                    {language === "english" ? "Unallocated" : "अनाबंटित"}
-                                </p>
-                                <div className="flex items-baseline gap-2">
-                                    <h3 className="text-3xl font-black text-white">
-                                        {stats?.unallocatedCount ?? 0}
-                                    </h3>
-                                    <span className="text-[10px] font-bold text-rose-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                        {stats?.total ? `${Math.round(((stats.unallocatedCount ?? 0) / stats.total) * 100)}%` : '0%'}
-                                    </span>
+                        {/* UNALLOCATED COMPLAINTS - SP only */}
+                        {user?.role === "SP" && (
+                            <div
+                                onClick={() => {
+                                    setSelectedCategory('unallocated');
+                                    setSelectedAgeGroup(null);
+                                    setShowStatsModal(true);
+                                }}
+                                className='cursor-pointer relative overflow-hidden group bg-linear-to-br from-rose-500 to-red-600 p-5 rounded-xs hover:shadow-red-200/50 transition-all duration-300'
+                            >
+                                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                                    <MdOutlineWrongLocation size={80} className="text-white" />
+                                </div>
+                                <div className="relative z-10 flex flex-col h-full justify-between">
+                                    <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
+                                        {language === "english" ? "Unallocated" : "अनाबंटित"}
+                                    </p>
+                                    <div className="flex items-baseline gap-2">
+                                        <h3 className="text-3xl font-black text-white">
+                                            {stats?.unallocatedCount ?? 0}
+                                        </h3>
+                                        <span className="text-[10px] font-bold text-rose-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
+                                            {stats?.total ? `${Math.round(((stats.unallocatedCount ?? 0) / stats.total) * 100)}%` : '0%'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* NIRAKRIT COMPLAINTS */}
                         <div
@@ -254,7 +256,7 @@ export default function Home() {
                                 <div className="flex gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                                     <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                    {user?.role === "SP" && <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />}
                                 </div>
                             </div>
 
@@ -262,20 +264,33 @@ export default function Home() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
-                                            data={[
-                                                { name: 'Pending', value: stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0, color: '#f59e0b' },
-                                                { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
-                                                { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' }
-                                            ]}
+                                            data={
+                                                user?.role === "SP"
+                                                    ? [
+                                                        { name: 'Pending', value: stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0, color: '#f59e0b' },
+                                                        { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
+                                                        { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' }
+                                                    ]
+                                                    : [
+                                                        { name: 'Pending', value: stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0, color: '#f59e0b' },
+                                                        { name: 'Nirakrit', value: stats?.nirakritCount ?? 0, color: '#10b981' },
+                                                        { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.nirakritCount ?? 0), color: '#6366f1' }
+                                                    ]
+                                            }
                                             innerRadius={25}
                                             outerRadius={40}
                                             paddingAngle={5}
                                             dataKey="value"
                                             stroke="none"
                                         >
-                                            {[0, 1, 2].map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={['#f59e0b', '#f43f5e', '#6366f1'][index]} />
-                                            ))}
+                                            {user?.role === "SP"
+                                                ? [0, 1, 2].map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={['#f59e0b', '#f43f5e', '#6366f1'][index]} />
+                                                ))
+                                                : [0, 1, 2].map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={['#f59e0b', '#10b981', '#6366f1'][index]} />
+                                                ))
+                                            }
                                         </Pie>
                                         <Tooltip
                                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }}
@@ -290,12 +305,24 @@ export default function Home() {
                                     <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0}</span>
                                     <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Pend</span>
                                 </div>
-                                <div className="flex flex-col items-center border-x border-slate-100 px-4">
-                                    <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.unallocatedCount ?? 0}</span>
-                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Unall</span>
-                                </div>
+                                {user?.role === "SP" ? (
+                                    <div className="flex flex-col items-center border-x border-slate-100 px-4">
+                                        <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.unallocatedCount ?? 0}</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Unall</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center border-x border-slate-100 px-4">
+                                        <span className="text-[9px] font-black text-slate-800 uppercase">{stats?.nirakritCount ?? 0}</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Nirakrit</span>
+                                    </div>
+                                )}
                                 <div className="flex flex-col items-center">
-                                    <span className="text-[9px] font-black text-slate-800 uppercase">{(stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0)}</span>
+                                    <span className="text-[9px] font-black text-slate-800 uppercase">
+                                        {user?.role === "SP"
+                                            ? (stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.unallocatedCount ?? 0)
+                                            : (stats?.total ?? 0) - (stats?.statusCounts?.लंबित ?? stats?.statusCounts?.PENDING ?? 0) - (stats?.nirakritCount ?? 0)
+                                        }
+                                    </span>
                                     <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Other</span>
                                 </div>
                             </div>
@@ -328,7 +355,7 @@ export default function Home() {
                                         {user?.role === "TI" ? (language === "english" ? `Thana: ${user.thana}` : `थाना: ${user.thana}`) : (language === "english" ? `District Overview: ${user?.name}` : `जिला विवरण: ${user?.name}`)}
                                     </p>
                                     <Link
-                                        href={selectedCategory === 'unallocated' ? '/unallocated-complaints' : '/manage-complaints'}
+                                        href={selectedCategory === 'unallocated' && user?.role === 'SP' ? '/unallocated-complaints' : '/manage-complaints'}
                                         className="flex items-center gap-1 text-[10px] font-black text-indigo-600 hover:text-indigo-700 transition-colors uppercase border-l border-slate-200 pl-3"
                                     >
                                         {language === "english" ? "View All" : "सभी देखें"}
@@ -446,7 +473,7 @@ export default function Home() {
                                             }
                                         </p>
                                         <Link
-                                            href={selectedCategory === 'unallocated' ? '/unallocated-complaints' : '/manage-complaints'}
+                                            href={selectedCategory === 'unallocated' && user?.role === 'SP' ? '/unallocated-complaints' : '/manage-complaints'}
                                             className="text-sm font-black text-white p-3 py-1 bg-indigo-700 hover:underline uppercase"
                                         >
                                             {language === "english" ? "Open Full List" : "पूरी सूची खोलें"}

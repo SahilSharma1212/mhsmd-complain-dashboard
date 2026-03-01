@@ -228,21 +228,26 @@ export async function GET(request: NextRequest) {
             thanaAgeStatusBreakdown,
             latestTotalComplaints,
             latestPendingComplaints,
-            latestUnallocatedComplaints,
             latestNirakritComplaints
         } = aggregateCounts(rows as any);
 
+        // TI sees only their thana's allocated complaints — strip unallocated stats
+        const tiCategoryAgeStats = {
+            ...categoryAgeStats,
+            unallocated: { lessThan15Days: 0, fifteenToThirtyDays: 0, moreThan30Days: 0 },
+        };
+
         const response = NextResponse.json({
+            role: "TI",
             total: rows.length,
             statusCounts,
             nirakritCount,
             ageStats,
-            categoryAgeStats,
+            categoryAgeStats: tiCategoryAgeStats,
             ageStatusBreakdown,
             thanaAgeStatusBreakdown,
             latestTotalComplaints,
             latestPendingComplaints,
-            latestUnallocatedComplaints,
             latestNirakritComplaints
         });
         response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=30');
@@ -319,6 +324,7 @@ export async function GET(request: NextRequest) {
         } = aggregateCounts(rows as any);
 
         const response = NextResponse.json({
+            role: "SP",
             total: rows.length,
             unallocatedCount,
             nirakritCount,
