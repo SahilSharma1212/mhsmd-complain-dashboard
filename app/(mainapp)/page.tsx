@@ -6,7 +6,7 @@ import { useUserStore } from '../_store/userStore'
 import { useStatsStore } from '../_store/statsStore'
 import { StatusCounts, StatData, COMPLAINT_STATUS_COLORS } from '../types'
 import { RiDashboardLine } from 'react-icons/ri'
-import { IoLayersOutline, IoCreateOutline, IoSettingsOutline, IoArrowForwardCircleOutline, IoBusinessOutline, IoTimerOutline } from 'react-icons/io5'
+import { IoLayersOutline, IoCreateOutline, IoSettingsOutline, IoArrowForwardCircleOutline, IoBusinessOutline, IoTimerOutline, IoReloadOutline } from 'react-icons/io5'
 
 import Link from 'next/link'
 import { useLanguageStore } from '../_store/languageStore'
@@ -472,7 +472,8 @@ export default function Home() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => fetchStats(true)} className="px-3 py-1.5 bg-white border border-slate-200 text-[10px] font-bold text-slate-600 hover:bg-slate-50 transition-all rounded-xs uppercase">
+                    <button onClick={() => fetchStats(true)} className="px-3 py-1.5 bg-white border border-slate-200 text-[10px] font-bold text-slate-600 hover:bg-slate-50 transition-all rounded-xs uppercase flex items-center gap-2">
+                        <IoReloadOutline />
                         {language === "english" ? "Refresh Data" : "डेटा अपडेट करें"}
                     </button>
                 </div>
