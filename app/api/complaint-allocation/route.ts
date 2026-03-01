@@ -157,7 +157,7 @@ export async function PATCH(request: NextRequest) {
         updated_by: user.name,
         prev_status: complaint.status,
         current_status: complaint.status,
-        reason: `Allocated to ${thana}`
+        reason: `${thana} थाना अलॉट किया गया`
     });
 
     return NextResponse.json({
