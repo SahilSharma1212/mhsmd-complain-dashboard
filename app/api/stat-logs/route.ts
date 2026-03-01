@@ -4,15 +4,13 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { User } from "@/app/types";
 
 const STATUSES = [
-    "संजेय",
-    "असंजेय",
+    "अपराध",
+    "फ़ैना",
     "अप्रमाणित",
     "प्रतिबंधात्मक",
     "वापसी",
+    "लम्बित",
     "अन्य",
-    "PENDING",
-    "SOLVED",
-    "लंबित",
 ] as const;
 
 type StatusKey = (typeof STATUSES)[number];
@@ -116,8 +114,8 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
         // 2. Category identification
         const hasThana = !!row.allocated_thana;
         const isUnallocated = !hasThana;
-        const isPending = hasThana && (row.status === "PENDING" || row.status === "लंबित");
-        const isNirakrit = hasThana && !!row.status && row.status !== "PENDING" && row.status !== "लंबित";
+        const isPending = hasThana && (row.status === "PENDING" || row.status === "लंबित" || row.status === "लम्बित");
+        const isNirakrit = hasThana && !!row.status && row.status !== "PENDING" && row.status !== "लंबित" && row.status !== "लम्बित";
 
         if (isPending) {
             categoryAgeStats.pending[currentAge]++;
@@ -135,13 +133,18 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
         latestComplaints.total.push(row);
 
         // 3. Status Breakdown
-        const s = row.status as StatusKey;
-        const isValidStatus = STATUSES.includes(s);
+        let rawStatus = row.status;
+        let s: StatusKey = "अन्य";
 
-        if (isValidStatus) {
-            statusCounts[s]++;
-            ageStatusBreakdown[currentAge][s]++;
+        // Normalize status
+        if (rawStatus === "PENDING" || rawStatus === "लंबित" || rawStatus === "लम्बित") {
+            s = "लम्बित";
+        } else if (STATUSES.includes(rawStatus as any)) {
+            s = rawStatus as StatusKey;
         }
+
+        statusCounts[s]++;
+        ageStatusBreakdown[currentAge][s]++;
 
         // 4. Per-thana breakdown
         if (row.allocated_thana) {
@@ -156,7 +159,7 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
             }
             thanaAgeBreakdown[t][currentAge]++;
 
-            if (isValidStatus) {
+            if (row.allocated_thana) {
                 if (!thanaBreakdown[t]) {
                     thanaBreakdown[t] = zeroCounts();
                 }
@@ -214,8 +217,13 @@ export async function GET(request: NextRequest) {
             .eq("allocated_thana", user.thana);
 
         if (error) {
-            console.error("stat-logs TI error:", error.message);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error("stat-logs TI error:", {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
+            return NextResponse.json({ error: error.message, details: error.details }, { status: 500 });
         }
 
         const rows = data ?? [];
@@ -297,11 +305,21 @@ export async function GET(request: NextRequest) {
         const allocatedRes = results[1] || { data: [], error: null };
 
         if (unallocatedRes.error) {
-            console.error("stat-logs SP unallocated fetch error:", unallocatedRes.error.message);
+            console.error("stat-logs SP unallocated fetch error:", {
+                message: unallocatedRes.error.message,
+                details: unallocatedRes.error.details,
+                hint: unallocatedRes.error.hint,
+                code: unallocatedRes.error.code
+            });
             return NextResponse.json({ error: unallocatedRes.error.message }, { status: 500 });
         }
         if (allocatedRes.error) {
-            console.error("stat-logs SP allocated fetch error:", allocatedRes.error.message);
+            console.error("stat-logs SP allocated fetch error:", {
+                message: allocatedRes.error.message,
+                details: allocatedRes.error.details,
+                hint: allocatedRes.error.hint,
+                code: allocatedRes.error.code
+            });
             return NextResponse.json({ error: allocatedRes.error.message }, { status: 500 });
         }
 
