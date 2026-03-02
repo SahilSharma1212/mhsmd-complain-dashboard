@@ -234,84 +234,90 @@ export default function LogsPage() {
 
     if (error)
         return (
-            <div className="p-6 max-w-7xl mx-auto">
+            <div className="p-6">
                 <button
                     onClick={() => router.back()}
-                    className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mb-6"
+                    className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors mb-6 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-xs text-sm font-bold group"
                 >
-                    <IoArrowBack className="mr-2" />
-                    {language === "english" ? "Back to Complaints" : "शिकायतों पर वापस"}
+                    <IoArrowBack className="group-hover:-translate-x-1 transition-transform" />
+                    {language === "english" ? "Back" : "वापस"}
                 </button>
-                <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xs font-medium shadow-sm">
+                <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xs text-xs font-bold uppercase tracking-widest">
                     {error}
                 </div>
             </div>
         )
 
     return (
-        <div className="p-3 bg-white">
+        <div className="p-6 bg-white">
             <button
                 onClick={() => router.back()}
-                className="flex items-center text-slate-600 hover:text-slate-900 transition-colors mb-6 group bg-slate-100 hover:bg-slate-200 px-4 py-2 text-sm font-medium w-fit shadow-xs"
+                className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors mb-6 group bg-slate-50 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-xs text-sm font-bold w-fit"
             >
-                <IoArrowBack className="mr-2 group-hover:-translate-x-1 transition-transform" />
-                {language === "english" ? "Back to Complaints" : "शिकायतों पर वापस"}
+                <IoArrowBack className="group-hover:-translate-x-1 transition-transform" />
+                {language === "english" ? "Back" : "वापस"}
             </button>
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                        <MdOutlineTrackChanges className="text-blue-500" />
-                        {language === "english" ? "Log Timeline" : "लॉग टाइमलाइन"}
-                    </h1>
-                    <p className="text-slate-600 mt-1">
-                        Complaint ID: <span className="font-semibold text-slate-800">#{complaintId}</span>
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => {
-                            if (currentlyViewingComplaint) {
-                                setEditForm({
-                                    subject: currentlyViewingComplaint.subject || "",
-                                    message: currentlyViewingComplaint.message || "",
-                                    complainant_name: currentlyViewingComplaint.complainant_name || "",
-                                    complainant_contact: currentlyViewingComplaint.complainant_contact || "",
-                                    allocated_thana: currentlyViewingComplaint.allocated_thana || ""
-                                })
-                                setIsEditModalOpen(true)
-                            }
-                        }}
-                        className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xs font-bold border border-slate-200 shadow-sm transition-all hover:-translate-y-0.5"
-                    >
-                        <IoCreateOutline size={20} />
-                        {language === "english" ? "Edit Case" : "केस संपादित करें"}
-                    </button>
-                    {user?.role === "TI" && (
+            <div className="bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden mb-6">
+                <div className="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-50 rounded-xs flex items-center justify-center border border-blue-100">
+                            <MdOutlineTrackChanges className="text-blue-600 text-lg" />
+                        </div>
+                        <div className="flex flex-col">
+                            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                                {language === "english" ? "Log Timeline" : "लॉग टाइमलाइन"}
+                            </h2>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                {language === "english" ? "Complaint" : "शिकायत"} #{complaintId}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
                         <button
                             onClick={() => {
-                                setIoOfficerName(currentlyViewingComplaint?.io_officer || "")
-                                setIsIOModalOpen(true)
+                                if (currentlyViewingComplaint) {
+                                    setEditForm({
+                                        subject: currentlyViewingComplaint.subject || "",
+                                        message: currentlyViewingComplaint.message || "",
+                                        complainant_name: currentlyViewingComplaint.complainant_name || "",
+                                        complainant_contact: currentlyViewingComplaint.complainant_contact || "",
+                                        allocated_thana: currentlyViewingComplaint.allocated_thana || ""
+                                    })
+                                    setIsEditModalOpen(true)
+                                }
                             }}
-                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-sm transition-all hover:-translate-y-0.5"
+                            className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xs text-[11px] font-bold uppercase tracking-wider border border-slate-200 shadow-xs transition-all"
                         >
-                            <IoPersonOutline size={20} />
-                            {currentlyViewingComplaint?.io_officer
-                                ? (language === "english" ? "Edit IO" : "आईओ संपादित करें")
-                                : (language === "english" ? "Allocate IO" : "आईओ आवंटित करें")
-                            }
+                            <IoCreateOutline size={16} />
+                            {language === "english" ? "Edit Case" : "संपादित"}
                         </button>
-                    )}
-                    <button
-                        onClick={() => {
-                            setSelectedStatus(currentlyViewingComplaint?.status || "")
-                            setIsModalOpen(true)
-                        }}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xs font-bold shadow-sm transition-all hover:-translate-y-0.5"
-                    >
-                        <IoAdd size={20} />
-                        {language === "english" ? "Add New Log" : "नया लॉग जोड़ें"}
-                    </button>
+                        {user?.role === "TI" && (
+                            <button
+                                onClick={() => {
+                                    setIoOfficerName(currentlyViewingComplaint?.io_officer || "")
+                                    setIsIOModalOpen(true)
+                                }}
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xs text-[11px] font-bold uppercase tracking-wider shadow-xs transition-all"
+                            >
+                                <IoPersonOutline size={16} />
+                                {currentlyViewingComplaint?.io_officer
+                                    ? (language === "english" ? "Edit IO" : "IO संपादित")
+                                    : (language === "english" ? "Allocate IO" : "IO आवंटित")
+                                }
+                            </button>
+                        )}
+                        <button
+                            onClick={() => {
+                                setSelectedStatus(currentlyViewingComplaint?.status || "")
+                                setIsModalOpen(true)
+                            }}
+                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xs text-[11px] font-bold uppercase tracking-wider shadow-xs transition-all"
+                        >
+                            <IoAdd size={16} />
+                            {language === "english" ? "Add Log" : "लॉग जोड़ें"}
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -225,7 +225,7 @@ export default function ManageComplaints() {
                         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             {language === "english" ? "Complaint Registry" : "शिकायत रजिस्टर"}
                         </h2>
-                        <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
+                        <span className='text-[10px] font-bold text-slate-500 uppercase tracking-widest'>
                             {language === "english" ? "TOTAL" : "कुल"} • {totalCount}
                         </span>
                     </div>

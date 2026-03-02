@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
 import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage, MdCreate } from 'react-icons/md';
-import { IoArrowForwardCircleOutline } from 'react-icons/io5';
+import { IoArrowForwardCircleOutline, IoCreateOutline } from 'react-icons/io5';
 import { useLanguageStore } from '../_store/languageStore';
 
 export default function RegisterComplaint() {
@@ -110,13 +110,19 @@ export default function RegisterComplaint() {
     return (
         <div className='w-full bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden'>
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                    <MdCreate className="text-blue-500" />
-                    {language === "english" ? "Register a New Official Complaint" : "नई आधिकारिक शिकायत दर्ज करें"}
-                </h2>
-                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold tracking-tight uppercase">
-                    {language === "english" ? "New Entry" : "नई प्रविष्टि"}
-                </span>
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-50 rounded-xs flex items-center justify-center border border-blue-100">
+                        <IoCreateOutline className="text-blue-600 text-lg" />
+                    </div>
+                    <div className="flex flex-col">
+                        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                            {language === "english" ? "Register Complaint" : "शिकायत दर्ज करें"}
+                        </h2>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            {language === "english" ? "New Entry" : "नई प्रविष्टि"}
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <div className='p-6'>

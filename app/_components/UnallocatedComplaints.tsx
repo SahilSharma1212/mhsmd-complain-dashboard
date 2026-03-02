@@ -115,17 +115,17 @@ export default function UnallocatedComplaints() {
     return (
         <div className='w-full bg-white border border-slate-200 rounded-xs shadow-sm overflow-hidden flex flex-col'>
             {/* HEADER AREA */}
-            <div className='p-6 bg-white border-b border-slate-100 flex items-center justify-between'>
-                <div className='flex items-center gap-4'>
-                    <div className="w-10 h-10 bg-orange-50 rounded-xs flex items-center justify-center border border-orange-100">
-                        <IoBusinessOutline className="text-orange-600 text-xl" />
+            <div className='px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
+                    <div className="w-8 h-8 bg-orange-50 rounded-xs flex items-center justify-center border border-orange-100">
+                        <IoBusinessOutline className="text-orange-600 text-lg" />
                     </div>
                     <div className="flex flex-col">
                         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                            {language === 'english' ? "Unallocated Complaints Queue" : "अनआवंटित शिकायतें"}
+                            {language === 'english' ? "Unallocated Complaints" : "अनआवंटित शिकायतें"}
                         </h2>
-                        <span className='text-[10px] font-bold text-slate-600 uppercase tracking-widest'>
-                            {language === 'english' ? "TOTAL • " : "कुल • "}{totalCount} {language === 'english' ? "अप्रमाणित" : "लंबित"}
+                        <span className='text-[10px] font-bold text-slate-500 uppercase tracking-widest'>
+                            {language === 'english' ? "TOTAL" : "कुल"} • {totalCount}
                         </span>
                     </div>
                 </div>
@@ -133,7 +133,7 @@ export default function UnallocatedComplaints() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => fetchUnallocated(true)}
-                        className='p-2 rounded-xs bg-slate-50 border border-slate-200 text-slate-400 hover:text-orange-600 hover:border-orange-200 hover:bg-white transition-all cursor-pointer shadow-xs group'
+                        className='p-2 rounded-xs bg-slate-50 border border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-200 hover:bg-white transition-all cursor-pointer shadow-xs group'
                         title="Refresh Queue"
                     >
                         <IoReloadOutline size={18} className="group-active:rotate-180 transition-transform duration-500" />

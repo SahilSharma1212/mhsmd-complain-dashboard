@@ -24,13 +24,6 @@ const complaintStatusColors = Object.entries(COMPLAINT_STATUS_COLORS).map(([id, 
     indicatorColor: c.indicatorColor,
 }));
 
-const mainTabs = [
-    { id: "manage", labeleng: "Manage Complaints", labelhindi: "शिकायत प्रबंधन", href: "/manage-complaints", color: "#7a00b3", indicatorColor: "#dd00ff" },
-    { id: "unallocated", labeleng: "Unallocated Complaints", labelhindi: "अनाबंटित शिकायतें", href: "/unallocated-complaints", color: "#e67e22", indicatorColor: "#f39c12" },
-    { id: "register", labeleng: "Register Complaint", labelhindi: "शिकायत दर्ज करें", href: "/register-complaint", color: "#0000ff", indicatorColor: "#0000ff" },
-    { id: "admin", labeleng: "Admin Actions", labelhindi: "प्रशासनिक कार्य", href: "/admin-actions", color: "#06a600", indicatorColor: "#00ff00" },
-];
-
 type StatsTabId = 'summary' | 'age' | 'status';
 
 export default function Home() {
@@ -92,8 +85,9 @@ export default function Home() {
 
     // ── Render Helpers ──────────────────────────────────────────────────────
 
-    const renderSummaryTab = () => (
+    const RenderSummaryTab = () => (
         <div className="space-y-6 animate-in fade-in duration-500">
+            <h1 className="text-lg font-bold text-purple-600 uppercase tracking-widest bg-purple-100 w-fit p-1 px-3 rounded-xs">{language === "english" ? "Application Summary" : "आवेदन सारांश"}</h1>
             <div className={`grid grid-cols-1 sm:grid-cols-2 ${(user?.role === 'SP' || user?.role === 'ASP' || user?.role === 'SDOP') ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
                 {/* TOTAL COMPLAINTS */}
                 <div className='relative overflow-hidden group bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-xs hover:shadow-indigo-200/50 transition-all duration-300'>
@@ -294,8 +288,9 @@ export default function Home() {
         </div>
     );
 
-    const renderAgeTab = () => (
-        <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+    const RenderAgeTab = () => (
+        <div className="space-y-8 animate-in slide-in-from-right-4 mt-6 duration-500">
+            <h1 className="text-lg font-bold text-blue-600 uppercase tracking-widest bg-blue-100 w-fit p-2 rounded-xs">{language === "english" ? "Pending Age" : "लंबित अवधि"}</h1>
             {/* Age Distribution Header */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {[
@@ -311,7 +306,7 @@ export default function Home() {
                     return (
                         <div
                             key={idx}
-                            onClick={() => setSelectedAgeGroup(isSelected ? null : age.id as any)}
+                            onClick={() => setSelectedAgeGroup(isSelected ? null : age.id as typeof selectedAgeGroup)}
                             className={`cursor-pointer transition-all duration-300 flex flex-col p-6 rounded-xs border ${isSelected ? age.border + `border-[${age.color}] shadow-lg transform scale-[1.02]` : 'border-slate-100'} ${age.bg}`}
                         >
                             <div className="flex justify-between items-start mb-4">
@@ -390,8 +385,9 @@ export default function Home() {
         </div>
     );
 
-    const renderStatusTab = () => (
+    const RenderStatusTab = () => (
         <div className="space-y-8 animate-in fade-in duration-500">
+            <h1 className="text-lg mt-4 font-bold text-green-600 uppercase tracking-widest bg-green-100 w-fit p-1 px-3 rounded-xs">{language === "english" ? "Investigation Conclusion" : "जांच निष्कर्ष"}</h1>
             {/* Status Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {complaintStatusColors.map((status, idx) => {
@@ -433,7 +429,7 @@ export default function Home() {
                             </h4>
                             <div className="space-y-2">
                                 {Object.entries(stats?.ageStatusBreakdown?.[ageId.time] || {})
-                                    .filter(([_, count]) => count > 0)
+                                    .filter(([, count]) => count > 0)
                                     .sort((a, b) => b[1] - a[1])
                                     .map(([status, count], idx) => {
                                         const statusMeta = complaintStatusColors.find(s => s.id === status);
@@ -480,7 +476,7 @@ export default function Home() {
             </div>
 
             {/* STATS TABS NAVIGATION */}
-            <div className="w-full">
+            {/* <div className="w-full">
                 <div className="border-b p-1.5 rounded-xs flex relative w-full border-slate-300">
                     {[
                         { id: 'summary', eng: 'Avedan Sarans', hin: 'आवेदन सारांश' },
@@ -504,7 +500,7 @@ export default function Home() {
                         }}
                     />
                 </div>
-            </div>
+            </div> */}
 
             {/* TAB CONTENT */}
             <div className="w-full px-3 min-h-[400px]">
@@ -516,98 +512,13 @@ export default function Home() {
                     </div>
                 ) : (
                     <>
-                        {activeStatsTab === 'summary' && renderSummaryTab()}
-                        {activeStatsTab === 'age' && renderAgeTab()}
-                        {activeStatsTab === 'status' && renderStatusTab()}
+                        <RenderSummaryTab />
+                        <RenderAgeTab />
+                        <RenderStatusTab />
                     </>
                 )}
             </div>
 
-            {/* SEPARATOR */}
-            <div className="w-full h-px bg-slate-100 my-4" />
-
-            {/* MAIN ACTIONS GRID */}
-            <div>
-                <div className="px-3 mb-6">
-                    <h2 className='text-sm font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2'>
-                        <IoLayersOutline className="text-indigo-500" />
-                        {language === "english" ? "Management Modules" : "प्रबंधन मॉड्यूल"}
-                    </h2>
-                </div>
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-3 pb-4'>
-                    {/* Manage Complaints */}
-                    <Link href="/manage-complaints" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group flex flex-col justify-between h-full min-h-[180px]'>
-                        <div>
-                            <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                <IoLayersOutline className="text-indigo-600 text-xl" />
-                            </div>
-                            <h2 className='text-sm font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors'>{language === "english" ? "Manage Complaints" : "शिकायत प्रबंधन"}</h2>
-                            <p className='text-slate-500 text-[11px] leading-relaxed mb-4'>
-                                {language === "english" ? "Access central database to view and update complaint status." : "शिकायतों की स्थिति देखने और अपडेट करने के लिए डेटाबेस तक पहुंचें।"}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2 text-indigo-600 text-[10px] font-black uppercase tracking-wider">
-                            <span>{language === "english" ? "Enter Module" : "मॉड्यूल में प्रवेश"}</span>
-                            <IoArrowForwardCircleOutline className="text-lg group-hover:translate-x-1 transition-transform" />
-                        </div>
-                    </Link>
-
-                    {/* Unallocated Complaints - SP, ASP, SDOP only */}
-                    {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && (
-                        <Link href="/unallocated-complaints" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[180px]'>
-                            <div>
-                                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                    <IoBusinessOutline className="text-orange-600 text-xl" />
-                                </div>
-                                <h2 className='text-sm font-bold text-slate-900 mb-2 group-hover:text-orange-600 transition-colors'>{language === "english" ? "Unallocated Items" : "अनाबंटित आइटम"}</h2>
-                                <p className='text-slate-500 text-[11px] leading-relaxed mb-4'>
-                                    {language === "english" ? "Review and assign jurisdictions to unassigned complaints." : "अनाबंटित शिकायतों के लिएJurisdictions की समीक्षा करें और सौंपें।"}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2 text-orange-600 text-[10px] font-black uppercase tracking-wider">
-                                <span>{language === "english" ? "Manage Allocation" : "प्रबंधन आवंटन"}</span>
-                                <IoArrowForwardCircleOutline className="text-lg group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </Link>
-                    )}
-
-                    {/* Register Complaint */}
-                    <Link href="/register-complaint" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group flex flex-col justify-between h-full min-h-[180px]'>
-                        <div>
-                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                <IoCreateOutline className="text-blue-600 text-xl" />
-                            </div>
-                            <h2 className='text-sm font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors'>{language === "english" ? "New Registration" : "नया पंजीकरण"}</h2>
-                            <p className='text-slate-500 text-[11px] leading-relaxed mb-4'>
-                                {language === "english" ? "File new grievances with precise categorization and attachments." : "सटीक वर्गीकरण और अनुलग्नकों के साथ नई शिकायतें दर्ज करें।"}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2 text-blue-600 text-[10px] font-black uppercase tracking-wider">
-                            <span>{language === "english" ? "File Narrative" : "प्रविष्टि प्रारंभ करें"}</span>
-                            <IoArrowForwardCircleOutline className="text-lg group-hover:translate-x-1 transition-transform" />
-                        </div>
-                    </Link>
-
-                    {/* Admin Actions - SP, ASP, SDOP only */}
-                    {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && (
-                        <Link href="/admin-actions" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group flex flex-col justify-between h-full min-h-[180px]'>
-                            <div>
-                                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                    <IoSettingsOutline className="text-emerald-600 text-xl" />
-                                </div>
-                                <h2 className='text-sm font-bold text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors'>{language === "english" ? "Admin Actions" : "प्रशासनिक कार्य"}</h2>
-                                <p className='text-slate-500 text-[11px] leading-relaxed mb-4'>
-                                    {language === "english" ? "Management tools to configure thanas and monitor user accounts." : "thanas को कॉन्फ़िगर करने और उपयोगकर्ता खातों की निगरानी के उपकरण।"}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2 text-emerald-600 text-[10px] font-black uppercase tracking-wider">
-                                <span>{language === "english" ? "Security Console" : "सुरक्षा कंसोल"}</span>
-                                <IoArrowForwardCircleOutline className="text-lg group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </Link>
-                    )}
-                </div>
-            </div>
         </div>
     )
 }
