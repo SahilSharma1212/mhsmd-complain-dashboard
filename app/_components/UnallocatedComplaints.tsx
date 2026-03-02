@@ -63,7 +63,7 @@ export default function UnallocatedComplaints() {
     }, [page, lastFetched, complaints, cachedPage, setCachedData]);
 
     useEffect(() => {
-        if (user?.role === "SP") {
+        if (user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") {
             fetchUnallocated();
         }
     }, [fetchUnallocated, user]);
@@ -104,10 +104,10 @@ export default function UnallocatedComplaints() {
         }
     };
 
-    if (user?.role !== "SP") {
+    if (user?.role !== "SP" && user?.role !== "ASP" && user?.role !== "SDOP") {
         return (
             <div className="flex items-center justify-center h-[200px] w-full bg-red-50 border border-red-100 rounded-xs">
-                <p className="text-red-600 font-bold uppercase tracking-widest text-xs">{language === 'english' ? "Access Restricted to SP Only" : "केवल एसपी के लिए प्रतिबंधित"}</p>
+                <p className="text-red-600 font-bold uppercase tracking-widest text-xs">{language === 'english' ? "Access Restricted to SP/ASP/SDOP Only" : "केवल एसपी/एएसपी/एसडीओपी के लिए प्रतिबंधित"}</p>
             </div>
         );
     }

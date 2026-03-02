@@ -27,11 +27,13 @@ export async function GET(request: NextRequest) {
     const decodedToken = decoded as User;
     try {
 
-        if (decodedToken.role === "SP") {
+        if (decodedToken.role === "SP" || decodedToken.role === "ASP" || decodedToken.role === "SDOP") {
+            const roleColumn = decodedToken.role === "SP" ? "designated_sp" : decodedToken.role === "ASP" ? "designated_asp" : "designated_sdop";
+
             const { data, error } = await supabase
                 .from("thana")
                 .select("name")
-                .eq("designated_sp", decodedToken.name); console.log("data", data);
+                .eq(roleColumn, decodedToken.name); console.log("data", data);
             if (error) {
                 return NextResponse.json({
                     message: "Error fetching thana data",
@@ -102,8 +104,8 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 2. Role check — only SP can create thanas
-    if (decodedToken.role !== "SP") {
+    // 2. Role check — only SP/ASP/SDOP can create thanas
+    if (decodedToken.role !== "SP" && decodedToken.role !== "ASP" && decodedToken.role !== "SDOP") {
         return NextResponse.json(
             { message: "Forbidden", success: false },
             { status: 403 }
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest) {
 
     const { name, contact_number, pin_code, city } = parsed.data;
 
+    const roleColumn = decodedToken.role === "SP" ? "designated_sp" : decodedToken.role === "ASP" ? "designated_asp" : "designated_sdop";
+
     const { data, error } = await supabase
         .from("thana").insert({
             name: name.toLowerCase(),
@@ -131,7 +135,7 @@ export async function POST(request: NextRequest) {
             pin_code,
             city: city.toLowerCase(),
             ti: "NOT ALLOCATED",
-            designated_sp: decodedToken.name.toLowerCase()
+            [roleColumn]: decodedToken.name.toLowerCase()
         });
 
 

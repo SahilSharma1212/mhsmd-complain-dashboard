@@ -69,7 +69,7 @@ export default function AdminActions() {
         }
     };
 
-    if (user?.role !== "SP" && user?.role !== "TI") {
+    if (user?.role !== "SP" && user?.role !== "ASP" && user?.role !== "SDOP" && user?.role !== "TI") {
         return (
             <div className="flex items-center justify-center h-[200px] w-full bg-red-50 border border-red-100 rounded-xs">
                 <p className="text-red-600 font-bold uppercase tracking-widest text-xs">{language === "english" ? "Access Restricted to Official Personnel Only" : "केवल आधिकारिक कर्मियों के लिए प्रतिबंधित पहुंच"}</p>
@@ -91,8 +91,8 @@ export default function AdminActions() {
 
             <div className='grid grid-cols-2 max-lg:grid-cols-1 gap-8 w-full items-start'>
 
-                {/* ADD THANA — SP only */}
-                {user?.role === "SP" && (
+                {/* ADD THANA — SP, ASP, SDOP Only */}
+                {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && (
                     <div className='bg-white border border-slate-200 rounded-xs shadow-sm overflow-hidden flex flex-col'>
                         <div className='p-4 bg-white border-b border-slate-100 flex items-center gap-3'>
                             <div className="w-8 h-8 bg-emerald-600 rounded-xs flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -195,7 +195,7 @@ export default function AdminActions() {
 
                             <div className='flex flex-col gap-1.5'>
                                 <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider'>{language === "english" ? "Allocated Jurisdiction" : "आवंटित अधिकार क्षेत्र"}</label>
-                                {user?.role === "SP" ? (
+                                {user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP" ? (
                                     <select value={addUserDetails.thana}
                                         onChange={(e) => setAddUserDetails({ ...addUserDetails, thana: e.target.value })}
                                         className='w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xs focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 focus:bg-white transition-all text-xs font-semibold text-slate-900'>

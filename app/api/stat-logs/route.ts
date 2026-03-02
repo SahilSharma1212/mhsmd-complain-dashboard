@@ -262,13 +262,15 @@ export async function GET(request: NextRequest) {
         return response;
     }
 
-    // ── 3. SP: 2 queries → thana list + complaints with thana column ──────────
-    if (user.role === "SP") {
-        // Round-trip 1: get thana names belonging to this SP
+    // ── 3. SP, ASP, SDOP: 2 queries → thana list + complaints with thana column ─
+    if (user.role === "SP" || user.role === "ASP" || user.role === "SDOP") {
+        const roleColumn = user.role === "SP" ? "designated_sp" : user.role === "ASP" ? "designated_asp" : "designated_sdop";
+
+        // Round-trip 1: get thana names belonging to this role
         const { data: thanaData, error: thanaError } = await supabase
             .from("thana")
             .select("name")
-            .eq("designated_sp", user.name);
+            .eq(roleColumn, user.name);
 
         if (thanaError) {
             console.error("stat-logs SP thana fetch error:", {

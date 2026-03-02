@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     const decodedToken = verifyToken(token);
-    if (!decodedToken || decodedToken.role !== "SP") {
+    if (!decodedToken || !["SP", "ASP", "SDOP"].includes(decodedToken.role)) {
         return NextResponse.json({ message: "Unauthorised Access", success: false }, { status: 403 });
     }
 
@@ -87,11 +87,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const user = verifyToken(token);
-    if (!user || user.role !== "SP") {
+    if (!user || !["SP", "ASP", "SDOP"].includes(user.role)) {
         return NextResponse.json({ message: "Unauthorised Access", success: false }, { status: 403 });
     }
 
-    let body: any;
+    let body: unknown;
     try {
         body = await request.json();
     } catch {

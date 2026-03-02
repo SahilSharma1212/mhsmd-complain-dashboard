@@ -85,21 +85,34 @@ export default function SignInPage() {
                             className={`flex-1 py-3 text-sm font-bold transition-all duration-200 text-center relative z-10 ${role === "SP" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
                                 }`}
                         >
-                            SP Account
+                            SP
+                        </button>
+                        <button
+                            onClick={() => setRole("ASP")}
+                            className={`flex-1 py-3 text-sm font-bold transition-all duration-200 text-center relative z-10 ${role === "ASP" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                                }`}
+                        >
+                            ASP
+                        </button>
+                        <button
+                            onClick={() => setRole("SDOP")}
+                            className={`flex-1 py-3 text-sm font-bold transition-all duration-200 text-center relative z-10 ${role === "SDOP" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                                }`}
+                        >
+                            SDOP
                         </button>
                         <button
                             onClick={() => setRole("TI")}
                             className={`flex-1 py-3 text-sm font-bold transition-all duration-200 text-center relative z-10 ${role === "TI" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
                                 }`}
                         >
-                            TI Account
+                            TI
                         </button>
-
                         <div
                             className="absolute bottom-0 h-0.5 bg-blue-600 transition-all duration-300"
                             style={{
-                                width: '50%',
-                                left: role === "SP" ? '0%' : '50%'
+                                width: '25%',
+                                left: role === "SP" ? '0%' : role === "ASP" ? '25%' : role === "SDOP" ? '50%' : '75%'
                             }}
                         />
                     </div>

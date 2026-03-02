@@ -79,15 +79,17 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // =====================
-        // ROLE: SP
-        // =====================
-        if (user.role === "SP") {
+        // ===================================
+        // ROLE: SP, ASP, SDOP
+        // ===================================
+        if (user.role === "SP" || user.role === "ASP" || user.role === "SDOP") {
             if (complaint.allocated_thana) {
+                const roleColumn = user.role === "SP" ? "designated_sp" : user.role === "ASP" ? "designated_asp" : "designated_sdop";
+
                 const { data: designatedThana, error: thanaError } = await supabase
                     .from("thana")
                     .select("name")
-                    .eq("designated_sp", user.name)
+                    .eq(roleColumn, user.name)
                     .eq("name", complaint.allocated_thana)
                     .maybeSingle()
 
@@ -190,11 +192,13 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        if (user.role === "SP") {
+        if (user.role === "SP" || user.role === "ASP" || user.role === "SDOP") {
+            const roleColumn = user.role === "SP" ? "designated_sp" : user.role === "ASP" ? "designated_asp" : "designated_sdop";
+
             const { data: designatedThana } = await supabase
                 .from("thana")
                 .select("*")
-                .eq("designated_sp", user.name)
+                .eq(roleColumn, user.name)
                 .eq("name", complaint.allocated_thana)
                 .single()
 
@@ -329,17 +333,19 @@ export async function DELETE(request: NextRequest) {
         }
 
         // 5. Authorization
-        if (user.role !== "SP") {
+        if (user.role !== "SP" && user.role !== "ASP" && user.role !== "SDOP") {
             return NextResponse.json(
-                { message: "Only SP users are authorized to delete logs", success: false },
+                { message: "You are not authorized to delete logs", success: false },
                 { status: 403 }
             )
         }
 
+        const roleColumn = user.role === "SP" ? "designated_sp" : user.role === "ASP" ? "designated_asp" : "designated_sdop";
+
         const { data: designatedThana } = await supabase
             .from("thana")
             .select("*")
-            .eq("designated_sp", user.name)
+            .eq(roleColumn, user.name)
             .eq("name", complaint.allocated_thana)
             .single()
 

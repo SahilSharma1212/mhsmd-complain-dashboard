@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs"
 const signInSchema = z.object({
     email: z.string().email("Invalid email format"),
     password: z.string().min(8, "Password must be at least 8 characters long"),
-    role: z.enum(["SP", "TI"], { message: "Role must be SP or TI" })
+    role: z.enum(["SP", "TI", "ASP", "SDOP"], { message: "Invalid role selected" })
 })
 
 export async function POST(req: NextRequest) {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         // Check role mismatch separately — gives a clearer error
         if (user.role !== role) {
             return NextResponse.json(
-                { message: `This account is registered as '${user.role}', not '${role}'. Please select the correct account type.` },
+                { message: "Invalid role selected for this account" },
                 { status: 403 }
             );
         }

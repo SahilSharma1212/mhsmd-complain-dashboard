@@ -180,7 +180,7 @@ export default function ManageComplaints() {
     }
 
     const handleDeleteComplaint = async (id: string) => {
-        if (user?.role !== 'SP') {
+        if (user?.role !== 'SP' && user?.role !== 'ASP' && user?.role !== 'SDOP') {
             toast.error(language === "english" ? "Only SP users can delete complaints" : "केवल SP उपयोगकर्ता ही शिकायतें हटा सकते हैं");
             return;
         }
@@ -262,10 +262,10 @@ export default function ManageComplaints() {
                             <option value="status">{language === "english" ? "Status" : "स्टेटस"}</option>
                             <option value="complainant_name">{language === "english" ? "Name of Complainer" : "शिकायतकर्ता का नाम"}</option>
                             <option value="accused">{language === "english" ? "Accused (आरोपी)" : "आरोपी"}</option>
-                            {user?.role === 'SP' && (
+                            {(user?.role === 'SP' || user?.role === 'ASP' || user?.role === 'SDOP') && (
                                 <option value="allocated_thana">{language === "english" ? "Search by Thana" : "थाना द्वारा खोजें"}</option>
                             )}
-                            {user?.role !== 'TI' && user?.role !== 'SP' && (
+                            {user?.role !== 'TI' && user?.role !== 'SP' && user?.role !== 'ASP' && user?.role !== 'SDOP' && (
                                 <option value="role_addressed_to">{language === "english" ? "Addressed To" : "किसको संबोधित"}</option>
                             )}
                         </select>
@@ -490,7 +490,7 @@ export default function ManageComplaints() {
                                                     title="View Detailed Logs">
                                                     <CgNotes size={16} />
                                                 </Link>
-                                                {user?.role === 'SP' && (
+                                                {(user?.role === 'SP' || user?.role === 'ASP' || user?.role === 'SDOP') && (
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(complaint.id!); }}
                                                         className='w-8 h-8 flex items-center justify-center text-red-500 hover:text-white hover:bg-red-600 rounded-xs transition-all border border-red-100 bg-red-50 shadow-xs'

@@ -45,7 +45,7 @@ export default function ActionsLayout({ children }: { children: React.ReactNode 
     }, [fetchStats]);
 
     // ── Tab helpers ──────────────────────────────────────────────────────────
-    const visibleTabs = user?.role === "SP"
+    const visibleTabs = user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP"
         ? tabs
         : tabs.filter(t => t.id !== "admin" && t.id !== "unallocated");
 

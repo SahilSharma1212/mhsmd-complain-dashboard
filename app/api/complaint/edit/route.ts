@@ -68,14 +68,16 @@ export async function PATCH(request: NextRequest) {
             if (complaint.allocated_thana === user.thana) {
                 isAuthorised = true;
             }
-        } else if (user.role === "SP") {
+        } else if (user.role === "SP" || user.role === "ASP" || user.role === "SDOP") {
+            const roleColumn = user.role === "SP" ? "designated_sp" : user.role === "ASP" ? "designated_asp" : "designated_sdop";
+
             const { data: thanaRecord } = await supabase
                 .from("thana")
-                .select("designated_sp")
+                .select(roleColumn)
                 .eq("name", complaint.allocated_thana)
                 .single();
 
-            if (thanaRecord?.designated_sp === user.name) {
+            if ((thanaRecord as any)?.[roleColumn] === user.name) {
                 isAuthorised = true;
             }
         }

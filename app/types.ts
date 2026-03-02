@@ -1,5 +1,5 @@
 export interface Role {
-    role: "SP" | "TI" | "ADSP" | "SDOP"
+    role: "SP" | "TI" | "ASP" | "SDOP"
 }
 
 export interface User {

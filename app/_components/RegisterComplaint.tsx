@@ -133,6 +133,8 @@ export default function RegisterComplaint() {
                             className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
                             <option value="">{language === "english" ? "-- Select Recipient --" : "-- प्राप्तकर्ता चुनें --"}</option>
                             <option value="SP">SP</option>
+                            <option value="ASP">ASP</option>
+                            <option value="SDOP">SDOP</option>
                             <option value="TI">TI</option>
                         </select>
                     </div>

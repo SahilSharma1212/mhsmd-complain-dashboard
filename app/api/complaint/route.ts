@@ -313,14 +313,16 @@ export async function GET(request: NextRequest) {
             .select("*", { count: "exact" })
             .eq("allocated_thana", decodedToken.thana)
             .order("created_at", { ascending: false });
-    } else if (decodedToken.role === "SP") {
+    } else if (decodedToken.role === "SP" || decodedToken.role === "ASP" || decodedToken.role === "SDOP") {
         // ─── CHANGED: use a subquery approach instead of !inner join ───
         // !inner silently drops complaints when the thana row is missing.
         // Instead, fetch the SP's thana names first, then filter complaints.
+        const roleColumn = decodedToken.role === "SP" ? "designated_sp" : decodedToken.role === "ASP" ? "designated_asp" : "designated_sdop";
+
         const { data: thanasForSP, error: thanaFetchError } = await supabase
             .from("thana")
             .select("name")
-            .eq("designated_sp", decodedToken.name);
+            .eq(roleColumn, decodedToken.name);
 
         if (thanaFetchError) {
             console.log("Thana fetch error for SP:", {
@@ -554,16 +556,18 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Authorization check
-    if (user.role !== "SP") {
+    if (user.role !== "SP" && user.role !== "ASP" && user.role !== "SDOP") {
         return NextResponse.json(
-            { message: "Only SP users are authorized to delete complaints.", success: false },
+            { message: "Only SP/ASP/SDOP users are authorized to delete complaints.", success: false },
             { status: 403 }
         );
     }
 
+    const roleColumn = user.role === "SP" ? "designated_sp" : user.role === "ASP" ? "designated_asp" : "designated_sdop";
+
     const { data: thanaRecord, error: thanaError } = await supabase
         .from("thana")
-        .select("designated_sp")
+        .select(roleColumn)
         .eq("name", complaint.allocated_thana)
         .maybeSingle();
 
@@ -575,7 +579,7 @@ export async function DELETE(request: NextRequest) {
         );
     }
 
-    if (thanaRecord?.designated_sp !== user.name) {
+    if (thanaRecord && (thanaRecord as any)[roleColumn] !== user.name) {
         return NextResponse.json(
             { message: "You are not authorised to delete this complaint.", success: false },
             { status: 403 }

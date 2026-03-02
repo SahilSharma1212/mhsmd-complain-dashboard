@@ -94,7 +94,7 @@ export default function Home() {
 
     const renderSummaryTab = () => (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className={`grid grid-cols-1 sm:grid-cols-2 ${user?.role === 'SP' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
+            <div className={`grid grid-cols-1 sm:grid-cols-2 ${(user?.role === 'SP' || user?.role === 'ASP' || user?.role === 'SDOP') ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
                 {/* TOTAL COMPLAINTS */}
                 <div className='relative overflow-hidden group bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-xs hover:shadow-indigo-200/50 transition-all duration-300'>
                     <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
@@ -135,8 +135,8 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* UNALLOCATED COMPLAINTS - SP only */}
-                {user?.role === "SP" && (
+                {/* UNALLOCATED COMPLAINTS - SP, ASP, SDOP only */}
+                {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && (
                     <div className='relative overflow-hidden group bg-linear-to-br from-rose-500 to-red-600 p-5 rounded-xs hover:shadow-red-200/50 transition-all duration-300'>
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
                             <MdOutlineWrongLocation size={80} className="text-white" />
@@ -191,7 +191,7 @@ export default function Home() {
                             <PieChart>
                                 <Pie
                                     data={
-                                        user?.role === "SP"
+                                        user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP"
                                             ? [
                                                 { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
                                                 { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
@@ -209,7 +209,7 @@ export default function Home() {
                                     dataKey="value"
                                     stroke="none"
                                 >
-                                    {user?.role === "SP"
+                                    {user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP"
                                         ? [0, 1, 2].map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={['#f59e0b', '#f43f5e', '#6366f1'][index]} />
                                         ))
@@ -229,7 +229,7 @@ export default function Home() {
                             <span className="text-sm font-black text-slate-800 uppercase">{stats?.statusCounts?.लम्बित ?? 0}</span>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pending</span>
                         </div>
-                        {user?.role === "SP" ? (
+                        {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") ? (
                             <div className="flex flex-col items-center border-x border-slate-100 px-8">
                                 <span className="text-sm font-black text-slate-800 uppercase">{stats?.unallocatedCount ?? 0}</span>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unallocated</span>
@@ -242,7 +242,7 @@ export default function Home() {
                         )}
                         <div className="flex flex-col items-center">
                             <span className="text-sm font-black text-slate-800 uppercase">
-                                {user?.role === "SP"
+                                {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP")
                                     ? (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.unallocatedCount ?? 0)
                                     : (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.nirakritCount ?? 0)
                                 }
@@ -338,8 +338,8 @@ export default function Home() {
                 })}
             </div>
 
-            {/* Thana-wise Age Distribution (SP Only) */}
-            {user?.role === "SP" && stats?.thanaAgeBreakdown && (
+            {/* Thana-wise Age Distribution (SP, ASP, SDOP Only) */}
+            {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && stats?.thanaAgeBreakdown && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
@@ -459,7 +459,7 @@ export default function Home() {
     );
 
     return (
-        <div className='p-6 pb-0 flex flex-col gap-6 animate-in fade-in w-fullduration-700'>
+        <div className='p-6 px-1 pb-0 flex flex-col gap-6 animate-in fade-in w-fullduration-700'>
             {/* Header with quick navigation */}
             <div className="flex items-center justify-between px-3">
                 <div className="flex flex-col gap-1">
@@ -480,7 +480,7 @@ export default function Home() {
             </div>
 
             {/* STATS TABS NAVIGATION */}
-            <div className="w-full px-3 pb-0">
+            <div className="w-full">
                 <div className="border-b p-1.5 rounded-xs flex relative w-full border-slate-300">
                     {[
                         { id: 'summary', eng: 'Avedan Sarans', hin: 'आवेदन सारांश' },
@@ -552,8 +552,8 @@ export default function Home() {
                         </div>
                     </Link>
 
-                    {/* Unallocated Complaints - SP only */}
-                    {user?.role === "SP" && (
+                    {/* Unallocated Complaints - SP, ASP, SDOP only */}
+                    {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && (
                         <Link href="/unallocated-complaints" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[180px]'>
                             <div>
                                 <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -588,8 +588,8 @@ export default function Home() {
                         </div>
                     </Link>
 
-                    {/* Admin Actions */}
-                    {user?.role === "SP" && (
+                    {/* Admin Actions - SP, ASP, SDOP only */}
+                    {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && (
                         <Link href="/admin-actions" className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group flex flex-col justify-between h-full min-h-[180px]'>
                             <div>
                                 <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">

@@ -577,7 +577,7 @@ export default function LogsPage() {
                                             </p>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {log.action !== 'CREATED' && user?.role === 'SP' && (
+                                            {log.action !== 'CREATED' && (user?.role === 'SP' || user?.role === "ASP" || user?.role === "SDOP") && (
                                                 <button
                                                     onClick={() => {
                                                         setLogToDelete(log.id)
