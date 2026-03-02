@@ -42,10 +42,10 @@ export default function Home() {
 
     useEffect(() => {
         setIsMounted(true);
-        if (!stats && !statsLoading && !statsError) {
+        if (user && !stats && !statsLoading && !statsError) {
             fetchStats();
         }
-    }, [fetchStats, stats, statsLoading, statsError]);
+    }, [fetchStats, stats, statsLoading, statsError, user]);
 
     const fetchUserDetails = async () => {
         if (!user) {

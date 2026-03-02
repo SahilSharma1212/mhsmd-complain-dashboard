@@ -106,8 +106,10 @@ export default function LogsPage() {
             return
         }
 
-        fetchLogs()
-    }, [complaintId])
+        if (user) {
+            fetchLogs()
+        }
+    }, [complaintId, user])
 
 
     const handleAddLog = async (e: React.FormEvent) => {

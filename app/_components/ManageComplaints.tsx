@@ -82,11 +82,11 @@ export default function ManageComplaints() {
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
         const isCacheValid = lastFetched && (Date.now() - lastFetched < CACHE_DURATION);
 
-        if (!complaints || !isCacheValid) {
+        if (user && (!complaints || !isCacheValid)) {
             fetchComplaints(currentPage, filterAttribute, filterValue);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [user]);
 
     // Reset filterValue when changing filterAttribute
     useEffect(() => {
