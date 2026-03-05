@@ -6,9 +6,8 @@ import bcrypt from "bcryptjs";
 const userSchema = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email format"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    role: z.enum(["SP", "TI", "ASP", "SDOP"], { message: "Invalid role" }),
-    phone: z.string().min(10, "Phone must be at least 10 digits"),
+    role: z.string().min(1, "Role is required"),
+    phone: z.string().min(10, "Phone number must be at least 10 digits"),
     thana: z.string().optional(),
 });
 
@@ -30,13 +29,13 @@ export async function POST(req: NextRequest) {
 
         const { users } = parsed.data;
 
-        // Hash all passwords
-        const usersWithHashedPasswords = await Promise.all(
+        // Hash passwords (phone number is the default password, same as user/route.ts)
+        const usersToInsert = await Promise.all(
             users.map(async (user) => {
-                const hashedPassword = await bcrypt.hash(user.password, 10);
+                const hashedPassword = await bcrypt.hash(user.phone, 10);
                 return {
                     name: user.name.toLowerCase(),
-                    email: user.email.toLowerCase(),
+                    email: user.email,
                     password: hashedPassword,
                     role: user.role,
                     phone: user.phone,
@@ -47,7 +46,7 @@ export async function POST(req: NextRequest) {
 
         const { data, error } = await supabase
             .from("users")
-            .insert(usersWithHashedPasswords)
+            .insert(usersToInsert)
             .select("id, name, email, role, phone, thana");
 
         if (error) {
