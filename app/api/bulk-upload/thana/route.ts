@@ -19,7 +19,13 @@ const bulkThanaSchema = z.object({
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        let body = await req.json();
+
+        // If body is an array, wrap it in a "thanas" object
+        if (Array.isArray(body)) {
+            body = { thanas: body };
+        }
+
         const parsed = bulkThanaSchema.safeParse(body);
 
         if (!parsed.success) {
