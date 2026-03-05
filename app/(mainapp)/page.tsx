@@ -1,22 +1,20 @@
 'use client'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useUserStore } from '../_store/userStore'
 import { useStatsStore } from '../_store/statsStore'
-import { StatusCounts, StatData, COMPLAINT_STATUS_COLORS } from '../types'
+import { StatusCounts, StatData, COMPLAINT_STATUS_COLORS, Complaint } from '../types'
 import { RiDashboardLine } from 'react-icons/ri'
-import { IoLayersOutline, IoCreateOutline, IoSettingsOutline, IoArrowForwardCircleOutline, IoBusinessOutline, IoTimerOutline, IoReloadOutline } from 'react-icons/io5'
-
+import { IoLayersOutline, IoArrowForwardCircleOutline, IoBusinessOutline, IoTimerOutline, IoReloadOutline, IoCloseOutline } from 'react-icons/io5'
 import Link from 'next/link'
 import { useLanguageStore } from '../_store/languageStore'
-import { usePathname } from 'next/navigation'
-import { MdHourglassFull, MdOutlineWrongLocation } from 'react-icons/md'
+import { MdOutlineWrongLocation } from 'react-icons/md'
 import { FaHourglass } from 'react-icons/fa6'
 import { IoMdTimer } from 'react-icons/io'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 const complaintStatusColors = Object.entries(COMPLAINT_STATUS_COLORS).map(([id, c]) => ({
     id,
     labeleng: c.labeleng,
@@ -24,501 +22,734 @@ const complaintStatusColors = Object.entries(COMPLAINT_STATUS_COLORS).map(([id, 
     indicatorColor: c.indicatorColor,
 }));
 
-type StatsTabId = 'summary' | 'age' | 'status';
+type PopupType =
+    | 'total'
+    | 'pending'
+    | 'unallocated'
+    | 'nirakrit'
+    | 'recent'
+    | 'thana_age'
+    | `age_lessThan15Days`
+    | `age_fifteenToThirtyDays`
+    | `age_moreThan30Days`
+    | `status_${string}`
+    | null;
 
+// ─── Reusable Modal ───────────────────────────────────────────────────────────
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backdropFilter: 'blur(6px)', backgroundColor: 'rgba(15,23,42,0.45)' }}
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-xs shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+                    <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">{title}</h2>
+                    <button
+                        onClick={onClose}
+                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all"
+                    >
+                        <IoCloseOutline size={18} />
+                    </button>
+                </div>
+                {/* Body */}
+                <div className="overflow-y-auto flex-1 p-5 space-y-4">
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Reusable Tab Bar ─────────────────────────────────────────────────────────
+function TabBar({ tabs, active, onChange }: { tabs: { id: string; label: string }[]; active: string; onChange: (id: string) => void }) {
+    return (
+        <div className="flex gap-1 bg-slate-100 rounded-xs p-1 mb-4 shrink-0">
+            {tabs.map(tab => (
+                <button
+                    key={tab.id}
+                    onClick={() => onChange(tab.id)}
+                    className={`flex-1 py-1.5 rounded-md text-[11px] font-black uppercase tracking-widest transition-all duration-200 ${active === tab.id ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+    );
+}
+
+// ─── Complaint Row ────────────────────────────────────────────────────────────
+function ComplaintRow({ complaint }: { complaint: Complaint }) {
+    return (
+        <Link href={`/logs/${complaint.id}`} className="flex items-center justify-between p-3 rounded-xs border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group">
+            <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="text-xs font-bold text-slate-800 group-hover:text-indigo-600 transition-colors truncate">{complaint.complainant_name || 'Anonymous'}</span>
+                <span className="text-[10px] text-slate-400 font-medium truncate max-w-[280px]">{complaint.subject || 'No Subject'}</span>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 ml-3">
+                <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-bold text-slate-500">{complaint.created_at ? new Date(complaint.created_at).toLocaleDateString() : '--'}</span>
+                    <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-tighter">ID: {String(complaint.id).slice(0, 8)}</span>
+                </div>
+                <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                    <IoArrowForwardCircleOutline size={14} />
+                </div>
+            </div>
+        </Link>
+    );
+}
+
+// ─── Thana-Age Table ──────────────────────────────────────────────────────────
+function ThanaAgeTable({ data, language }: { data: Record<string, { lessThan15Days: number; fifteenToThirtyDays: number; moreThan30Days: number }>; language: string }) {
+    const sorted = Object.entries(data).sort((a, b) => {
+        const tA = a[1].lessThan15Days + a[1].fifteenToThirtyDays + a[1].moreThan30Days;
+        const tB = b[1].lessThan15Days + b[1].fifteenToThirtyDays + b[1].moreThan30Days;
+        return tB - tA;
+    });
+    return (
+        <div className="bg-white border border-slate-100 rounded-xs overflow-hidden">
+            <table className="w-full border-collapse text-[11px]">
+                <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100">
+                        <th className="py-2.5 px-3 text-left font-bold text-slate-500 uppercase tracking-wider">Thana</th>
+                        <th className="py-2.5 px-3 text-center font-bold text-green-600 uppercase">0-15d</th>
+                        <th className="py-2.5 px-3 text-center font-bold text-orange-600 uppercase">15-30d</th>
+                        <th className="py-2.5 px-3 text-center font-bold text-red-600 uppercase">&gt;30d</th>
+                        <th className="py-2.5 px-3 text-center font-black text-slate-800 uppercase border-l border-slate-100">Total</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                    {sorted.map(([thana, ages], idx) => (
+                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="py-2 px-3 font-bold text-slate-700">{thana}</td>
+                            <td className="py-2 px-3 text-center"><span className="px-1.5 py-0.5 bg-green-50 text-green-700 font-black rounded">{ages.lessThan15Days}</span></td>
+                            <td className="py-2 px-3 text-center"><span className="px-1.5 py-0.5 bg-orange-50 text-orange-700 font-black rounded">{ages.fifteenToThirtyDays}</span></td>
+                            <td className="py-2 px-3 text-center"><span className="px-1.5 py-0.5 bg-red-50 text-red-700 font-black rounded">{ages.moreThan30Days}</span></td>
+                            <td className="py-2 px-3 text-center font-black text-slate-800 border-l border-slate-50 bg-slate-50/30">{ages.lessThan15Days + ages.fifteenToThirtyDays + ages.moreThan30Days}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+// ─── Status Distribution List ─────────────────────────────────────────────────
+function StatusDistList({ counts, total, language }: { counts: StatusCounts; total: number; language: string }) {
+    return (
+        <div className="grid grid-cols-2 gap-2">
+            {complaintStatusColors.map((s) => {
+                const count = counts?.[s.id] ?? 0;
+                if (count === 0) return null;
+                return (
+                    <div key={s.id} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.indicatorColor }} />
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter truncate">{language === 'english' ? s.labeleng : s.labelhindi}</span>
+                        </div>
+                        <span className="text-xs font-black text-slate-800 ml-2">{count}</span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function Home() {
     const { user, setUser, thana, setThana } = useUserStore();
     const { language } = useLanguageStore();
-    const pathname = usePathname();
     const stats = useStatsStore(state => state.stats);
     const statsLoading = useStatsStore(state => state.loading);
     const statsError = useStatsStore(state => state.error);
     const fetchStats = useStatsStore(state => state.fetchStats);
     const [isMounted, setIsMounted] = useState(false);
 
-    // ── Stats Tabs ──────────────────────────────────────────────────────────
-    const [activeStatsTab, setActiveStatsTab] = useState<StatsTabId>('summary');
-    const [selectedAgeGroup, setSelectedAgeGroup] = useState<'lessThan15Days' | 'fifteenToThirtyDays' | 'moreThan30Days' | null>(null);
+    // ── Popup state ───────────────────────────────────────────────────────────
+    const [popup, setPopup] = useState<PopupType>(null);
+    const [popupTab, setPopupTab] = useState<string>('');
+
+    const openPopup = (type: PopupType, defaultTab = 'age') => {
+        setPopup(type);
+        setPopupTab(defaultTab);
+    };
+    const closePopup = () => setPopup(null);
 
     useEffect(() => {
         setIsMounted(true);
-        if (user && !stats && !statsLoading && !statsError) {
-            fetchStats();
-        }
+        if (user && !stats && !statsLoading && !statsError) fetchStats();
     }, [fetchStats, stats, statsLoading, statsError, user]);
 
-    const fetchUserDetails = async () => {
-        if (!user) {
-            try {
-                const response = await axios.get("/api/user");
-                if (response.data) {
-                    setUser(response.data);
-                }
-            } catch (error) {
-                toast.error("Failed to fetch user details");
-            }
-        }
-    }
-
-    const fetchThanaDetails = async () => {
-        if (!thana) {
-            try {
-                const response = await axios.get("/api/thana");
-                if (response.data && response.data.success) {
-                    const thanaData = response.data.data;
-                    if (Array.isArray(thanaData)) {
-                        setThana(thanaData);
-                    } else {
-                        setThana([thanaData]);
-                    }
-                }
-            } catch (error) {
-                toast.error("Failed to fetch thana details");
-            }
-        }
-    }
-
     useEffect(() => {
+        const fetchUserDetails = async () => {
+            if (!user) {
+                try {
+                    const response = await axios.get("/api/user");
+                    if (response.data) setUser(response.data);
+                } catch { toast.error("Failed to fetch user details"); }
+            }
+        };
+        const fetchThanaDetails = async () => {
+            if (!thana) {
+                try {
+                    const response = await axios.get("/api/thana");
+                    if (response.data?.success) {
+                        const d = response.data.data;
+                        setThana(Array.isArray(d) ? d : [d]);
+                    }
+                } catch { toast.error("Failed to fetch thana details"); }
+            }
+        };
         fetchUserDetails();
         fetchThanaDetails();
     }, []);
 
-    // ── Render Helpers ──────────────────────────────────────────────────────
+    const isSPRole = user?.role === 'SP' || user?.role === 'ASP' || user?.role === 'SDOP';
 
-    const RenderSummaryTab = () => (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <h1 className="text-lg font-bold text-purple-600 uppercase tracking-widest bg-purple-100 w-fit p-1 px-3 rounded-xs">{language === "english" ? "Application Summary" : "आवेदन सारांश"}</h1>
-            <div className={`grid grid-cols-1 sm:grid-cols-2 ${(user?.role === 'SP' || user?.role === 'ASP' || user?.role === 'SDOP') ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
-                {/* TOTAL COMPLAINTS */}
-                <div className='relative overflow-hidden group bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-xs hover:shadow-indigo-200/50 transition-all duration-300'>
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                        <FaHourglass size={80} className="text-white" />
-                    </div>
-                    <div className="flex flex-col h-full justify-between relative z-10">
-                        <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "Total" : "कुल"}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-3xl font-black text-white">
-                                {stats?.total ?? 0}
-                            </h3>
-                            <span className="text-[10px] font-bold text-indigo-200 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                {language === "english" ? "Total" : "कुल"}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    const ageGroups = [
+        { id: 'lessThan15Days' as const, label: language === 'english' ? '0 – 15 Days' : '0 – 15 दिन', color: '#22c55e', bg: 'bg-green-50', border: 'border-green-300', textColor: 'text-green-700', numBg: 'bg-green-100' },
+        { id: 'fifteenToThirtyDays' as const, label: language === 'english' ? '15 – 30 Days' : '15 – 30 दिन', color: '#f59e0b', bg: 'bg-amber-50', border: 'border-amber-300', textColor: 'text-amber-700', numBg: 'bg-amber-100' },
+        { id: 'moreThan30Days' as const, label: language === 'english' ? '30+ Days' : '30+ दिन', color: '#ef4444', bg: 'bg-red-50', border: 'border-red-300', textColor: 'text-red-700', numBg: 'bg-red-100' },
+    ];
 
-                {/* PENDING COMPLAINTS */}
-                <div className='relative overflow-hidden group bg-linear-to-br from-amber-400 to-orange-500 p-5 rounded-xs hover:shadow-orange-200/50 transition-all duration-300'>
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                        <IoMdTimer size={80} className="text-white" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full justify-between">
-                        <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "Pending" : "लम्बित"}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-3xl font-black text-white">
-                                {stats?.statusCounts?.लम्बित ?? 0}
-                            </h3>
-                            <span className="text-[10px] font-bold text-orange-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                {stats?.total ? `${Math.round(((stats?.statusCounts?.लम्बित ?? 0) / stats.total) * 100)}%` : '0%'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+    const pendingTotal =
+        (stats?.categoryAgeStats?.total?.lessThan15Days ?? 0) +
+        (stats?.categoryAgeStats?.total?.fifteenToThirtyDays ?? 0) +
+        (stats?.categoryAgeStats?.total?.moreThan30Days ?? 0);
 
-                {/* UNALLOCATED COMPLAINTS - SP, ASP, SDOP only */}
-                {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && (
-                    <div className='relative overflow-hidden group bg-linear-to-br from-rose-500 to-red-600 p-5 rounded-xs hover:shadow-red-200/50 transition-all duration-300'>
-                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                            <MdOutlineWrongLocation size={80} className="text-white" />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between">
-                            <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                                {language === "english" ? "Unallocated" : "अनाबंटित"}
-                            </p>
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-3xl font-black text-white">
-                                    {stats?.unallocatedCount ?? 0}
-                                </h3>
-                                <span className="text-[10px] font-bold text-rose-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                    {stats?.total ? `${Math.round(((stats.unallocatedCount ?? 0) / stats.total) * 100)}%` : '0%'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                )}
+    // ── Popup content resolver ─────────────────────────────────────────────────
+    const renderPopupContent = () => {
+        if (!popup) return null;
 
-                {/* NIRAKRIT COMPLAINTS */}
-                <div className='relative overflow-hidden group bg-linear-to-br from-emerald-500 to-teal-600 p-5 rounded-xs hover:shadow-emerald-200/50 transition-all duration-300'>
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                        <IoLayersOutline size={80} className="text-white" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full justify-between">
-                        <p className='text-lg font-bold text-white uppercase tracking-widest mb-1'>
-                            {language === "english" ? "NIRAKRIT" : "निराकृत"}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-3xl font-black text-white">
-                                {stats?.nirakritCount ?? 0}
-                            </h3>
-                            <span className="text-[10px] font-bold text-emerald-100 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">
-                                {stats?.total ? `${Math.round(((stats?.nirakritCount ?? 0) / stats.total) * 100)}%` : '0%'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* PIE CHART */}
-                <div className='bg-white p-6 rounded-xs border border-slate-200 shadow-sm flex flex-col gap-4 overflow-hidden'>
-                    <div className="flex justify-between items-center">
-                        <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest'>
-                            {language === "english" ? "Status Distribution" : "स्थिति वितरण"}
-                        </p>
-                    </div>
-                    <div className="h-56 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={
-                                        user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP"
-                                            ? [
-                                                { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
-                                                { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
-                                                { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' }
-                                            ]
-                                            : [
-                                                { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
-                                                { name: 'Nirakrit', value: stats?.nirakritCount ?? 0, color: '#10b981' },
-                                                { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.nirakritCount ?? 0), color: '#6366f1' }
-                                            ]
-                                    }
-                                    innerRadius={50}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    stroke="none"
-                                >
-                                    {user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP"
-                                        ? [0, 1, 2].map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={['#f59e0b', '#f43f5e', '#6366f1'][index]} />
-                                        ))
-                                        : [0, 1, 2].map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={['#f59e0b', '#10b981', '#6366f1'][index]} />
-                                        ))
-                                    }
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold' }}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="flex justify-around border-t border-slate-50 pt-4">
-                        <div className="flex flex-col items-center">
-                            <span className="text-sm font-black text-slate-800 uppercase">{stats?.statusCounts?.लम्बित ?? 0}</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pending</span>
-                        </div>
-                        {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") ? (
-                            <div className="flex flex-col items-center border-x border-slate-100 px-8">
-                                <span className="text-sm font-black text-slate-800 uppercase">{stats?.unallocatedCount ?? 0}</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unallocated</span>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center border-x border-slate-100 px-8">
-                                <span className="text-sm font-black text-slate-800 uppercase">{stats?.nirakritCount ?? 0}</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nirakrit</span>
-                            </div>
-                        )}
-                        <div className="flex flex-col items-center">
-                            <span className="text-sm font-black text-slate-800 uppercase">
-                                {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP")
-                                    ? (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.unallocatedCount ?? 0)
-                                    : (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.nirakritCount ?? 0)
-                                }
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Other</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* LATEST COMPLAINTS */}
-                <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xs flex flex-col overflow-hidden">
-                    <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                        <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">
-                            {language === "english" ? "Latest Submissions" : "नवीनतम प्रविष्टियां"}
-                        </h3>
-                        <Link href="/manage-complaints" className="text-[10px] font-black text-indigo-600 hover:underline uppercase">
-                            {language === "english" ? "View Archive" : "संग्रह देखें"}
-                        </Link>
-                    </div>
-                    <div className="flex-1 overflow-auto divide-y divide-slate-50">
-                        {(stats?.latestTotalComplaints || []).slice(0, 5).map((complaint, idx) => (
-                            <Link href={`/logs/${complaint.id}`} key={idx} className="p-4 hover:bg-slate-50/50 transition-colors group flex items-center justify-between">
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-xs font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
-                                        {complaint.complainant_name || "Anonymous"}
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 font-medium truncate max-w-[200px] sm:max-w-md">
-                                        {complaint.subject || "No Subject"}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-[10px] font-bold text-slate-500">
-                                            {complaint.created_at ? new Date(complaint.created_at).toLocaleDateString() : '--'}
-                                        </span>
-                                        <span className="text-[8px] text-indigo-400 font-bold uppercase tracking-tighter">
-                                            ID: {String(complaint.id).slice(0, 8)}
-                                        </span>
+        // ── TOTAL ──────────────────────────────────────────────────────────────
+        if (popup === 'total') {
+            const tabs = [{ id: 'age', label: language === 'english' ? 'Age Distribution' : 'आयु वितरण' }, ...(isSPRole ? [{ id: 'thana', label: language === 'english' ? 'Thana-wise' : 'थाना-वार' }] : [])];
+            return (
+                <Modal title={language === 'english' ? 'Total Complaints' : 'कुल शिकायतें'} onClose={closePopup}>
+                    <TabBar tabs={tabs} active={popupTab} onChange={setPopupTab} />
+                    {popupTab === 'age' && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {ageGroups.map(ag => (
+                                <div key={ag.id} className={`${ag.bg} ${ag.border} border rounded-xs p-4 flex flex-col gap-2`}>
+                                    <span className={`text-[10px] font-bold ${ag.textColor} uppercase tracking-widest`}>{ag.label}</span>
+                                    <span className="text-3xl font-black text-slate-800">{stats?.categoryAgeStats?.total?.[ag.id] ?? 0}</span>
+                                    <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full" style={{ width: `${pendingTotal ? ((stats?.categoryAgeStats?.total?.[ag.id] ?? 0) / pendingTotal) * 100 : 0}%`, backgroundColor: ag.color }} />
                                     </div>
-                                    <p className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:bg-indigo-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
-                                        <IoArrowForwardCircleOutline size={16} />
-                                    </p>
                                 </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-    const RenderAgeTab = () => (
-        <div className="space-y-8 animate-in slide-in-from-right-4 mt-6 duration-500">
-            <h1 className="text-lg font-bold text-blue-600 uppercase tracking-widest bg-blue-100 w-fit p-2 rounded-xs">{language === "english" ? "Pending Age" : "लंबित अवधि"}</h1>
-            {/* Age Distribution Header */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {[
-                    { id: 'lessThan15Days', label: language === "english" ? "0 - 15 Days" : "0 - 15 दिन", count: stats?.categoryAgeStats?.total?.lessThan15Days ?? 0, color: "#22c55e", bg: "bg-green-50/50", border: "border-green-500" },
-                    { id: 'fifteenToThirtyDays', label: language === "english" ? "15 - 30 Days" : "15 - 30 दिन", count: stats?.categoryAgeStats?.total?.fifteenToThirtyDays ?? 0, color: "#f59e0b", bg: "bg-orange-50/50", border: "border-orange-500" },
-                    { id: 'moreThan30Days', label: language === "english" ? "More Than A Month" : "एक महीने से अधिक", count: stats?.categoryAgeStats?.total?.moreThan30Days ?? 0, color: "#ef4444", bg: "bg-red-50/50", border: "border-red-500" }
-                ].map((age, idx) => {
-                    const isSelected = selectedAgeGroup === age.id;
-                    const total = (stats?.categoryAgeStats?.total?.lessThan15Days ?? 0) +
-                        (stats?.categoryAgeStats?.total?.fifteenToThirtyDays ?? 0) +
-                        (stats?.categoryAgeStats?.total?.moreThan30Days ?? 0);
-
-                    return (
-                        <div
-                            key={idx}
-                            onClick={() => setSelectedAgeGroup(isSelected ? null : age.id as typeof selectedAgeGroup)}
-                            className={`cursor-pointer transition-all duration-300 flex flex-col p-6 rounded-xs border ${isSelected ? age.border + `border-[${age.color}] shadow-lg transform scale-[1.02]` : 'border-slate-100'} ${age.bg}`}
-                        >
-                            <div className="flex justify-between items-start mb-4">
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{age.label}</span>
-                                <div className={`w-3 h-3 rounded-full ${isSelected ? 'animate-ping' : ''}`} style={{ backgroundColor: age.color }} />
-                            </div>
-                            <div className="flex items-end gap-3 mb-4">
-                                <span className="text-5xl font-black text-slate-800 leading-none">{age.count}</span>
-                                <span className="text-[11px] font-black text-slate-400 mb-1">
-                                    {total ? `${Math.round((age.count / total) * 100)}%` : '0%'}
-                                </span>
-                            </div>
-                            <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-slate-100/50 shadow-inner">
-                                <div
-                                    className="h-full transition-all duration-1000 ease-out"
-                                    style={{
-                                        width: `${total ? (age.count / total) * 100 : 0}%`,
-                                        backgroundColor: age.color
-                                    }}
-                                />
-                            </div>
+                            ))}
                         </div>
-                    );
-                })}
-            </div>
+                    )}
+                    {popupTab === 'thana' && stats?.thanaAgeBreakdown && (
+                        <ThanaAgeTable data={stats.thanaAgeBreakdown} language={language} />
+                    )}
+                </Modal>
+            );
+        }
 
-            {/* Thana-wise Age Distribution (SP, ASP, SDOP Only) */}
-            {(user?.role === "SP" || user?.role === "ASP" || user?.role === "SDOP") && stats?.thanaAgeBreakdown && (
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                            {language === "english" ? "Thana-Wise Performance Matrix" : "थाना-वार प्रदर्शन मैट्रिक्स"}
-                        </p>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-xs overflow-hidden shadow-sm">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50/80 border-b border-slate-100">
-                                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Thana Name</th>
-                                    <th className="py-4 px-4 text-center text-[10px] font-bold text-green-600 uppercase tracking-wider">0-15 Days</th>
-                                    <th className="py-4 px-4 text-center text-[10px] font-bold text-orange-600 uppercase tracking-wider">15-30 Days</th>
-                                    <th className="py-4 px-4 text-center text-[10px] font-bold text-red-600 uppercase tracking-wider">{"> 30 Days"}</th>
-                                    <th className="py-4 px-6 text-center text-[11px] font-black text-slate-800 uppercase tracking-wider border-l border-slate-100">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {Object.entries(stats.thanaAgeBreakdown)
-                                    .sort((a, b) => {
-                                        const totalA = a[1].lessThan15Days + a[1].fifteenToThirtyDays + a[1].moreThan30Days;
-                                        const totalB = b[1].lessThan15Days + b[1].fifteenToThirtyDays + b[1].moreThan30Days;
-                                        return totalB - totalA;
-                                    })
-                                    .map(([thana, ages], idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="py-3 px-6 text-[12px] font-bold text-slate-700">{thana}</td>
-                                            <td className="py-3 px-4 text-center">
-                                                <span className="inline-block px-2 py-0.5 bg-green-50 text-green-700 text-[11px] font-black rounded-xs">{ages.lessThan15Days}</span>
-                                            </td>
-                                            <td className="py-3 px-4 text-center">
-                                                <span className="inline-block px-2 py-0.5 bg-orange-50 text-orange-700 text-[11px] font-black rounded-xs">{ages.fifteenToThirtyDays}</span>
-                                            </td>
-                                            <td className="py-3 px-4 text-center">
-                                                <span className="inline-block px-2 py-0.5 bg-red-50 text-red-700 text-[11px] font-black rounded-xs">{ages.moreThan30Days}</span>
-                                            </td>
-                                            <td className="py-3 px-6 text-center text-[12px] font-black text-slate-800 border-l border-slate-50 bg-slate-50/30">
-                                                {ages.lessThan15Days + ages.fifteenToThirtyDays + ages.moreThan30Days}
-                                            </td>
-                                        </tr>
-                                    ))
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-
-    const RenderStatusTab = () => (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <h1 className="text-lg mt-4 font-bold text-green-600 uppercase tracking-widest bg-green-100 w-fit p-1 px-3 rounded-xs">{language === "english" ? "Investigation Conclusion" : "जांच निष्कर्ष"}</h1>
-            {/* Status Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {complaintStatusColors.map((status, idx) => {
-                    const count = stats?.statusCounts?.[status.id] ?? 0;
-                    return (
-                        <div key={idx} className="bg-white border border-slate-200 p-5 rounded-xs flex flex-col gap-3 shadow-sm hover:border-indigo-100 transition-all group">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: status.indicatorColor }} />
-                                <span className="font-bold text-slate-600 text-[12px] uppercase tracking-tighter truncate">
-                                    {language === "english" ? status.labeleng : status.labelhindi}
-                                </span>
-                            </div>
-                            <div className="flex items-baseline justify-between">
-                                <span className="text-3xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors">{count}</span>
-                                <span className="text-[10px] text-slate-300 font-bold">
-                                    {stats?.total ? `${Math.round((count / stats.total) * 100)}%` : '0%'}
-                                </span>
-                            </div>
+        // ── PENDING ────────────────────────────────────────────────────────────
+        if (popup === 'pending') {
+            const tabs = [{ id: 'age', label: language === 'english' ? 'Age Distribution' : 'आयु वितरण' }, ...(isSPRole ? [{ id: 'thana', label: language === 'english' ? 'Thana-wise' : 'थाना-वार' }] : [])];
+            const pendAgeTotal = (stats?.categoryAgeStats?.pending?.lessThan15Days ?? 0) + (stats?.categoryAgeStats?.pending?.fifteenToThirtyDays ?? 0) + (stats?.categoryAgeStats?.pending?.moreThan30Days ?? 0);
+            return (
+                <Modal title={language === 'english' ? 'Pending Complaints' : 'लम्बित शिकायतें'} onClose={closePopup}>
+                    <TabBar tabs={tabs} active={popupTab} onChange={setPopupTab} />
+                    {popupTab === 'age' && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {ageGroups.map(ag => (
+                                <div key={ag.id} className={`${ag.bg} ${ag.border} border rounded-xs p-4 flex flex-col gap-2`}>
+                                    <span className={`text-[10px] font-bold ${ag.textColor} uppercase tracking-widest`}>{ag.label}</span>
+                                    <span className="text-3xl font-black text-slate-800">{stats?.categoryAgeStats?.pending?.[ag.id] ?? 0}</span>
+                                    <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full" style={{ width: `${pendAgeTotal ? ((stats?.categoryAgeStats?.pending?.[ag.id] ?? 0) / pendAgeTotal) * 100 : 0}%`, backgroundColor: ag.color }} />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    );
-                })}
-            </div>
+                    )}
+                    {popupTab === 'thana' && stats?.thanaAgeBreakdown && (
+                        <ThanaAgeTable data={stats.thanaAgeBreakdown} language={language} />
+                    )}
+                </Modal>
+            );
+        }
 
-            {/* Age Group Breakdown */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                        {language === "english" ? "Investigation Breakdown by Duration" : "जांच विवरण अवधि के अनुसार"}
-                    </p>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {([{ time: 'lessThan15Days', bg: 'bg-green-50', color: 'text-green-700' }, { time: 'fifteenToThirtyDays', bg: 'bg-orange-50', color: 'text-orange-700' }, { time: 'moreThan30Days', bg: 'bg-red-50', color: 'text-red-700' }] as const).map((ageId) => (
-                        <div key={ageId.time} className={`space-y-4 ${ageId.bg} p-4 border border-slate-100 rounded-xs`}>
-                            <h4 className={`text-[11px] font-black ${ageId.color} uppercase tracking-widest flex items-center gap-2`}>
-                                <IoTimerOutline />
-                                {ageId.time === 'lessThan15Days' ? (language === "english" ? "0-15 days" : "0-15 दिन") :
-                                    ageId.time === 'fifteenToThirtyDays' ? (language === "english" ? "15-30 days" : "15-30 दिन") :
-                                        (language === "english" ? "30+ days" : "30+ दिन")}
-                            </h4>
-                            <div className="space-y-2">
-                                {Object.entries(stats?.ageStatusBreakdown?.[ageId.time] || {})
-                                    .filter(([, count]) => count > 0)
-                                    .sort((a, b) => b[1] - a[1])
-                                    .map(([status, count], idx) => {
-                                        const statusMeta = complaintStatusColors.find(s => s.id === status);
-                                        return (
-                                            <div key={idx} className="flex items-center justify-between p-3 bg-white border border-white hover:border-slate-200 rounded-xs transition-all">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusMeta?.indicatorColor || '#cbd5e1' }} />
-                                                    <span className="text-[10px] font-bold text-slate-600 uppercase">
-                                                        {language === "english" ? statusMeta?.labeleng || status : statusMeta?.labelhindi || status}
-                                                    </span>
-                                                </div>
-                                                <span className="text-xs font-black text-slate-800">{count}</span>
-                                            </div>
-                                        );
-                                    })
-                                }
-                            </div>
+        // ── UNALLOCATED ────────────────────────────────────────────────────────
+        if (popup === 'unallocated') {
+            return (
+                <Modal title={language === 'english' ? 'Unallocated Complaints' : 'अनाबंटित शिकायतें'} onClose={closePopup}>
+                    <div className="space-y-2">
+                        {(stats?.latestUnallocatedComplaints || []).slice(0, 5).map((c, i) => <ComplaintRow key={i} complaint={c} />)}
+                        {(!stats?.latestUnallocatedComplaints || stats.latestUnallocatedComplaints.length === 0) && (
+                            <p className="text-center text-sm text-slate-400 py-4 font-medium">{language === 'english' ? 'No unallocated complaints' : 'कोई अनाबंटित शिकायत नहीं'}</p>
+                        )}
+                    </div>
+                    <Link href="/unallocated-complaints" onClick={closePopup} className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase tracking-widest transition-all">
+                        {language === 'english' ? 'View All Unallocated' : 'सभी अनाबंटित देखें'}
+                        <IoArrowForwardCircleOutline size={16} />
+                    </Link>
+                </Modal>
+            );
+        }
+
+        // ── NIRAKRIT ───────────────────────────────────────────────────────────
+        if (popup === 'nirakrit') {
+            const tabs = [
+                { id: 'age', label: language === 'english' ? 'Age Distribution' : 'आयु वितरण' },
+                ...(isSPRole ? [{ id: 'thana', label: language === 'english' ? 'Thana-wise' : 'थाना-वार' }] : []),
+                { id: 'status', label: language === 'english' ? 'Status-wise' : 'स्थिति-वार' },
+            ];
+            const nirakritAgeTotal = (stats?.categoryAgeStats?.nirakrit?.lessThan15Days ?? 0) + (stats?.categoryAgeStats?.nirakrit?.fifteenToThirtyDays ?? 0) + (stats?.categoryAgeStats?.nirakrit?.moreThan30Days ?? 0);
+            return (
+                <Modal title={language === 'english' ? 'Nirakrit Complaints' : 'निराकृत शिकायतें'} onClose={closePopup}>
+                    <TabBar tabs={tabs} active={popupTab} onChange={setPopupTab} />
+                    {popupTab === 'age' && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {ageGroups.map(ag => (
+                                <div key={ag.id} className={`${ag.bg} ${ag.border} border rounded-xs p-4 flex flex-col gap-2`}>
+                                    <span className={`text-[10px] font-bold ${ag.textColor} uppercase tracking-widest`}>{ag.label}</span>
+                                    <span className="text-3xl font-black text-slate-800">{stats?.categoryAgeStats?.nirakrit?.[ag.id] ?? 0}</span>
+                                    <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full" style={{ width: `${nirakritAgeTotal ? ((stats?.categoryAgeStats?.nirakrit?.[ag.id] ?? 0) / nirakritAgeTotal) * 100 : 0}%`, backgroundColor: ag.color }} />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
+                    )}
+                    {popupTab === 'thana' && stats?.thanaAgeBreakdown && (
+                        <ThanaAgeTable data={stats.thanaAgeBreakdown} language={language} />
+                    )}
+                    {popupTab === 'status' && (
+                        <StatusDistList counts={stats?.statusCounts ?? {}} total={stats?.nirakritCount ?? 0} language={language} />
+                    )}
+                </Modal>
+            );
+        }
 
+        // ── RECENT COMPLAINTS ─────────────────────────────────────────────────
+        if (popup === 'recent') {
+            const allocated = (stats?.latestTotalComplaints || []).filter(c => c.allocated_thana).slice(0, 5);
+            return (
+                <Modal title={language === 'english' ? 'Recent Complaints' : 'हालिया शिकायतें'} onClose={closePopup}>
+                    <div className="space-y-2">
+                        {allocated.map((c, i) => <ComplaintRow key={i} complaint={c} />)}
+                        {allocated.length === 0 && (
+                            <p className="text-center text-sm text-slate-400 py-4">{language === 'english' ? 'No recent complaints' : 'कोई हालिया शिकायत नहीं'}</p>
+                        )}
+                    </div>
+                    <Link href="/manage-complaints" onClick={closePopup} className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest transition-all">
+                        {language === 'english' ? 'View All Complaints' : 'सभी शिकायतें देखें'}
+                        <IoArrowForwardCircleOutline size={16} />
+                    </Link>
+                </Modal>
+            );
+        }
+
+        // ── AGE GROUP ─────────────────────────────────────────────────────────
+        if (popup?.startsWith('age_')) {
+            const ageKey = popup.replace('age_', '') as 'lessThan15Days' | 'fifteenToThirtyDays' | 'moreThan30Days';
+            const ag = ageGroups.find(a => a.id === ageKey)!;
+            const tabs = [
+                { id: 'thana', label: language === 'english' ? 'Thana-wise' : 'थाना-वार' },
+                { id: 'status', label: language === 'english' ? 'Status-wise' : 'स्थिति-वार' },
+            ];
+            const statusCounts = stats?.ageStatusBreakdown?.[ageKey] ?? {};
+            // Build thana data for this age bucket only
+            const thanaDataForAge: Record<string, { lessThan15Days: number; fifteenToThirtyDays: number; moreThan30Days: number }> = {};
+            if (stats?.thanaAgeBreakdown) {
+                Object.entries(stats.thanaAgeBreakdown).forEach(([t, ages]) => {
+                    thanaDataForAge[t] = { lessThan15Days: 0, fifteenToThirtyDays: 0, moreThan30Days: 0, [ageKey]: ages[ageKey] };
+                });
+            }
+            return (
+                <Modal title={`${ag.label} — ${language === 'english' ? 'Pending Complaints' : 'लम्बित शिकायतें'}`} onClose={closePopup}>
+                    <TabBar tabs={tabs} active={popupTab} onChange={setPopupTab} />
+                    {popupTab === 'thana' && stats?.thanaAgeBreakdown && (
+                        <div className="bg-white border border-slate-100 rounded-xs overflow-hidden">
+                            <table className="w-full border-collapse text-[11px]">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-100">
+                                        <th className="py-2.5 px-3 text-left font-bold text-slate-500 uppercase tracking-wider">Thana</th>
+                                        <th className="py-2.5 px-3 text-center font-bold uppercase" style={{ color: ag.color }}>{ag.label}</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {Object.entries(stats.thanaAgeBreakdown)
+                                        .sort((a, b) => b[1][ageKey] - a[1][ageKey])
+                                        .map(([t, ages], idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="py-2 px-3 font-bold text-slate-700">{t}</td>
+                                                <td className="py-2 px-3 text-center">
+                                                    <span className="px-2 py-0.5 font-black rounded" style={{ backgroundColor: ag.color + '20', color: ag.color }}>{ages[ageKey]}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                    {popupTab === 'status' && <StatusDistList counts={statusCounts} total={stats?.categoryAgeStats?.total?.[ageKey] ?? 0} language={language} />}
+                </Modal>
+            );
+        }
+
+        // ── STATUS ────────────────────────────────────────────────────────────
+        if (popup?.startsWith('status_')) {
+            const statusId = popup.replace('status_', '');
+            const statusMeta = complaintStatusColors.find(s => s.id === statusId);
+            const tabs = [
+                { id: 'age', label: language === 'english' ? 'Age Distribution' : 'आयु वितरण' },
+                ...(isSPRole ? [{ id: 'thana', label: language === 'english' ? 'Thana-wise' : 'थाना-वार' }] : []),
+            ];
+            const ageDistForStatus = {
+                lessThan15Days: stats?.ageStatusBreakdown?.lessThan15Days?.[statusId] ?? 0,
+                fifteenToThirtyDays: stats?.ageStatusBreakdown?.fifteenToThirtyDays?.[statusId] ?? 0,
+                moreThan30Days: stats?.ageStatusBreakdown?.moreThan30Days?.[statusId] ?? 0,
+            };
+            const ageTotal = ageDistForStatus.lessThan15Days + ageDistForStatus.fifteenToThirtyDays + ageDistForStatus.moreThan30Days;
+            return (
+                <Modal title={language === 'english' ? `Status: ${statusMeta?.labeleng ?? statusId}` : `स्थिति: ${statusMeta?.labelhindi ?? statusId}`} onClose={closePopup}>
+                    <TabBar tabs={tabs} active={popupTab} onChange={setPopupTab} />
+                    {popupTab === 'age' && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {ageGroups.map(ag => (
+                                <div key={ag.id} className={`${ag.bg} ${ag.border} border rounded-xs p-4 flex flex-col gap-2`}>
+                                    <span className={`text-[10px] font-bold ${ag.textColor} uppercase tracking-widest`}>{ag.label}</span>
+                                    <span className="text-3xl font-black text-slate-800">{ageDistForStatus[ag.id]}</span>
+                                    <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full" style={{ width: `${ageTotal ? (ageDistForStatus[ag.id] / ageTotal) * 100 : 0}%`, backgroundColor: ag.color }} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {popupTab === 'thana' && stats?.thanaAgeBreakdown && (
+                        <ThanaAgeTable data={stats.thanaAgeBreakdown} language={language} />
+                    )}
+                </Modal>
+            );
+        }
+        // ── THANA AGE ───────────────────────────────────────────────────────
+        if (popup === 'thana_age' && stats?.thanaAgeBreakdown) {
+            return (
+                <Modal title={language === 'english' ? 'Thana-wise Age Distribution' : 'थाना-वार आयु वितरण'} onClose={closePopup}>
+                    <ThanaAgeTable data={stats.thanaAgeBreakdown} language={language} />
+                </Modal>
+            );
+        }
+
+        return null;
+    };
+
+    // ── Pie chart data ─────────────────────────────────────────────────────────
+    const pieData = isSPRole
+        ? [
+            { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
+            { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
+            { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' },
+        ]
+        : [
+            { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
+            { name: 'Nirakrit', value: stats?.nirakritCount ?? 0, color: '#10b981' },
+            { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.nirakritCount ?? 0), color: '#6366f1' },
+        ];
+
+    // ─────────────────────────────────────────────────────────────────────────
     return (
-        <div className='p-6 px-1 pb-0 flex flex-col gap-6 animate-in fade-in w-fullduration-700'>
-            {/* Header with quick navigation */}
-            <div className="flex items-center justify-between px-3">
-                <div className="flex flex-col gap-1">
-                    <h1 className='text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2'>
-                        <RiDashboardLine className="text-blue-600" />
-                        {language === "english" ? "Command Center" : "कमांड सेंटर"}
+        <div className='flex flex-col gap-3 p-4 h-full overflow-hidden animate-in fade-in duration-500'>
+
+            {/* ── Header ──────────────────────────────────────────────────── */}
+            <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-0.5">
+                    <h1 className='text-lg font-black text-slate-900 tracking-tight flex items-center gap-2'>
+                        <RiDashboardLine className="text-indigo-600" />
+                        {language === 'english' ? 'Command Center' : 'कमांड सेंटर'}
                     </h1>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        {user?.role === "TI" ? (language === "english" ? `Thana: ${user.thana}` : `थाना: ${user.thana}`) : (language === "english" ? `District Overview: ${user?.name}` : `जिला विवरण: ${user?.name}`)}
+                        {user?.role === 'TI'
+                            ? (language === 'english' ? `Thana: ${user.thana}` : `थाना: ${user.thana}`)
+                            : (language === 'english' ? `District: ${user?.name}` : `जिला: ${user?.name}`)}
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={() => fetchStats(true)} className="px-3 py-1.5 bg-white border border-slate-200 text-[10px] font-bold text-slate-600 hover:bg-slate-50 transition-all rounded-xs uppercase flex items-center gap-2">
-                        <IoReloadOutline />
-                        {language === "english" ? "Refresh Data" : "डेटा अपडेट करें"}
-                    </button>
-                </div>
+                <button
+                    onClick={() => fetchStats(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-[10px] font-black text-slate-600 hover:bg-slate-50 rounded-xs uppercase tracking-widest transition-all"
+                >
+                    <IoReloadOutline size={12} />
+                    {language === 'english' ? 'Refresh' : 'अपडेट करें'}
+                </button>
             </div>
 
-            {/* STATS TABS NAVIGATION */}
-            {/* <div className="w-full">
-                <div className="border-b p-1.5 rounded-xs flex relative w-full border-slate-300">
-                    {[
-                        { id: 'summary', eng: 'Avedan Sarans', hin: 'आवेदन सारांश' },
-                        { id: 'age', eng: 'Lambit Awadhi', hin: 'लंबित अवधि' },
-                        { id: 'status', eng: 'Jaanch Nirikshan', hin: 'जांच निरीक्षण' }
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveStatsTab(tab.id as StatsTabId)}
-                            className={`flex-1 py-2.5 px-4 text-normal font-black uppercase tracking-widest relative z-10 transition-all duration-300 border-none outline-none ${activeStatsTab === tab.id ? 'text-indigo-800' : 'text-slate-500 hover:text-indigo-800'
-                                }`}
-                        >
-                            {language === 'english' ? tab.eng : tab.hin}
-                        </button>
-                    ))}
-                    <div
-                        className="absolute top-0 bottom-0 transition-all duration-300 ease-in-out bg-indigo-600/10 rounded-px shadow-indigo-200"
-                        style={{
-                            left: `${(100 / 3) * ['summary', 'age', 'status'].indexOf(activeStatsTab) + 0.5}%`,
-                            width: `${(100 / 3) - 1}%`
-                        }}
-                    />
+            {statsLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 animate-pulse">
+                    {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-24 bg-slate-100 rounded-xs" />)}
                 </div>
-            </div> */}
+            ) : (
+                <>
+                    {/* ═══════════════════════════════════════════════════════
+                        ROW 1 — Stat Cards (2×2) + Pie Chart
+                    ═══════════════════════════════════════════════════════ */}
+                    <div className="flex gap-3 items-stretch">
+                        {/* 2×2 Stat cards */}
+                        <div className="grid grid-cols-2 gap-3 flex-1">
+                            {/* Total */}
+                            <button
+                                onClick={() => openPopup('total', 'age')}
+                                className='relative overflow-hidden text-left group bg-linear-to-br from-indigo-500 to-indigo-600 p-3 rounded-xs hover:shadow-lg hover:shadow-indigo-200/60 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer'
+                            >
+                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform">
+                                    <FaHourglass size={40} className="text-white" />
+                                </div>
+                                <div className="relative z-10">
+                                    <p className='text-[9px] font-black text-indigo-200 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Total' : 'कुल'}</p>
+                                    <h3 className="text-2xl font-black text-white">{stats?.total ?? 0}</h3>
+                                </div>
+                            </button>
 
-            {/* TAB CONTENT */}
-            <div className="w-full px-3 min-h-[400px]">
-                {statsLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="h-40 bg-slate-100 rounded-xs" />
-                        ))}
+                            {/* Pending */}
+                            <button
+                                onClick={() => openPopup('pending', 'age')}
+                                className='relative overflow-hidden text-left group bg-linear-to-br from-amber-400 to-orange-500 p-3 rounded-xs hover:shadow-lg hover:shadow-orange-200/60 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer'
+                            >
+                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform">
+                                    <IoMdTimer size={40} className="text-white" />
+                                </div>
+                                <div className="relative z-10">
+                                    <p className='text-[9px] font-black text-orange-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Pending' : 'लम्बित'}</p>
+                                    <h3 className="text-2xl font-black text-white">{stats?.statusCounts?.लम्बित ?? 0}</h3>
+                                    <span className="text-[8px] font-bold text-orange-100/70 uppercase">
+                                        {stats?.total ? `${Math.round(((stats?.statusCounts?.लम्बित ?? 0) / stats.total) * 100)}%` : '0%'}
+                                    </span>
+                                </div>
+                            </button>
+
+                            {/* Unallocated (SP/ASP/SDOP only) or placeholder */}
+                            {isSPRole ? (
+                                <button
+                                    onClick={() => openPopup('unallocated', 'list')}
+                                    className='relative overflow-hidden text-left group bg-linear-to-br from-rose-500 to-red-600 p-3 rounded-xs hover:shadow-lg hover:shadow-red-200/60 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer'
+                                >
+                                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform">
+                                        <MdOutlineWrongLocation size={40} className="text-white" />
+                                    </div>
+                                    <div className="relative z-10">
+                                        <p className='text-[9px] font-black text-rose-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Unallocated' : 'अनाबंटित'}</p>
+                                        <h3 className="text-2xl font-black text-white">{stats?.unallocatedCount ?? 0}</h3>
+                                        <span className="text-[8px] font-bold text-rose-100/70 uppercase">
+                                            {stats?.total ? `${Math.round(((stats?.unallocatedCount ?? 0) / stats.total) * 100)}%` : '0%'}
+                                        </span>
+                                    </div>
+                                </button>
+                            ) : (
+                                <div className="rounded-xs bg-slate-100 border-2 border-dashed border-slate-200" />
+                            )}
+
+                            {/* Nirakrit */}
+                            <button
+                                onClick={() => openPopup('nirakrit', 'age')}
+                                className='relative overflow-hidden text-left group bg-linear-to-br from-emerald-500 to-teal-600 p-3 rounded-xs hover:shadow-lg hover:shadow-emerald-200/60 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer'
+                            >
+                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform">
+                                    <IoLayersOutline size={40} className="text-white" />
+                                </div>
+                                <div className="relative z-10">
+                                    <p className='text-[9px] font-black text-emerald-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Nirakrit' : 'निराकृत'}</p>
+                                    <h3 className="text-2xl font-black text-white">{stats?.nirakritCount ?? 0}</h3>
+                                    <span className="text-[8px] font-bold text-emerald-100/70 uppercase">
+                                        {stats?.total ? `${Math.round(((stats?.nirakritCount ?? 0) / stats.total) * 100)}%` : '0%'}
+                                    </span>
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Pie Chart */}
+                        <div className='bg-white border border-slate-200 rounded-xs p-3 flex flex-col gap-1 w-48 shrink-0 shadow-sm'>
+                            <p className='text-[9px] font-black text-slate-400 uppercase tracking-widest'>{language === 'english' ? 'Status Distribution' : 'स्थिति वितरण'}</p>
+                            <div className="h-24 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie data={pieData} innerRadius={28} outerRadius={45} paddingAngle={4} dataKey="value" stroke="none">
+                                            {pieData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
+                                        </Pie>
+                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: 'bold' }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="flex flex-col gap-1 border-t border-slate-50 pt-1.5">
+                                {pieData.map((d, i) => (
+                                    <div key={i} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
+                                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tight">{d.name}</span>
+                                        </div>
+                                        <span className="text-[9px] font-black text-slate-700">{d.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                ) : (
-                    <>
-                        <RenderSummaryTab />
-                        <RenderAgeTab />
-                        <RenderStatusTab />
-                    </>
-                )}
-            </div>
 
+                    {/* ═══════════════════════════════════════════════════════
+                        ROW 2 — Recent + 3 Age Cards
+                    ═══════════════════════════════════════════════════════ */}
+                    <div className="grid grid-cols-4 gap-3">
+                        {/* Recent Complaints button */}
+                        <button
+                            onClick={() => openPopup('recent', 'list')}
+                            className="flex flex-col items-center justify-center gap-2 p-4 bg-white border-2 border-indigo-200 rounded-xs hover:bg-indigo-50 hover:border-indigo-400 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <IoArrowForwardCircleOutline size={22} className="text-indigo-600" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">{language === 'english' ? 'Recent Complaints' : 'हालिया शिकायतें'}</p>
+                                <p className="text-[9px] text-slate-400 font-medium mt-0.5">{language === 'english' ? 'Top 5 allocated' : 'शीर्ष 5 आवंटित'}</p>
+                            </div>
+                        </button>
+
+                        {/* 3 Age Cards with color coding */}
+                        {ageGroups.map(ag => {
+                            const count = stats?.categoryAgeStats?.total?.[ag.id] ?? 0;
+                            const pct = pendingTotal ? Math.round((count / pendingTotal) * 100) : 0;
+                            return (
+                                <button
+                                    key={ag.id}
+                                    onClick={() => openPopup(`age_${ag.id}` as PopupType, 'thana')}
+                                    className={`cursor-pointer flex flex-col p-4 rounded-xs border-2 ${ag.border} ${ag.bg} hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left shadow-sm`}
+                                >
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className={`text-[9px] font-black ${ag.textColor} uppercase tracking-widest`}>{ag.label}</span>
+                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ag.color }} />
+                                    </div>
+                                    <span className="text-2xl font-black text-slate-800 leading-none">{count}</span>
+                                    <div className="mt-2 w-full h-1.5 bg-white/70 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, backgroundColor: ag.color }} />
+                                    </div>
+                                    <span className={`text-[9px] font-bold ${ag.textColor} mt-1`}>{pct}% {language === 'english' ? 'of pending' : 'लम्बित का'}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* ═══════════════════════════════════════════════════════
+                        ROW 3 — Thana Distribution + Status Distribution
+                    ═══════════════════════════════════════════════════════ */}
+                    <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
+                        {/* Thana-wise Distribution (Informative Placeholder) */}
+                        {isSPRole && stats?.thanaAgeBreakdown ? (
+                            <button
+                                onClick={() => openPopup('thana_age', 'table')}
+                                className="bg-linear-to-br from-white to-slate-50 border border-slate-200 rounded-xs shadow-sm flex flex-col p-3 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-50 transition-all cursor-pointer group"
+                            >
+                                <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-indigo-100/50 w-full">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-7 h-7 rounded-sm bg-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-200">
+                                            <IoBusinessOutline size={14} className="text-white" />
+                                        </div>
+                                        <div className="flex flex-col items-start">
+                                            <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest leading-none">
+                                                {language === 'english' ? 'Thana Matrix' : 'थाना मैट्रिक्स'}
+                                            </p>
+                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                {language === 'english' ? 'Top 3 Pending' : 'शीर्ष 3 लंबित'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className="text-[8px] font-black text-indigo-600 uppercase bg-indigo-100/50 px-2 py-0.5 rounded-xs group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                        {language === 'english' ? 'Full View' : 'पूर्ण विवरण'}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 w-full flex-1 mt-1">
+                                    {Object.entries(stats.thanaAgeBreakdown)
+                                        .sort((a, b) => {
+                                            const tA = (a[1].lessThan15Days || 0) + (a[1].fifteenToThirtyDays || 0) + (a[1].moreThan30Days || 0);
+                                            const tB = (b[1].lessThan15Days || 0) + (b[1].fifteenToThirtyDays || 0) + (b[1].moreThan30Days || 0);
+                                            return tB - tA;
+                                        })
+                                        .slice(0, 3)
+                                        .map(([name, ages], i) => {
+                                            const total = (ages.lessThan15Days || 0) + (ages.fifteenToThirtyDays || 0) + (ages.moreThan30Days || 0);
+                                            return (
+                                                <div key={i} className="flex flex-col items-center justify-center p-1.5 bg-slate-50/50 border border-slate-100 rounded-xs group/item hover:bg-white hover:border-indigo-200 transition-all">
+                                                    <span className="text-[8px] font-black text-slate-400 mb-0.5 uppercase tracking-tighter">#{i + 1}</span>
+                                                    <span className="text-[9px] font-bold text-slate-700 truncate w-full text-center px-1 mb-1">{name}</span>
+                                                    <div className="flex items-center gap-1.5 w-full justify-center">
+                                                        <div className="w-10 h-1 bg-slate-200 rounded-full overflow-hidden shrink-0">
+                                                            <div
+                                                                className="h-full bg-linear-to-r from-indigo-400 to-indigo-600 rounded-full"
+                                                                style={{ width: `${Math.min(100, (total / (stats.total || 1)) * 100 * 5)}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-[9px] font-black text-slate-900 tabular-nums">{total}</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    }
+                                </div>
+                                <div className="mt-3 pt-1.5 border-t border-slate-50 w-full text-center">
+                                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest group-hover:text-indigo-500 transition-colors">
+                                        {language === 'english' ? 'Click to explore age distribution' : 'आयु-वार विस्तार के लिए क्लिक करें'}
+                                    </p>
+                                </div>
+                            </button>
+                        ) : (
+                            <div className="bg-white border border-slate-200 rounded-xs shadow-sm flex items-center justify-center text-slate-300 text-sm font-medium">
+                                {language === 'english' ? 'Thana data not available' : 'थाना डेटा उपलब्ध नहीं'}
+                            </div>
+                        )}
+
+                        {/* Status-wise Distribution */}
+                        <div className="bg-white border border-slate-200 rounded-xs shadow-sm flex flex-col overflow-hidden">
+                            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 shrink-0">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <IoTimerOutline size={12} />
+                                    {language === 'english' ? 'Status-wise Distribution' : 'स्थिति-वार वितरण'}
+                                </p>
+                            </div>
+                            <div className="overflow-auto flex-1 p-3">
+                                <div className="grid grid-cols-3 gap-2">
+                                    {complaintStatusColors.map((s) => {
+                                        const count = stats?.statusCounts?.[s.id] ?? 0;
+                                        const pct = stats?.total ? Math.round((count / stats.total) * 100) : 0;
+                                        return (
+                                            <button
+                                                key={s.id}
+                                                onClick={() => openPopup(`status_${s.id}` as PopupType, 'age')}
+                                                className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xs hover:border-indigo-200 hover:bg-indigo-50/30 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-left"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.indicatorColor }} />
+                                                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-tight truncate">{language === 'english' ? s.labeleng : s.labelhindi}</span>
+                                                </div>
+                                                <div className="flex flex-col items-end ml-1 shrink-0">
+                                                    <span className="text-xs font-black text-slate-800">{count}</span>
+                                                    <span className="text-[8px] text-slate-400 font-bold">{pct}%</span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Popups */}
+            {renderPopupContent()}
         </div>
-    )
+    );
 }

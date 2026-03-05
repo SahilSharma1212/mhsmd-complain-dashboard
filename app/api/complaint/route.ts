@@ -15,6 +15,7 @@ const complaintPostSchema = z.object({
     complainant_contact: z.string().min(10),
     allocated_thana: z.string().min(1),
     message: z.string().optional(),
+    accused_details: z.string().optional(),
 });
 
 const complaintPatchSchema = z.object({
@@ -94,6 +95,7 @@ export async function POST(request: NextRequest) {
         complainant_contact: formData.get("complainant_contact") as string,
         allocated_thana: formData.get("allocated_thana") as string,
         message: formData.get("message") as string | undefined,
+        accused_details: formData.get("accused_details") as string | undefined,
     };
 
     // ─── Security Check: TI Jurisdiction ───
@@ -128,6 +130,7 @@ export async function POST(request: NextRequest) {
         complainant_contact,
         allocated_thana,
         message,
+        accused_details,
     } = parsed.data;
 
     const files = formData.getAll("files") as File[];
@@ -246,6 +249,7 @@ export async function POST(request: NextRequest) {
             allocated_thana,
             submitted_by: decodedToken.name,
             message,
+            accused_details: accused_details || null,
             source: "WEBSITE",
             file_urls: file_urls.length > 0 ? file_urls : null,
         })

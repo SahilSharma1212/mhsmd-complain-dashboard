@@ -492,6 +492,7 @@ export default function LogsPage() {
                 </div>
             </div>
 
+            {/*Detailed Action Logs*/}
             <div className="bg-white rounded-xs shadow-sm border border-slate-200 overflow-hidden">
                 <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-200">
                     <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
@@ -857,6 +858,7 @@ export default function LogsPage() {
                     </div>
                 </div>
             )}
+
             {/* IO Allocation Modal */}
             {isIOModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4">

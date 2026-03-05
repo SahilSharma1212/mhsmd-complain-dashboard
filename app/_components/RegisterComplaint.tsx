@@ -23,14 +23,19 @@ export default function RegisterComplaint() {
         allocated_thana: "",
         submitted_by: "",
         message: "",
+        accused_details: "",
     });
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Auto-fill thana for TI users
+    // Auto-fill thana and role_addressed_to for TI users
     useEffect(() => {
-        if (user?.role === 'TI' && user.thana) {
-            setComplaintDetails(prev => ({ ...prev, allocated_thana: user.thana as string }));
+        if (user?.role === 'TI') {
+            setComplaintDetails(prev => ({
+                ...prev,
+                allocated_thana: user.thana as string,
+                role_addressed_to: 'TI',
+            }));
         }
     }, [user]);
 
@@ -53,7 +58,8 @@ export default function RegisterComplaint() {
     const submitComplaint = async () => {
         setLoading(true);
 
-        if (!complaintDetails.role_addressed_to || !complaintDetails.recipient_address || !complaintDetails.subject || !complaintDetails.date || !complaintDetails.complainant_name || !complaintDetails.complainant_contact || !complaintDetails.allocated_thana) {
+        const isTI = user?.role === 'TI';
+        if ((!isTI && !complaintDetails.role_addressed_to) || !complaintDetails.recipient_address || !complaintDetails.subject || !complaintDetails.date || !complaintDetails.complainant_name || !complaintDetails.complainant_contact || !complaintDetails.allocated_thana) {
             toast.error(language === "english" ? "Please fill all the required fields" : "कृपया सभी आवश्यक फ़ील्ड भरें");
             setLoading(false);
             return;
@@ -82,16 +88,17 @@ export default function RegisterComplaint() {
             if (response.data.success) {
                 toast.success(language === "english" ? "Complaint submitted successfully" : "शिकायत सफलतापूर्वक दर्ज की गई");
                 setComplaintDetails({
-                    role_addressed_to: "",
+                    role_addressed_to: user?.role === 'TI' ? 'TI' : "",
                     recipient_address: "",
                     subject: "",
                     date: "",
                     status: "",
                     complainant_name: "",
                     complainant_contact: "",
-                    allocated_thana: "",
+                    allocated_thana: user?.role === 'TI' ? (user.thana as string) : "",
                     submitted_by: "",
                     message: "",
+                    accused_details: "",
                 });
                 setSelectedFiles([]);
                 if (fileInputRef.current) fileInputRef.current.value = "";
@@ -127,23 +134,25 @@ export default function RegisterComplaint() {
 
             <div className='p-6'>
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full'>
-                    {/* Addressed to */}
-                    <div className="space-y-1.5">
-                        <label htmlFor="role_addressed_to" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
-                            {language === "english" ? "Addressed to" : "किसको संबोधित"}
-                        </label>
-                        <select
-                            id="role_addressed_to"
-                            value={complaintDetails.role_addressed_to}
-                            onChange={(e) => setComplaintDetails({ ...complaintDetails, role_addressed_to: e.target.value })}
-                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
-                            <option value="">{language === "english" ? "-- Select Recipient --" : "-- प्राप्तकर्ता चुनें --"}</option>
-                            <option value="SP">SP</option>
-                            <option value="ASP">ASP</option>
-                            <option value="SDOP">SDOP</option>
-                            <option value="TI">TI</option>
-                        </select>
-                    </div>
+                    {/* Addressed to — hidden for TI (auto-set) */}
+                    {user?.role !== 'TI' && (
+                        <div className="space-y-1.5">
+                            <label htmlFor="role_addressed_to" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
+                                {language === "english" ? "Addressed to" : "किसको संबोधित"}
+                            </label>
+                            <select
+                                id="role_addressed_to"
+                                value={complaintDetails.role_addressed_to}
+                                onChange={(e) => setComplaintDetails({ ...complaintDetails, role_addressed_to: e.target.value })}
+                                className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
+                                <option value="">{language === "english" ? "-- Select Recipient --" : "-- प्राप्तकर्ता चुनें --"}</option>
+                                <option value="SP">SP</option>
+                                <option value="ASP">ASP</option>
+                                <option value="SDOP">SDOP</option>
+                                <option value="TI">TI</option>
+                            </select>
+                        </div>
+                    )}
 
                     {/* Thana */}
                     <div className="space-y-1.5">
@@ -223,6 +232,19 @@ export default function RegisterComplaint() {
                             value={complaintDetails.complainant_name}
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, complainant_name: e.target.value })}
                             placeholder={language === 'english' ? "Enter full legal name" : "पूरा कानूनी नाम दर्ज करें"} type="text"
+                            className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
+                    </div>
+
+                    {/* Accused Name */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="accused_details" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
+                            {language === "english" ? "Accused Name" : "आरोपी का नाम"}
+                        </label>
+                        <input
+                            id="accused_details"
+                            value={complaintDetails.accused_details || ''}
+                            onChange={(e) => setComplaintDetails({ ...complaintDetails, accused_details: e.target.value })}
+                            placeholder={language === 'english' ? "Enter accused person's name (optional)" : "आरोपी का नाम दर्ज करें (वैकल्पिक)"} type="text"
                             className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
                     </div>
 
