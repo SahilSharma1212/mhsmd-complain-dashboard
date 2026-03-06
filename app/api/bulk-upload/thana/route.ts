@@ -21,6 +21,15 @@ export async function POST(req: NextRequest) {
     try {
         let body = await req.json();
 
+        const token = req.cookies.get("token")?.value;
+
+        if (!token) {
+            return NextResponse.json(
+                { message: "Unauthorized", success: false },
+                { status: 401 }
+            );
+        }
+
         // If body is an array, wrap it in a "thanas" object
         if (Array.isArray(body)) {
             body = { thanas: body };

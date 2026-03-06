@@ -19,6 +19,15 @@ export async function POST(req: NextRequest) {
     try {
         let body = await req.json();
 
+        const token = req.cookies.get("token")?.value;
+
+        if (!token) {
+            return NextResponse.json(
+                { message: "Unauthorized", success: false },
+                { status: 401 }
+            );
+        }
+
         // If body is an array, wrap it in a "users" object
         if (Array.isArray(body)) {
             body = { users: body };
