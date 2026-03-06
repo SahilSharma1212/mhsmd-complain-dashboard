@@ -11,6 +11,7 @@ import { Complaint, COMPLAINT_STATUS_COLORS, COMPLAINT_STATUSES } from '../types
 import Link from 'next/link';
 import { useLanguageStore } from '../_store/languageStore';
 import { useComplaintStore } from '../_store/complaintStore';
+import { isKrutidev, convertKrutidevToUnicode } from '../_utils/krutidevConverter';
 
 export default function ManageComplaints() {
     const { user, thana, setCurrentlyViewingComplaint } = useUserStore();
@@ -26,10 +27,11 @@ export default function ManageComplaints() {
     } = useComplaintStore();
     const { language } = useLanguageStore();
 
-    // ─── Search & Pagination state (Local sync with store) ───
+    // ─── Search & Pagination state ───
     const [filterAttribute, setFilterAttribute] = useState(cachedFilterAttribute);
     const [filterValue, setFilterValue] = useState(cachedFilterValue);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [krutiConvertedValue, setKrutiConvertedValue] = useState<string | null>(null);
     const isFetchingRef = useRef(false);
     const pageSize = 20;
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -50,7 +52,6 @@ export default function ManageComplaints() {
             if (response.data && response.data.success) {
                 const complaintData = response.data.data;
                 const normalizedData = Array.isArray(complaintData) ? complaintData : [complaintData];
-
                 setCachedData({
                     complaints: normalizedData,
                     totalCount: response.data.totalCount ?? 0,
@@ -79,9 +80,8 @@ export default function ManageComplaints() {
 
     // Initial load with caching logic
     useEffect(() => {
-        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        const CACHE_DURATION = 5 * 60 * 1000;
         const isCacheValid = lastFetched && (Date.now() - lastFetched < CACHE_DURATION);
-
         if (user && (!complaints || !isCacheValid)) {
             fetchComplaints(currentPage, filterAttribute, filterValue);
         }
@@ -91,15 +91,37 @@ export default function ManageComplaints() {
     // Reset filterValue when changing filterAttribute
     useEffect(() => {
         setFilterValue("");
+        setKrutiConvertedValue(null);
     }, [filterAttribute]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        setKrutiConvertedValue(null);
+
         if (filterAttribute && !filterValue) {
             toast.error("Please enter a value for the selected filter");
             return;
         }
-        fetchComplaints(1, filterAttribute, filterValue);
+
+        let searchQuery = filterValue;
+
+        // Only attempt Krutidev detection on free-text fields
+        const isTextField = filterAttribute === "complainant_name" || filterAttribute === "accused";
+
+        if (isTextField && isKrutidev(searchQuery)) {
+            const converted = convertKrutidevToUnicode(searchQuery);
+            setKrutiConvertedValue(converted);
+            toast.success(
+                language === "english"
+                    ? `Krutidev detected → searching: "${converted}"`
+                    : `कृतिदेव पहचाना → खोज: "${converted}"`,
+                { duration: 3500, icon: "🔤" }
+            );
+            searchQuery = converted;
+            setFilterValue(converted);
+        }
+
+        fetchComplaints(1, filterAttribute, searchQuery);
     };
 
     const handlePageChange = (page: number) => {
@@ -110,6 +132,7 @@ export default function ManageComplaints() {
     const handleRefresh = () => {
         setFilterAttribute("");
         setFilterValue("");
+        setKrutiConvertedValue(null);
         clearCache();
         fetchComplaints(1, "", "", true);
     };
@@ -119,14 +142,10 @@ export default function ManageComplaints() {
     const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
     const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false);
     const [complaintToUpdateStatus, setComplaintToUpdateStatus] = useState<Complaint | null>(null);
-
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
-
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-
-
 
     const handleStatusChange = async (id: string, status: string) => {
         if (updatingStatusId) return;
@@ -139,13 +158,7 @@ export default function ManageComplaints() {
                     const updatedComplaints = complaints.map((c) =>
                         c.id === id ? { ...c, status: status } : c
                     );
-                    setCachedData({
-                        complaints: updatedComplaints,
-                        totalCount,
-                        currentPage,
-                        filterAttribute,
-                        filterValue
-                    });
+                    setCachedData({ complaints: updatedComplaints, totalCount, currentPage, filterAttribute, filterValue });
                 }
                 setShowStatusUpdateModal(false);
                 setComplaintToUpdateStatus(null);
@@ -154,7 +167,6 @@ export default function ManageComplaints() {
             if (axios.isAxiosError(error)) {
                 const statusCode = error.response?.status;
                 const message = error.response?.data?.message;
-
                 if (statusCode === 401) {
                     toast.error(language === "english" ? "Session expired. Please log in again." : "सत्र समाप्त हो गया है। कृपया पुनः लॉग इन करें।");
                 } else if (statusCode === 403) {
@@ -177,7 +189,7 @@ export default function ManageComplaints() {
         } finally {
             setUpdatingStatusId(null);
         }
-    }
+    };
 
     const handleDeleteComplaint = async (id: string) => {
         if (user?.role !== 'SP' && user?.role !== 'ASP' && user?.role !== 'SDOP') {
@@ -191,13 +203,7 @@ export default function ManageComplaints() {
                 toast.success(language === "english" ? "Complaint deleted successfully" : "शिकायत सफलतापूर्वक हटा दी गई");
                 if (complaints) {
                     const updatedComplaints = complaints.filter((c) => c.id !== id);
-                    setCachedData({
-                        complaints: updatedComplaints,
-                        totalCount: totalCount - 1,
-                        currentPage,
-                        filterAttribute,
-                        filterValue
-                    });
+                    setCachedData({ complaints: updatedComplaints, totalCount: totalCount - 1, currentPage, filterAttribute, filterValue });
                 }
                 setShowDeleteConfirm(null);
             }
@@ -211,7 +217,10 @@ export default function ManageComplaints() {
         } finally {
             setDeletingId(null);
         }
-    }
+    };
+
+    // Determine if current filter supports Krutidev input
+    const isKrutidevEligibleField = filterAttribute === "complainant_name" || filterAttribute === "accused";
 
     return (
         <div className='w-full bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden flex flex-col'>
@@ -230,7 +239,6 @@ export default function ManageComplaints() {
                         </span>
                     </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleRefresh}
@@ -260,6 +268,7 @@ export default function ManageComplaints() {
                         >
                             <option value="">{language === "english" ? "-- Select Attribute --" : "-- विशेषता चुनें --"}</option>
                             <option value="status">{language === "english" ? "Status" : "स्टेटस"}</option>
+                            <option value="id">{language === "english" ? "ID / Serial No." : "ID / सीरियल नंबर"}</option>
                             <option value="complainant_name">{language === "english" ? "Name of Complainer" : "शिकायतकर्ता का नाम"}</option>
                             <option value="accused">{language === "english" ? "Accused (आरोपी)" : "आरोपी"}</option>
                             {(user?.role === 'SP' || user?.role === 'ASP' || user?.role === 'SDOP') && (
@@ -272,61 +281,82 @@ export default function ManageComplaints() {
                     </div>
 
                     <div className='flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[300px]'>
-                        <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider'>{language === "english" ? "Search Value" : "खोज"}</label>
-                        <div className='flex group'>
-                            {filterAttribute === "status" ? (
-                                <select
-                                    value={filterValue}
-                                    onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
-                                >
-                                    <option value="">{language === "english" ? "-- Select Status --" : "-- स्टेटस चुनें --"}</option>
-                                    {COMPLAINT_STATUSES.map((s) => (
-                                        <option key={s} value={s}>{s}</option>
-                                    ))}
-                                </select>
-                            ) : filterAttribute === "allocated_thana" ? (
-                                <select
-                                    value={filterValue}
-                                    onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
-                                >
-                                    <option value="">{language === "english" ? "ALL" : "सभी"}</option>
-                                    {thana?.map((th, idx) => (
-                                        <option key={idx} value={th.name}>{th.name}</option>
-                                    ))}
-                                </select>
-                            ) : filterAttribute === "role_addressed_to" ? (
-                                <select
-                                    value={filterValue}
-                                    onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
-                                >
-                                    <option value="">{language === "english" ? "-- Select Role --" : "-- भूमिका चुनें --"}</option>
-                                    <option value="SP">SP</option>
-                                    <option value="TI">TI</option>
-                                </select>
-                            ) : (
-                                <input
-                                    type="text"
-                                    value={filterValue}
-                                    onChange={(e) => setFilterValue(e.target.value)}
-                                    className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
-                                    placeholder={filterAttribute ? 'Type to search records...' : 'Select an attribute first'}
-                                    disabled={!filterAttribute}
-                                />
+                        <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5'>
+                            {language === "english" ? "Search Value" : "खोज"}
+                            {/* Krutidev support badge — shown only on eligible fields */}
+                            {isKrutidevEligibleField && (
+                                <span className="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[9px] font-bold text-blue-600 uppercase tracking-wider">
+                                    <span>🔤</span> Krutidev supported
+                                </span>
                             )}
-                            <button
-                                type="submit"
-                                disabled={searchLoading}
-                                className='bg-blue-600 text-white px-5 rounded-r-xs border border-blue-600 hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center shadow-md shadow-blue-500/10 shrink-0'
-                            >
-                                {searchLoading ? (
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        </label>
+                        <div className='flex flex-col gap-1.5'>
+                            <div className='flex group'>
+                                {filterAttribute === "status" ? (
+                                    <select
+                                        value={filterValue}
+                                        onChange={(e) => setFilterValue(e.target.value)}
+                                        className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
+                                    >
+                                        <option value="">{language === "english" ? "-- Select Status --" : "-- स्टेटस चुनें --"}</option>
+                                        {COMPLAINT_STATUSES.map((s) => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                ) : filterAttribute === "allocated_thana" ? (
+                                    <select
+                                        value={filterValue}
+                                        onChange={(e) => setFilterValue(e.target.value)}
+                                        className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
+                                    >
+                                        <option value="">{language === "english" ? "ALL" : "सभी"}</option>
+                                        {thana?.map((th, idx) => (
+                                            <option key={idx} value={th.name}>{th.name}</option>
+                                        ))}
+                                    </select>
+                                ) : filterAttribute === "role_addressed_to" ? (
+                                    <select
+                                        value={filterValue}
+                                        onChange={(e) => setFilterValue(e.target.value)}
+                                        className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
+                                    >
+                                        <option value="">{language === "english" ? "-- Select Role --" : "-- भूमिका चुनें --"}</option>
+                                        <option value="SP">SP</option>
+                                        <option value="TI">TI</option>
+                                    </select>
                                 ) : (
-                                    <IoMdSearch size={20} />
+                                    <input
+                                        type="text"
+                                        value={filterValue}
+                                        onChange={(e) => {
+                                            setFilterValue(e.target.value);
+                                            setKrutiConvertedValue(null); // clear badge on new input
+                                        }}
+                                        className='flex-1 px-4 py-2 bg-white border border-slate-200 rounded-l-xs text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all min-w-0'
+                                        placeholder={
+                                            !filterAttribute
+                                                ? 'Select an attribute first'
+                                                : isKrutidevEligibleField
+                                                    ? language === 'english'
+                                                        ? 'Type in Hindi or Krutidev font…'
+                                                        : 'हिंदी या कृतिदेव में टाइप करें…'
+                                                    : 'Type to search records...'
+                                        }
+                                        disabled={!filterAttribute}
+                                    />
                                 )}
-                            </button>
+                                <button
+                                    type="submit"
+                                    disabled={searchLoading}
+                                    className='bg-blue-600 text-white px-5 rounded-r-xs border border-blue-600 hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center shadow-md shadow-blue-500/10 shrink-0'
+                                >
+                                    {searchLoading ? (
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <IoMdSearch size={20} />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -394,9 +424,7 @@ export default function ManageComplaints() {
                                         {/* Date */}
                                         <td className="px-4 py-4 text-center">
                                             <span className='text-[11px] font-bold text-slate-800 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full'>
-                                                {new Date(complaint.date || complaint.created_at!)
-                                                    .toISOString()
-                                                    .split("T")[0]}
+                                                {new Date(complaint.date || complaint.created_at!).toISOString().split("T")[0]}
                                             </span>
                                         </td>
                                         {/* Addressed To */}
@@ -521,7 +549,6 @@ export default function ManageComplaints() {
                             >
                                 <MdNavigateBefore size={16} /> {language === "english" ? "Prev" : "पिछला"}
                             </button>
-
                             <div className="flex gap-1">
                                 {Array.from({ length: totalPages }, (_, i) => i + 1)
                                     .filter(p => {
@@ -552,7 +579,6 @@ export default function ManageComplaints() {
                                         )
                                     )}
                             </div>
-
                             <button
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={currentPage === totalPages || searchLoading}
@@ -604,11 +630,11 @@ export default function ManageComplaints() {
                     </div>
                 </div>
             )}
+
             {/* FULL DETAILS MODAL */}
             {showDetailsModal && selectedComplaint && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-100 flex items-center justify-center p-4">
                     <div className="bg-white rounded-xs border border-slate-200 shadow-2xl w-full max-w-2xl scale-in-center overflow-hidden flex flex-col max-h-[90vh]">
-                        {/* Modal Header */}
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-blue-50 rounded-xs flex items-center justify-center border border-blue-100">
@@ -619,75 +645,47 @@ export default function ManageComplaints() {
                                     <span className="text-[10px] font-mono text-slate-600">#{selectedComplaint.id}</span>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setShowDetailsModal(false)}
-                                className="p-2 hover:bg-slate-50 rounded-xs text-slate-600 hover:text-slate-600 transition-colors"
-                            >
+                            <button onClick={() => setShowDetailsModal(false)} className="p-2 hover:bg-slate-50 rounded-xs text-slate-600 hover:text-slate-600 transition-colors">
                                 <IoCloseOutline size={24} />
                             </button>
                         </div>
-
-                        {/* Modal Body */}
                         <div className="p-6 overflow-y-auto space-y-6">
-                            {/* Info Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Complainant Name" : "शिकायतकर्ता का नाम"}</p>
-                                    <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100 italic">
-                                        {selectedComplaint.complainant_name}
-                                    </p>
+                                    <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100 italic">{selectedComplaint.complainant_name}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Contact Number" : "संपर्क नंबर"}</p>
-                                    <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">
-                                        {selectedComplaint.complainant_contact}
-                                    </p>
+                                    <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">{selectedComplaint.complainant_contact}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Reporting Date" : "रिपोर्टिंग तिथि"}</p>
                                     <p className="text-sm font-bold text-slate-900 bg-slate-50 p-2 rounded-xs border border-slate-100">
-                                        {new Date(selectedComplaint.date || selectedComplaint.created_at!).toLocaleDateString('en-IN', {
-                                            day: '2-digit',
-                                            month: 'long',
-                                            year: 'numeric'
-                                        })}
+                                        {new Date(selectedComplaint.date || selectedComplaint.created_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Addressed To" : "किसको संबोधित"}</p>
-                                    <span className="inline-block px-3 py-1 bg-slate-800 text-white text-sm font-bold uppercase tracking-widest">
-                                        {selectedComplaint.role_addressed_to}
-                                    </span>
+                                    <span className="inline-block px-3 py-1 bg-slate-800 text-white text-sm font-bold uppercase tracking-widest">{selectedComplaint.role_addressed_to}</span>
                                 </div>
                             </div>
-
-                            {/* Subject Section */}
                             <div className="space-y-1.5">
                                 <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Subject Reference" : "विषय संदर्भ"}</p>
                                 <div className="bg-blue-50/10 border border-blue-100 p-4 rounded-xs">
-                                    <p className="text-sm font-bold text-slate-800 leading-relaxed">
-                                        {selectedComplaint.subject}
-                                    </p>
+                                    <p className="text-sm font-bold text-slate-800 leading-relaxed">{selectedComplaint.subject}</p>
                                 </div>
                             </div>
-
-                            {/* Message Section */}
                             <div className="space-y-1.5">
                                 <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Complaint Message" : "शिकायत संदेश"}</p>
                                 <div className="bg-slate-50 border border-slate-100 p-4 rounded-xs min-h-[80px]">
-                                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                                        {selectedComplaint.message || "— No detailed message provided —"}
-                                    </p>
+                                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{selectedComplaint.message || "— No detailed message provided —"}</p>
                                 </div>
                             </div>
-
-                            {/* Jurisdiction / Status */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Current Jurisdiction" : "वर्तमान अधिकार क्षेत्र"}</p>
-                                    <p className="text-xs font-bold text-slate-700 bg-slate-50 p-2 rounded-xs border border-slate-100">
-                                        {selectedComplaint.allocated_thana || "Unallocated"}
-                                    </p>
+                                    <p className="text-xs font-bold text-slate-700 bg-slate-50 p-2 rounded-xs border border-slate-100">{selectedComplaint.allocated_thana || "Unallocated"}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Current Status" : "वर्तमान स्थिति"}</p>
@@ -701,20 +699,13 @@ export default function ManageComplaints() {
                                     </span>
                                 </div>
                             </div>
-
-                            {/* Files Section */}
                             {selectedComplaint.file_urls && selectedComplaint.file_urls.length > 0 && (
                                 <div className="space-y-1.5">
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Attached Documentation" : "संलग्न दस्तावेज़ीकरण"}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedComplaint.file_urls.map((url, idx) => (
-                                            <a
-                                                key={idx}
-                                                href={url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-xs"
-                                            >
+                                            <a key={idx} href={url} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-xs">
                                                 <MdAttachFile size={16} className="text-blue-500" />
                                                 {language === "english" ? "VIEW DOCUMENT" : "दस्तावेज़ देखें"} {idx + 1}
                                             </a>
@@ -722,14 +713,10 @@ export default function ManageComplaints() {
                                     </div>
                                 </div>
                             )}
-
-                            {/* Feedback Section */}
                             <div className="pt-6 border-t border-slate-100 space-y-3">
                                 <div className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${selectedComplaint.feedback?.trim() ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.3)]' : 'bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.3)]'}`} />
-                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                                        {language === "english" ? "User Feedback" : "उपयोगकर्ता प्रतिक्रिया"}
-                                    </p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "User Feedback" : "उपयोगकर्ता प्रतिक्रिया"}</p>
                                 </div>
                                 <div className={`p-4 rounded-xs border transition-all duration-300 ${selectedComplaint.feedback?.trim() ? 'bg-emerald-50/40 border-emerald-100 shadow-sm' : 'bg-slate-50/50 border-slate-100'}`}>
                                     <p className={`text-sm leading-relaxed ${selectedComplaint.feedback?.trim() ? 'text-emerald-900 font-medium' : 'text-slate-500 italic'}`}>
@@ -738,14 +725,9 @@ export default function ManageComplaints() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Modal Footer */}
                         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
-                            <button
-                                onClick={() => setShowDetailsModal(false)}
-                                className="px-6 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xs"
-                            >
-                                {language === "english" ? "Dismiss" : "dismiss"}
+                            <button onClick={() => setShowDetailsModal(false)} className="px-6 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xs">
+                                {language === "english" ? "Dismiss" : "बंद करें"}
                             </button>
                         </div>
                     </div>
@@ -770,7 +752,6 @@ export default function ManageComplaints() {
                                 <IoCloseOutline size={20} />
                             </button>
                         </div>
-
                         <div className="p-5 space-y-4">
                             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xs">
                                 <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">{language === "english" ? "Current Status" : "वर्तमान स्थिति"}</p>
@@ -779,7 +760,6 @@ export default function ManageComplaints() {
                                     <span className="text-xs font-bold text-slate-900 uppercase">{complaintToUpdateStatus.status}</span>
                                 </div>
                             </div>
-
                             <div className="space-y-2">
                                 <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">{language === "english" ? "Select New Status" : "नई स्थिति चुनें"}</p>
                                 <div className="grid grid-cols-1 gap-1.5">
@@ -807,12 +787,8 @@ export default function ManageComplaints() {
                                 </div>
                             </div>
                         </div>
-
                         <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
-                            <button
-                                onClick={() => setShowStatusUpdateModal(false)}
-                                className="px-4 py-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-slate-900 transition-colors"
-                            >
+                            <button onClick={() => setShowStatusUpdateModal(false)} className="px-4 py-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-slate-900 transition-colors">
                                 {language === "english" ? "Close" : "बंद करें"}
                             </button>
                         </div>

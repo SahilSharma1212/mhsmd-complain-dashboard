@@ -373,7 +373,7 @@ export async function GET(request: NextRequest) {
         } else if (filter === "allocated_thana") {
             query = query.eq("allocated_thana", value);
         } else if (filter === "id") {
-            query = query.eq("id", value);
+            query = query.ilike("id", `%${value}%`);
         } else if (filter === "accused") {
             query = query.ilike("accused_details", `%${value}%`);
         }
