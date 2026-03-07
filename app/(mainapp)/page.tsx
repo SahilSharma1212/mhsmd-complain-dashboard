@@ -498,11 +498,11 @@ export default function Home() {
             ) : (
                 <>
                     {/* ═══════════════════════════════════════════════════════
-                        ROW 1 — Stat Cards (2×2) + Pie Chart
+                        ROW 1 — Stat Cards & Pie Chart
                     ═══════════════════════════════════════════════════════ */}
-                    <div className="flex gap-3 items-stretch">
-                        {/* 2×2 Stat cards */}
-                        <div className="grid grid-cols-2 gap-3 flex-1">
+                    <div className="flex flex-col lg:flex-row gap-3 items-stretch">
+                        {/* Stat cards grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
                             {/* Total */}
                             <button
                                 onClick={() => openPopup('total', 'age')}
@@ -574,7 +574,7 @@ export default function Home() {
                         </div>
 
                         {/* Pie Chart */}
-                        <div className='bg-white border border-slate-200 rounded-xs p-3 flex flex-col gap-1 w-48 shrink-0 shadow-sm'>
+                        <div className='bg-white border border-slate-200 rounded-xs p-3 flex flex-col gap-1 w-full lg:w-48 shrink-0 shadow-sm'>
                             <p className='text-[9px] font-black text-slate-400 uppercase tracking-widest'>{language === 'english' ? 'Status Distribution' : 'स्थिति वितरण'}</p>
                             <div className="h-24 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -603,7 +603,7 @@ export default function Home() {
                     {/* ═══════════════════════════════════════════════════════
                         ROW 2 — Recent + 3 Age Cards
                     ═══════════════════════════════════════════════════════ */}
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         {/* Recent Complaints button */}
                         <button
                             onClick={() => openPopup('recent', 'list')}
@@ -645,7 +645,7 @@ export default function Home() {
                     {/* ═══════════════════════════════════════════════════════
                         ROW 3 — Thana Distribution + Status Distribution
                     ═══════════════════════════════════════════════════════ */}
-                    <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 min-h-0">
                         {/* Thana-wise Distribution (Informative Placeholder) */}
                         {isSPRole && stats?.thanaAgeBreakdown ? (
                             <button
