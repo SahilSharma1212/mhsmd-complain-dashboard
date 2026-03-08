@@ -11,7 +11,8 @@ export function middleware(request: NextRequest) {
         pathname.startsWith('/api') ||
         pathname.startsWith('/static') ||
         pathname.includes('.') ||
-        pathname === '/sign-in'
+        pathname === '/sign-in' ||
+        pathname === '/no-login-complaint'
     ) {
         // But prevent logged-in users from visiting /sign-in
         if (pathname === '/sign-in' && token) {

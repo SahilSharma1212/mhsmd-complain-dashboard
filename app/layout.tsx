@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`antialiased bg-white text-black`}
+        className={`antialiased bg-white text-black selection:bg-blue-600 selection:text-white`}
       >
         {children}
         <Toaster
