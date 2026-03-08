@@ -226,7 +226,7 @@ export default function ManageComplaints() {
     return (
         <div className='w-full bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden flex flex-col'>
             {/* Header Section */}
-            <div className="px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-white">
+            <div className="px-6 py-4 pb-2 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 bg-white">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-blue-50 rounded-xs flex items-center justify-center border border-blue-100">
                         <IoLayersOutline className="text-blue-600 text-lg" />
@@ -254,7 +254,7 @@ export default function ManageComplaints() {
                 </div>
             </div>
 
-            <div className='p-6 flex flex-col gap-6'>
+            <div className='p-6 pb-0 flex flex-col gap-4'>
                 {/* SEARCH FORM */}
                 <form onSubmit={handleSearch} className='flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end justify-start gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xs'>
                     <div className='flex flex-col gap-1.5 w-full sm:w-auto'>
@@ -372,7 +372,7 @@ export default function ManageComplaints() {
                 </form>
 
                 {/* TABLE CONTAINER */}
-                <div className='w-full overflow-x-auto border border-slate-200 rounded-xs bg-white shadow-xs'>
+                <div className='w-full overflow-x-auto border border-slate-200 rounded-xs bg-white shadow-xs h-110'>
                     <table className='w-full text-left border-collapse text-sm' style={{ minWidth: '1000px' }}>
                         <thead>
                             <tr className='bg-slate-50 border-b border-slate-200'>
@@ -414,12 +414,20 @@ export default function ManageComplaints() {
                                         <td className='px-4 py-4'>
                                             <div className="flex items-center gap-2">
                                                 <div
-                                                    className={`w-2 h-2 rounded-full shrink-0 ${complaint.feedback?.trim() ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]'}`}
-                                                    title={complaint.feedback?.trim() ? (language === "english" ? "Feedback Received" : "प्रतिक्रिया प्राप्त हुई") : (language === "english" ? "Pending Feedback" : "प्रतिक्रिया लंबित")}
+                                                    className={`w-2 h-2 rounded-full shrink-0 ${complaint.io_officer?.trim() ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]'}`}
+                                                    title={complaint.io_officer?.trim() ? (language === "english" ? "IO Officer Assigned" : "आईओ अधिकारी नियुक्त") : (language === "english" ? "Pending IO Officer" : "आईओ अधिकारी लंबित")}
                                                 />
                                                 <span className="text-[10px] font-mono text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100" title={complaint.id}>
                                                     #{String(complaint.id).slice(0, 8)}
                                                 </span>
+
+                                                <button
+                                                    onClick={() => { setSelectedComplaint(complaint); setShowDetailsModal(true); }}
+                                                    className='p-1.5 bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-white rounded-xs transition-all cursor-pointer shadow-xs group shrink-0'
+                                                    title="View Full Details"
+                                                >
+                                                    <IoExpand size={14} />
+                                                </button>
                                             </div>
                                         </td>
                                         {/* Complainer */}
@@ -451,22 +459,13 @@ export default function ManageComplaints() {
                                         </td>
                                         {/* Subject & Description */}
                                         <td className='px-4 py-4 min-w-[200px]'>
-                                            <div className='flex items-center justify-between gap-4'>
-                                                <div className='flex flex-col gap-1 flex-1 min-w-0'>
-                                                    <span className='text-xs font-bold text-slate-900 truncate max-w-[250px]' title={complaint.subject}>
-                                                        {complaint.subject}
-                                                    </span>
-                                                    <span className='text-[10px] font-medium text-slate-600 truncate max-w-[250px]' title={complaint.message}>
-                                                        {complaint.message || "— No description —"}
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    onClick={() => { setSelectedComplaint(complaint); setShowDetailsModal(true); }}
-                                                    className='p-1.5 bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-white rounded-xs transition-all cursor-pointer shadow-xs group shrink-0'
-                                                    title="View Full Details"
-                                                >
-                                                    <IoExpand size={14} />
-                                                </button>
+                                            <div className='flex flex-col gap-1 flex-1 min-w-0'>
+                                                <span className='text-xs font-bold text-slate-900 truncate max-w-[250px]' title={complaint.subject}>
+                                                    {complaint.subject}
+                                                </span>
+                                                <span className='text-[10px] font-medium text-slate-600 truncate max-w-[250px]' title={complaint.message}>
+                                                    {complaint.message || "— No description —"}
+                                                </span>
                                             </div>
                                         </td>
                                         {/* Accused */}
@@ -659,6 +658,7 @@ export default function ManageComplaints() {
                                         <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">{language === "english" ? "Complaint Detailed View" : "शिकायत का विस्तृत दृश्य"}</h2>
                                         <span className="text-[10px] font-mono text-slate-600">#{selectedComplaint.id}</span>
                                     </div>
+
                                 </div>
                                 <button onClick={() => setShowDetailsModal(false)} className="p-2 hover:bg-slate-50 rounded-xs text-slate-600 hover:text-slate-600 transition-colors">
                                     <IoCloseOutline size={24} />
@@ -714,6 +714,16 @@ export default function ManageComplaints() {
                                         </span>
                                     </div>
                                 </div>
+                                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "IO Officer" : "आईओ अधिकारी"}</p>
+                                        <p className="text-xs font-bold text-slate-700 bg-slate-50 p-2 rounded-xs border border-slate-100">{selectedComplaint.io_officer || "-"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Accused Details" : "आरोपी का विवरण"}</p>
+                                        <p className="text-xs font-bold text-slate-700 bg-slate-50 p-2 rounded-xs border border-slate-100">{selectedComplaint.accused_details || "-"}</p>
+                                    </div>
+                                </div>
                                 {selectedComplaint.file_urls && selectedComplaint.file_urls.length > 0 && (
                                     <div className="space-y-1.5">
                                         <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Attached Documentation" : "संलग्न दस्तावेज़ीकरण"}</p>
@@ -741,6 +751,11 @@ export default function ManageComplaints() {
                                 </div>
                             </div>
                             <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
+                                <Link href={`/logs/${selectedComplaint.id}`}>
+                                    <button className="px-6 py-2 bg-blue-700 border border-slate-200 rounded-xs text-[10px] font-bold text-white uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xs">
+                                        {language === "english" ? "View Logs" : "लॉग देखें"}
+                                    </button>
+                                </Link>
                                 <button onClick={() => setShowDetailsModal(false)} className="px-6 py-2 bg-white border border-slate-200 rounded-xs text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xs">
                                     {language === "english" ? "Dismiss" : "बंद करें"}
                                 </button>

@@ -104,3 +104,22 @@ export interface StatData {
     latestNirakritComplaints?: Complaint[];
     latestTotalComplaints?: Complaint[];
 }
+
+export interface IOStat {
+    name: string;
+    count: number;
+}
+
+export interface ThanaIOStat {
+    thanaName: string;
+    ioStats: IOStat[];
+    noIoCount: number;
+}
+
+export type IOStatsData = TIResponse | ThanaIOStat[];
+
+export interface TIResponse {
+    thana: string;
+    ioStats: IOStat[];
+    noIoCount: number;
+}

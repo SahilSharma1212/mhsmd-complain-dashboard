@@ -4,6 +4,7 @@ import { Complaint, Thana } from '../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
+import { useIoStatsStore } from '../_store/ioStatsStore';
 import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage, MdCreate } from 'react-icons/md';
 import { IoArrowForwardCircleOutline, IoCreateOutline } from 'react-icons/io5';
 import { useLanguageStore } from '../_store/languageStore';
@@ -11,6 +12,7 @@ import { useLanguageStore } from '../_store/languageStore';
 export default function RegisterComplaint() {
     const { language } = useLanguageStore();
     const { thana, user } = useUserStore();
+    const { clearIOStats } = useIoStatsStore();
     const [loading, setLoading] = useState(false);
     const [complaintDetails, setComplaintDetails] = useState<Complaint>({
         role_addressed_to: "",
@@ -102,6 +104,7 @@ export default function RegisterComplaint() {
                 });
                 setSelectedFiles([]);
                 if (fileInputRef.current) fileInputRef.current.value = "";
+                clearIOStats();
             }
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -186,13 +189,13 @@ export default function RegisterComplaint() {
                     {/* Recipient Address */}
                     <div className="space-y-1.5">
                         <label htmlFor="recipient_address" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
-                            {language === "english" ? "Recipient Address" : "प्राप्तकर्ता का पता"}
+                            {language === "english" ? "Complainant Address" : "शिकायतकर्ता का पता"}
                         </label>
                         <input
                             id="recipient_address"
                             value={complaintDetails.recipient_address}
                             onChange={(e) => setComplaintDetails({ ...complaintDetails, recipient_address: e.target.value })}
-                            placeholder={language === 'english' ? "Enter recipient's designation/office" : "प्राप्तकर्ता का पद/कार्यालय दर्ज करें"} type="text"
+                            placeholder={language === 'english' ? "Enter complainant's address" : "शिकायतकर्ता का पता दर्ज करें"} type="text"
                             className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
                     </div>
 

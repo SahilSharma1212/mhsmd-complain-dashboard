@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
     if (user.role === "TI") {
         const { data, error } = await supabase
             .from("complaints")
-            .select("id, status, created_at, complainant_name, subject")
+            .select("id, status, created_at, complainant_name, subject, allocated_thana")
             .eq("allocated_thana", user.thana);
 
         if (error) {

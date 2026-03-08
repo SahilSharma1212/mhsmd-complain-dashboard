@@ -12,6 +12,7 @@ import { useLanguageStore } from "@/app/_store/languageStore"
 import { useLogStore, Log } from "@/app/_store/logStore"
 import { useStatsStore } from "@/app/_store/statsStore"
 import { useComplaintStore } from "@/app/_store/complaintStore"
+import { useIoStatsStore } from "@/app/_store/ioStatsStore"
 import { useRef } from "react"
 import { COMPLAINT_STATUS_COLORS, COMPLAINT_STATUSES } from "@/app/types"
 
@@ -23,6 +24,7 @@ export default function LogsPage() {
     const { logsByComplaint, setLogs: setCachedLogs, clearLogs: clearCachedLogs } = useLogStore()
     const { fetchStats } = useStatsStore()
     const { clearCache: clearComplaintCache } = useComplaintStore()
+    const { clearIOStats } = useIoStatsStore()
 
     const cachedData = logsByComplaint[complaintId]
     const logs = cachedData?.logs || []
@@ -137,6 +139,7 @@ export default function LogsPage() {
                 // Sync other stores
                 fetchStats(true)
                 clearComplaintCache()
+                clearIOStats()
             }
         } catch (err: any) {
             toast.error(language === "english" ? "Failed to add log" : "लॉग जोड़ने में विफल")
@@ -168,6 +171,7 @@ export default function LogsPage() {
                 // Sync other stores
                 fetchStats(true)
                 clearComplaintCache()
+                clearIOStats()
             }
         } catch (err: any) {
             toast.error(language === "english" ? "Failed to update complaint" : "शिकायत अपडेट करने में विफल")
@@ -224,6 +228,7 @@ export default function LogsPage() {
                 // Sync other stores
                 fetchStats(true)
                 clearComplaintCache()
+                clearIOStats()
             }
         } catch (err: any) {
             toast.error(err.response?.data?.message || (language === "english" ? "Failed to allocate IO" : "आईओ आवंटित करने में विफल"))
@@ -509,7 +514,6 @@ export default function LogsPage() {
                                 <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Status Transition" : "स्थिति परिवर्तन"}</th>
                                 <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Modified By" : "द्वारा संशोधित"}</th>
                                 <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">{language === "english" ? "Reason / Remarks" : "कारण / टिप्पणी"}</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-right">{language === "english" ? "Actions" : "कार्रवाई"}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
