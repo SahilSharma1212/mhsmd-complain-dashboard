@@ -83,7 +83,7 @@ export default function SignInPage() {
                     <div className='w-full flex flex-col gap-5'>
                         <div className="space-y-1.5">
                             <label htmlFor="email" className='text-[10px] font-black text-slate-500 uppercase tracking-widest block font-sans'>Email Address</label>
-                            <input id="email" value={credentials.email} onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} type="text" placeholder="department-id@gov.in" className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all' />
+                            <input id="email" value={credentials.email} onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} type="text" placeholder="Email" className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all' />
                         </div>
 
                         <div className="space-y-1.5">
@@ -107,19 +107,19 @@ export default function SignInPage() {
                 </div>
                 {/* Public Portal Info (Left on Desktop, Top on Mobile) */}
                 <div className='bg-linear-to-br from-blue-600 to-blue-700 p-8 md:p-10 flex flex-col justify-between text-white relative overflow-hidden'>
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform max-sm:hidden">
                         <MdOutlineDashboardCustomize size={180} className="text-white -mr-20 -mt-10" />
                     </div>
 
                     <div className="relative z-10 space-y-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-lg flex items-center justify-center">
-                                <MdOutlineDashboardCustomize className="text-white text-xl" />
+                        <div className="flex items-center gap-3 ">
+                            <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-lg flex items-center justify-center max-sm:hidden">
+                                <MdOutlineDashboardCustomize className="text-white text-xl " />
                             </div>
                             <span className="text-lg font-black tracking-tight uppercase">Open Portal</span>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-3 max-sm:hidden">
                             <h2 className="text-2xl md:text-3xl font-black leading-tight">
                                 Register a Complaint Without Posting.
                             </h2>
@@ -129,7 +129,7 @@ export default function SignInPage() {
                         </div>
                     </div>
 
-                    <div className="relative z-10 pt-8">
+                    <div className="relative z-10 pt-8 max-sm:pt-0">
                         <Link
                             href="/no-login-complaint"
                             className="inline-flex items-center gap-2 bg-white text-blue-600 font-bold py-3 px-6 rounded-xs hover:bg-blue-50 transition-all shadow-lg active:scale-95 group"
@@ -137,7 +137,7 @@ export default function SignInPage() {
                             <span>Open Public Portal</span>
                             <FaArrowRightLong className="group-hover:translate-x-1 transition-transform" />
                         </Link>
-                        <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-4 opacity-60">
+                        <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-4 opacity-60 max-sm:hidden">
                             Available 24/7 • Secure & Anonymous
                         </p>
                     </div>
