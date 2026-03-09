@@ -104,7 +104,7 @@ export default function PublicRegistration() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 selection:bg-blue-100 p-4 md:p-8">
+        <div className="min-h-screen selection:bg-blue-100 p-4 md:p-8">
 
             <div className="max-w-5xl mx-auto space-y-6">
                 {/* Header Section */}
@@ -125,17 +125,10 @@ export default function PublicRegistration() {
                                 {language === "english" ? "Anonymous Complaint Registration System" : "अनाम शिकायत पंजीकरण प्रणाली"}
                             </p>
                         </div>
-                    </div>
-                    <div className='flex items-center justify-between gap-2'>
-                        <button onClick={() => setLanguage(language === "hindi" ? "english" : "hindi")} className="px-4 py-2 bg-white border border-slate-200 rounded-xs hover:bg-slate-50 text-[12px] text-slate-600 transition-all cursor-pointer hidden md:block shadow-sm font-bold">
+
+                        <button onClick={() => setLanguage(language === "hindi" ? "english" : "hindi")} className="px-4 py-2 bg-white border border-slate-200 rounded-xs hover:bg-slate-50 text-[12px] text-slate-600 transition-all cursor-pointer md:block shadow-sm font-bold">
                             {language === "hindi" ? "हिं" : "EN"}
                         </button>
-
-                        <div className="px-4 py-2 bg-blue-600 rounded-xs shadow-lg shadow-blue-500/20 hidden md:block">
-                            <span className="text-white text-[11px] font-black uppercase tracking-widest">
-                                {language === "english" ? "Secure Submission Service" : "सुरक्षित शिकायत सेवा"}
-                            </span>
-                        </div>
                     </div>
                 </div>
 

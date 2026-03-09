@@ -8,6 +8,7 @@ import toast from "react-hot-toast"
 import { FaArrowRightLong } from 'react-icons/fa6'
 import { MdOutlineDashboardCustomize } from "react-icons/md"
 import Link from 'next/link'
+import { BiLoader } from 'react-icons/bi'
 export default function SignInPage() {
     const [loading, setLoading] = useState(false)
     const { setUser } = useUserStore()
@@ -53,7 +54,7 @@ export default function SignInPage() {
 
 
     return (
-        <div className='min-h-screen bg-slate-50 flex items-center justify-center p-4 selection:bg-blue-100'>
+        <div className='min-h-screen flex items-center justify-center p-4 selection:bg-blue-100'>
             <div className='w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-0 bg-white rounded-xs border border-slate-200 shadow-xl overflow-hidden'>
 
 
@@ -76,6 +77,8 @@ export default function SignInPage() {
                             <button onClick={() => setRole("SDOP")} className={`flex-1 py-3 text-[10px] font-black tracking-widest transition-all duration-200 text-center relative z-10 ${role === "SDOP" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}>SDOP</button>
                             <button onClick={() => setRole("TI")} className={`flex-1 py-3 text-[10px] font-black tracking-widest transition-all duration-200 text-center relative z-10 ${role === "TI" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}>TI</button>
                             <div className="absolute bottom-0 h-0.5 bg-blue-600 transition-all duration-300" style={{ width: '25%', left: role === "SP" ? '0%' : role === "ASP" ? '25%' : role === "SDOP" ? '50%' : '75%' }} />
+
+                            <div className="absolute bottom-0 h-full bg-blue-600/10 transition-all duration-300" style={{ width: '25%', left: role === "SP" ? '0%' : role === "ASP" ? '25%' : role === "SDOP" ? '50%' : '75%' }} />
                         </div>
                     </div>
 
@@ -97,10 +100,10 @@ export default function SignInPage() {
                         <button
                             onClick={handleGoogleSignIn}
                             disabled={loading}
-                            className={`w-full group flex items-center justify-center gap-3 bg-blue-600 text-white font-black py-3.5 px-4 rounded-xs transition-all duration-300 shadow-lg shadow-blue-500/20 text-[10px] tracking-[0.2em] uppercase
+                            className={`w-full group flex items-center justify-center gap-3 bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xs transition-all duration-300 shadow-lg shadow-blue-500/20  
                             ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-700 hover:shadow-blue-500/30 active:scale-[0.98] cursor-pointer"}`}
                         >
-                            {loading ? "Authenticating..." : "Sign In to Dashboard"}
+                            {loading ? <BiLoader className='animate-spin' /> : "Sign In"}
                             <FaArrowRightLong className="text-lg group-hover:translate-x-1 transition-transform" />
                         </button>
                     </div>
@@ -137,9 +140,6 @@ export default function SignInPage() {
                             <span>Open Public Portal</span>
                             <FaArrowRightLong className="group-hover:translate-x-1 transition-transform" />
                         </Link>
-                        <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-4 opacity-60 max-sm:hidden">
-                            Available 24/7 • Secure & Anonymous
-                        </p>
                     </div>
                 </div>
             </div>
