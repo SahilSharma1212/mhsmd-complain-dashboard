@@ -590,7 +590,21 @@ export async function DELETE(request: NextRequest) {
         );
     }
 
-    // Delete complaint
+    // Delete associated logs first (foreign key constraint)
+    const { error: logsDeleteError } = await supabase
+        .from("complaint_logs")
+        .delete()
+        .eq("complaint_id", id);
+
+    if (logsDeleteError) {
+        console.error("Logs delete error:", logsDeleteError.message);
+        return NextResponse.json(
+            { message: "Failed to delete complaint logs. Please try again.", success: false },
+            { status: 500 }
+        );
+    }
+
+    // Now delete the complaint
     const { error: deleteError } = await supabase
         .from("complaints")
         .delete()
@@ -604,23 +618,10 @@ export async function DELETE(request: NextRequest) {
         );
     }
 
-    // Insert log — non-fatal: complaint is gone, log is best-effort
-    const { logData, logError } = await insertLog({
-        complaint_id: complaint.id,
-        action: "DELETED",
-        updated_by: user.name,
-        prev_status: complaint.status,
-        current_status: "DELETED",
-        reason: "DELETED",
-    });
-
     return NextResponse.json(
         {
-            message: "Complaint deleted successfully",
+            message: "Complaint and all associated logs deleted successfully.",
             success: true,
-            logsUpdated: !logError,
-            ...(logError && { logWarning: "Complaint deleted but activity log could not be recorded." }),
-            logData,
         },
         { status: 200 }
     );

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { Complaint, Thana } from '../types';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import axios from 'axios';
 import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage, MdCreate, MdOutlinePublic, MdArrowBack } from 'react-icons/md';
 import { IoArrowForwardCircleOutline, IoCreateOutline } from 'react-icons/io5';
@@ -105,7 +105,6 @@ export default function PublicRegistration() {
 
     return (
         <div className="min-h-screen bg-slate-50 selection:bg-blue-100 p-4 md:p-8">
-            <Toaster position="top-right" />
 
             <div className="max-w-5xl mx-auto space-y-6">
                 {/* Header Section */}
@@ -183,15 +182,18 @@ export default function PublicRegistration() {
                                     value={complaintDetails.role_addressed_to}
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, role_addressed_to: e.target.value })}
                                     className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
-                                    <option value="SP">Superintendent of Police (SP)</option>
-                                    <option value="TI">Thana Incharge (TI)</option>
+                                    <option value="">{language === "english" ? "-- Select Recipient --" : "-- प्राप्तकर्ता चुनें --"}</option>
+                                    <option value="SP">{language === 'english' ? 'SP' : 'पुलिस अधीक्षक'}</option>
+                                    <option value="ASP">{language === 'english' ? 'ASP' : 'अतिरिक्त पुलिस अधीक्षक'}</option>
+                                    <option value="SDOP">{language === 'english' ? 'SDOP' : 'अनुविभागीय अधिकारी'}</option>
+                                    <option value="TI">{language === "english" ? "TI" : "थाना प्रभारी"}</option>
                                 </select>
                             </div>
 
                             {/* Thana Selection */}
                             <div className="space-y-1.5">
                                 <label htmlFor="thana" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
-                                    {language === "english" ? "Target Police Station (Thana)" : "लक्ष्य पुलिस स्टेशन (थाना)"}
+                                    {language === "english" ? "Add Office" : "thana जोड़ें"}
                                 </label>
                                 <select
                                     id="thana"
@@ -273,19 +275,6 @@ export default function PublicRegistration() {
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, accused_details: e.target.value })}
                                     placeholder={language === "english" ? "Enter accused person's name" : "आरोपी का नाम दर्ज करें"} type="text"
                                     className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' />
-                            </div>
-
-                            {/* Reporting Date (Readonly for public?) */}
-                            <div className="space-y-1.5">
-                                <label htmlFor="date" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
-                                    {language === "english" ? "Submission Date" : "जमा करने की तिथि"}
-                                </label>
-                                <input
-                                    id="date"
-                                    type='date'
-                                    readOnly
-                                    value={complaintDetails.date}
-                                    className='w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xs text-sm font-medium text-slate-500 cursor-not-allowed outline-hidden' />
                             </div>
 
                             {/* Detailed Description */}
