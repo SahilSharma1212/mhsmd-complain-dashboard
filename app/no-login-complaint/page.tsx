@@ -193,14 +193,14 @@ export default function PublicRegistration() {
                             {/* Thana Selection */}
                             <div className="space-y-1.5">
                                 <label htmlFor="thana" className='text-[11px] font-bold text-slate-600 uppercase tracking-wider block'>
-                                    {language === "english" ? "Add Office" : "thana जोड़ें"}
+                                    {language === "english" ? "Add Office" : "थाना चुनें"}
                                 </label>
                                 <select
                                     id="thana"
                                     value={complaintDetails.allocated_thana}
                                     onChange={(e) => setComplaintDetails({ ...complaintDetails, allocated_thana: e.target.value })}
                                     className='w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs text-sm font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-hidden' >
-                                    <option value="">-- Select Station --</option>
+                                    <option value="">{language === "english" ? "-- Select Station --" : "-- थाना चुनें --"}</option>
                                     {thanas.map((th, index) => (
                                         <option key={index} value={th.name}>{th.name}</option>
                                     ))}
