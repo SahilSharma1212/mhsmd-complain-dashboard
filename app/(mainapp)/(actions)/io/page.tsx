@@ -8,7 +8,7 @@ import { IOStat, ThanaIOStat, TIResponse } from "@/app/types";
 const IOPage = () => {
     const { user } = useUserStore();
     const { stats, loading, error, fetchIOStats } = useIoStatsStore();
-    const [expandedThana, setExpandedThana] = useState<string | null>(null);
+    const [selectedThana, setSelectedThana] = useState<ThanaIOStat | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -25,7 +25,7 @@ const IOPage = () => {
     const spStats = !isTI ? (stats as ThanaIOStat[]) : null;
 
     return (
-        <div className="min-h-screen bg-white p-6">
+        <div className="min-h-screen bg-white p-6 relative">
             <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900 tracking-tight">
@@ -134,54 +134,131 @@ const IOPage = () => {
                     {/* SP/ASP/SDOP View */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {spStats?.map((thana: ThanaIOStat) => (
-                            <div
+                            <button
                                 key={thana.thanaName}
-                                className={`rounded-xs border transition-all duration-300 ${expandedThana === thana.thanaName ? 'border-blue-200 ring-2 ring-blue-50' : 'border-gray-100'} bg-white shadow-sm overflow-hidden`}
+                                onClick={() => setSelectedThana(thana)}
+                                className="group flex flex-col items-start p-6 rounded-xs border border-gray-100 bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all text-left relative overflow-hidden"
                             >
-                                <button
-                                    onClick={() => setExpandedThana(expandedThana === thana.thanaName ? null : thana.thanaName)}
-                                    className="flex w-full items-center justify-between p-6 text-left"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-xs bg-blue-50 text-blue-600">
-                                            <FiHome size={24} />
+                                <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-blue-50/30 rounded-full transition-transform group-hover:scale-150 duration-500" />
+                                <div className="flex items-center gap-4 mb-4 relative z-10">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xs bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                        <FiHome size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-black text-slate-800 tracking-tight capitalize">{thana.thanaName}</h3>
+                                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">Statistical Overview</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between w-full mt-auto relative z-10">
+                                    <div className="flex gap-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase">IOs</span>
+                                            <span className="text-sm font-black text-slate-700">{thana.ioStats.length}</span>
                                         </div>
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-900 capitalize">{thana.thanaName}</h3>
-                                            <p className="text-sm text-gray-500 font-medium">
-                                                {thana.ioStats.length} IOs • {thana.ioStats.reduce((a, c) => a + c.count, 0)} मामले
-                                            </p>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase">Cases</span>
+                                            <span className="text-sm font-black text-slate-700">{thana.ioStats.reduce((a, c) => a + c.count, 0)}</span>
                                         </div>
                                     </div>
-                                    {expandedThana === thana.thanaName ? <FiChevronDown /> : <FiChevronRight />}
-                                </button>
-
-                                {expandedThana === thana.thanaName && (
-                                    <div className="border-t border-gray-50 bg-gray-50/30 p-6 animate-in slide-in-from-top-2 duration-300">
-                                        <div className="mb-4 flex items-center justify-between text-sm">
-                                            <span className="font-semibold text-gray-600 uppercase tracking-tighter">विवेचना अधिकारी</span>
-                                            <span className="font-semibold text-gray-600 uppercase tracking-tighter">मामले</span>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {thana.ioStats.map((io) => (
-                                                <div key={io.name} className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm border border-gray-100">
-                                                    <span className="font-medium text-gray-700 capitalize">{io.name}</span>
-                                                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-600">
-                                                        {io.count}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                            <div className="flex items-center justify-between rounded-lg bg-orange-50/50 p-3 border border-orange-100 mt-4">
-                                                <span className="font-bold text-orange-700">बिना आवंटित मामले</span>
-                                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-700">
-                                                    {thana.noIoCount}
-                                                </span>
-                                            </div>
-                                        </div>
+                                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all border border-slate-100 group-hover:border-blue-100">
+                                        <FiChevronRight size={18} />
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            </button>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* IO Modal */}
+            {selectedThana && (
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
+                        onClick={() => setSelectedThana(null)}
+                    />
+                    <div className="relative w-full max-w-lg bg-white rounded-xs shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-600" />
+
+                        <div className="px-6 py-6 border-b border-gray-100 flex items-center justify-between bg-white">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xs bg-blue-50 text-blue-600">
+                                    <FiHome size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black text-slate-900 capitalize tracking-tight">{selectedThana.thanaName}</h2>
+                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">विवेचना अधिकारी वितरण</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedThana(null)}
+                                className="p-2 hover:bg-slate-50 rounded-xs text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <FiRefreshCw className="rotate-45" size={24} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
+                            <div className="grid grid-cols-2 gap-4 mb-2">
+                                <div className="p-4 rounded-xs bg-slate-50 border border-slate-100 text-center">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Officers</p>
+                                    <p className="text-2xl font-black text-slate-800">{selectedThana.ioStats.length}</p>
+                                </div>
+                                <div className="p-4 rounded-xs bg-blue-50/50 border border-blue-100 text-center">
+                                    <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-1">Total Cases</p>
+                                    <p className="text-2xl font-black text-blue-600">{selectedThana.ioStats.reduce((a, c) => a + c.count, 0)}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Officer Wise Distribution</p>
+                                {selectedThana.ioStats.map((io) => (
+                                    <div key={io.name} className="group flex items-center justify-between p-3.5 rounded-xs border border-gray-100 bg-white hover:border-blue-200 transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">
+                                                {io.name.substring(0, 2)}
+                                            </div>
+                                            <span className="text-sm font-bold text-slate-700 capitalize">{io.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
+                                                <div
+                                                    className="h-full bg-blue-500 rounded-full"
+                                                    style={{ width: `${Math.min((io.count / (selectedThana.ioStats.reduce((a, c) => a + c.count, 0) || 1)) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                            <span className="inline-flex h-8 w-10 items-center justify-center rounded-xs bg-blue-50 text-xs font-black text-blue-600 border border-blue-100">
+                                                {io.count}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <div className="flex items-center justify-between p-4 rounded-xs bg-orange-50 border border-orange-100 mt-6 group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-xs bg-orange-100 flex items-center justify-center text-orange-600">
+                                            <FiAlertCircle size={18} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-black text-orange-900">Unallocated Cases</span>
+                                            <span className="text-[9px] font-bold text-orange-600 uppercase tracking-widest -mt-0.5">बिना आवंटित मामले</span>
+                                        </div>
+                                    </div>
+                                    <span className="inline-flex h-10 w-12 items-center justify-center rounded-xs bg-white text-base font-black text-orange-700 border border-orange-200 shadow-sm transition-transform group-hover:scale-110">
+                                        {selectedThana.noIoCount}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border-t border-gray-100 flex justify-end">
+                            <button
+                                onClick={() => setSelectedThana(null)}
+                                className="px-8 py-2.5 bg-slate-800 text-white rounded-xs text-[10px] font-bold uppercase tracking-widest hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
+                            >
+                                Close Details
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

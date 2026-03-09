@@ -95,6 +95,10 @@ export default function ManageComplaints() {
         setKrutiConvertedValue(null);
     }, [filterAttribute]);
 
+    // Determine if current filter supports Krutidev input
+    const isKrutidevEligibleField = filterAttribute === "complainant_name" || filterAttribute === "accused";
+    const [useKrutidev, setUseKrutidev] = useState(false);
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         setKrutiConvertedValue(null);
@@ -106,10 +110,8 @@ export default function ManageComplaints() {
 
         let searchQuery = filterValue;
 
-        // Only attempt Krutidev detection on free-text fields
-        const isTextField = filterAttribute === "complainant_name" || filterAttribute === "accused";
-
-        if (isTextField && isKrutidev(searchQuery)) {
+        // Only attempt Krutidev detection if enabled and on eligible fields
+        if (useKrutidev && isKrutidevEligibleField && isKrutidev(searchQuery)) {
             const converted = convertKrutidevToUnicode(searchQuery);
             setKrutiConvertedValue(converted);
             toast.success(
@@ -119,7 +121,6 @@ export default function ManageComplaints() {
                 { duration: 3500, icon: "🔤" }
             );
             searchQuery = converted;
-            setFilterValue(converted);
         }
 
         fetchComplaints(1, filterAttribute, searchQuery);
@@ -220,9 +221,6 @@ export default function ManageComplaints() {
         }
     };
 
-    // Determine if current filter supports Krutidev input
-    const isKrutidevEligibleField = filterAttribute === "complainant_name" || filterAttribute === "accused";
-
     return (
         <div className='w-full bg-white rounded-xs border border-slate-200 shadow-sm overflow-hidden flex flex-col'>
             {/* Header Section */}
@@ -282,13 +280,37 @@ export default function ManageComplaints() {
                     </div>
 
                     <div className='flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[300px]'>
-                        <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5'>
-                            {language === "english" ? "Search Value" : "खोज"}
-                            {/* Krutidev support badge — shown only on eligible fields */}
+                        <label className='text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between'>
+
+
+                            {/* Manual Toggle Button */}
                             {isKrutidevEligibleField && (
-                                <span className="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[9px] font-bold text-blue-600 uppercase tracking-wider">
-                                    <span>🔤</span> Krutidev supported
-                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setUseKrutidev(!useKrutidev)}
+                                    className={`group relative flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-semibold uppercase tracking-wide transition-all duration-200 cursor-pointer
+        ${useKrutidev
+                                            ? "bg-blue-600 text-white border-blue-600 shadow-md hover:bg-blue-700"
+                                            : "bg-white text-slate-700 border-slate-300 hover:border-blue-400 hover:text-blue-600"}
+        `}
+                                >
+
+                                    {/* Toggle indicator */}
+                                    <div
+                                        className={`w-3 h-3 flex items-center justify-center rounded-full border transition-all
+            ${useKrutidev
+                                                ? "bg-white border-white"
+                                                : "border-slate-400 group-hover:border-blue-500"}
+            `}
+                                    >
+                                        {useKrutidev && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                                        )}
+                                    </div>
+
+                                    {useKrutidev ? "Krutidev Enabled" : "Enable Krutidev"}
+
+                                </button>
                             )}
                         </label>
                         <div className='flex flex-col gap-1.5'>
@@ -338,9 +360,9 @@ export default function ManageComplaints() {
                                             !filterAttribute
                                                 ? 'Select an attribute first'
                                                 : isKrutidevEligibleField
-                                                    ? language === 'english'
-                                                        ? 'Type in Hindi or Krutidev font…'
-                                                        : 'हिंदी या कृतिदेव में टाइप करें…'
+                                                    ? useKrutidev
+                                                        ? language === 'english' ? 'Type in Krutidev font…' : 'कृतिदेव में टाइप करें…'
+                                                        : language === 'english' ? 'Type in Hindi or English…' : 'हिंदी या अंग्रेजी में टाइप करें…'
                                                     : 'Type to search records...'
                                         }
                                         disabled={!filterAttribute}
