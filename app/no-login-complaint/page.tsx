@@ -127,7 +127,7 @@ export default function PublicRegistration() {
                         </div>
                     </div>
                     <div className='flex items-center justify-between gap-2'>
-                        <button onClick={() => setLanguage(language === "hindi" ? "english" : "hindi")} className="px-4 py-2 bg-white border border-slate-200 rounded-xs hover:bg-slate-50 transition-all cursor-pointer hidden md:block shadow-sm font-bold">
+                        <button onClick={() => setLanguage(language === "hindi" ? "english" : "hindi")} className="px-4 py-2 bg-white border border-slate-200 rounded-xs hover:bg-slate-50 text-[12px] text-slate-600 transition-all cursor-pointer hidden md:block shadow-sm font-bold">
                             {language === "hindi" ? "हिं" : "EN"}
                         </button>
 
