@@ -38,7 +38,7 @@ type PopupType =
     | null;
 
 // ─── Reusable Modal ───────────────────────────────────────────────────────────
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function Modal({ title, onClose, isRedirecting, children }: { title: string; onClose: () => void; isRedirecting?: boolean; children: React.ReactNode }) {
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = ''; };
@@ -48,7 +48,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ backdropFilter: 'blur(6px)', backgroundColor: 'rgba(15,23,42,0.45)' }}
-            onClick={onClose}
+            onClick={isRedirecting ? undefined : onClose}
         >
             <div
                 className="bg-white rounded-xs shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200"
@@ -59,7 +59,8 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
                     <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all"
+                        disabled={isRedirecting}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full text-slate-400 transition-all ${isRedirecting ? 'opacity-20 cursor-not-allowed' : 'hover:bg-slate-100 hover:text-slate-700'}`}
                     >
                         <IoCloseOutline size={18} />
                     </button>
@@ -205,6 +206,9 @@ export default function Home() {
                     filterValue: value
                 });
                 router.push('/manage-complaints');
+            } else {
+                toast.error(response.data?.message || "Failed to fetch data");
+                setIsRedirecting(false);
             }
         } catch (error) {
             toast.error("Failed to fetch complaints for redirection");
@@ -275,7 +279,7 @@ export default function Home() {
         if (popup === 'total') {
             const tabs = [{ id: 'age', label: language === 'english' ? 'Age Distribution' : 'आयु वितरण' }, ...(isSPRole ? [{ id: 'thana', label: language === 'english' ? 'Thana-wise' : 'थाना-वार' }] : [])];
             return (
-                <Modal title={language === 'english' ? 'Total Complaints' : 'कुल शिकायतें'} onClose={closePopup}>
+                <Modal title={language === 'english' ? 'Total Complaints' : 'कुल शिकायतें'} onClose={closePopup} isRedirecting={isRedirecting}>
                     <TabBar tabs={tabs} active={popupTab} onChange={setPopupTab} />
                     {popupTab === 'age' && (
                         <div className="grid grid-cols-3 gap-3">
@@ -295,11 +299,21 @@ export default function Home() {
                     )}
                     {isSPRole && (
                         <button
-                            onClick={() => { closePopup(); handleRedirection("", ""); }}
-                            className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                            onClick={() => { handleRedirection("", ""); }}
+                            disabled={isRedirecting}
+                            className={`mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs text-[10px] font-black uppercase tracking-widest transition-all ${isRedirecting ? 'bg-indigo-400 cursor-not-allowed text-indigo-50' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md'}`}
                         >
-                            {language === 'english' ? 'View All Complaints' : 'सभी शिकायतें देखें'}
-                            <IoArrowForwardCircleOutline size={16} />
+                            {isRedirecting ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    {language === 'english' ? 'Redirecting...' : 'रीडायरेक्ट किया जा रहा...'}
+                                </div>
+                            ) : (
+                                <>
+                                    {language === 'english' ? 'View All Complaints' : 'सभी शिकायतें देखें'}
+                                    <IoArrowForwardCircleOutline size={16} />
+                                </>
+                            )}
                         </button>
                     )}
                 </Modal>
@@ -315,7 +329,7 @@ export default function Home() {
             const activeTab = (popupTab === 'age' || popupTab === '') && isSPRole ? 'thana' : (popupTab || 'age');
 
             return (
-                <Modal title={language === 'english' ? 'Pending Complaints' : 'लम्बित शिकायतें'} onClose={closePopup}>
+                <Modal title={language === 'english' ? 'Pending Complaints' : 'लम्बित शिकायतें'} onClose={closePopup} isRedirecting={isRedirecting}>
                     <TabBar tabs={tabs} active={activeTab} onChange={setPopupTab} />
                     {activeTab === 'age' && (
                         <div className="grid grid-cols-3 gap-3">
@@ -337,11 +351,21 @@ export default function Home() {
                         <ThanaAgeTable data={stats.thanaAgeBreakdown} language={language} />
                     )}
                     <button
-                        onClick={() => { closePopup(); handleRedirection("status", "लम्बित"); }}
-                        className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                        onClick={() => { handleRedirection("status", "लम्बित"); }}
+                        disabled={isRedirecting}
+                        className={`mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs text-[10px] font-black uppercase tracking-widest transition-all ${isRedirecting ? 'bg-orange-300 cursor-not-allowed text-orange-50' : 'bg-orange-500 hover:bg-orange-600 text-white shadow-sm hover:shadow-md'}`}
                     >
-                        {language === 'english' ? 'View All Pending' : 'सभी लम्बित देखें'}
-                        <IoArrowForwardCircleOutline size={16} />
+                        {isRedirecting ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                {language === 'english' ? 'Redirecting...' : 'रीडायरेक्ट किया जा रहा...'}
+                            </div>
+                        ) : (
+                            <>
+                                {language === 'english' ? 'View All Pending' : 'सभी लम्बित देखें'}
+                                <IoArrowForwardCircleOutline size={16} />
+                            </>
+                        )}
                     </button>
                 </Modal>
             );
@@ -350,14 +374,18 @@ export default function Home() {
         // ── UNALLOCATED ────────────────────────────────────────────────────────
         if (popup === 'unallocated') {
             return (
-                <Modal title={language === 'english' ? 'Unallocated Complaints' : 'अनाबंटित शिकायतें'} onClose={closePopup}>
+                <Modal title={language === 'english' ? 'Unallocated Complaints' : 'अनाबंटित शिकायतें'} onClose={closePopup} isRedirecting={isRedirecting}>
                     <div className="space-y-2">
                         {(stats?.latestUnallocatedComplaints || []).slice(0, 5).map((c, i) => <ComplaintRow key={i} complaint={c} />)}
                         {(!stats?.latestUnallocatedComplaints || stats.latestUnallocatedComplaints.length === 0) && (
                             <p className="text-center text-sm text-slate-400 py-4 font-medium">{language === 'english' ? 'No unallocated complaints' : 'कोई अनाबंटित शिकायत नहीं'}</p>
                         )}
                     </div>
-                    <Link href="/unallocated-complaints" onClick={closePopup} className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase tracking-widest transition-all">
+                    <Link
+                        href="/unallocated-complaints"
+                        onClick={e => { if (isRedirecting) { e.preventDefault(); return; } closePopup(); }}
+                        className={`mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs text-xs font-black uppercase tracking-widest transition-all ${isRedirecting ? 'bg-rose-400 cursor-not-allowed opacity-70' : 'bg-rose-600 hover:bg-rose-700 text-white'}`}
+                    >
                         {language === 'english' ? 'View All Unallocated' : 'सभी अनाबंटित देखें'}
                         <IoArrowForwardCircleOutline size={16} />
                     </Link>
@@ -377,7 +405,7 @@ export default function Home() {
             const activeTab = (popupTab === 'age' || popupTab === '') && isSPRole ? 'thana' : (popupTab || 'age');
 
             return (
-                <Modal title={language === 'english' ? 'Nirakrit Complaints' : 'निराकृत शिकायतें'} onClose={closePopup}>
+                <Modal title={language === 'english' ? 'Nirakrit Complaints' : 'निराकृत शिकायतें'} onClose={closePopup} isRedirecting={isRedirecting}>
                     <TabBar tabs={tabs} active={activeTab} onChange={setPopupTab} />
                     {activeTab === 'age' && (
                         <div className="grid grid-cols-3 gap-3">
@@ -412,11 +440,21 @@ export default function Home() {
                         </div>
                     )}
                     <button
-                        onClick={() => { closePopup(); handleRedirection("status", "निराकृत"); }}
-                        className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                        onClick={() => { handleRedirection("status", "निराकृत"); }}
+                        disabled={isRedirecting}
+                        className={`mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs text-[10px] font-black uppercase tracking-widest transition-all ${isRedirecting ? 'bg-emerald-400 cursor-not-allowed text-emerald-50' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md'}`}
                     >
-                        {language === 'english' ? 'View All Nirakrit' : 'सभी निराकृत देखें'}
-                        <IoArrowForwardCircleOutline size={16} />
+                        {isRedirecting ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                {language === 'english' ? 'Redirecting...' : 'रीडायरेक्ट किया जा रहा...'}
+                            </div>
+                        ) : (
+                            <>
+                                {language === 'english' ? 'View All Nirakrit' : 'सभी निराकृत देखें'}
+                                <IoArrowForwardCircleOutline size={16} />
+                            </>
+                        )}
                     </button>
                 </Modal>
             );
@@ -426,14 +464,18 @@ export default function Home() {
         if (popup === 'recent') {
             const allocated = (stats?.latestTotalComplaints || []).filter(c => c.allocated_thana).slice(0, 5);
             return (
-                <Modal title={language === 'english' ? 'Recent Complaints' : 'नवीनतम शिकायतें'} onClose={closePopup}>
+                <Modal title={language === 'english' ? 'Recent Complaints' : 'नवीनतम शिकायतें'} onClose={closePopup} isRedirecting={isRedirecting}>
                     <div className="space-y-2">
                         {allocated.map((c, i) => <ComplaintRow key={i} complaint={c} />)}
                         {allocated.length === 0 && (
                             <p className="text-center text-sm text-slate-400 py-4">{language === 'english' ? 'No recent complaints' : 'कोई नवीनतम शिकायत नहीं'}</p>
                         )}
                     </div>
-                    <Link href="/manage-complaints" onClick={closePopup} className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest transition-all">
+                    <Link
+                        href="/manage-complaints"
+                        onClick={e => { if (isRedirecting) { e.preventDefault(); return; } closePopup(); }}
+                        className={`mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs text-xs font-black uppercase tracking-widest transition-all ${isRedirecting ? 'bg-indigo-400 cursor-not-allowed opacity-70' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md'}`}
+                    >
                         {language === 'english' ? 'View All Complaints' : 'सभी शिकायतें देखें'}
                         <IoArrowForwardCircleOutline size={16} />
                     </Link>
@@ -452,7 +494,7 @@ export default function Home() {
             const activeTab = (popupTab === 'age' || popupTab === '') ? (isSPRole ? 'thana' : 'status') : popupTab;
 
             return (
-                <Modal title={`${ag?.label ?? ''} — ${language === 'english' ? 'Pending Complaints' : 'लम्बित शिकायतें'}`} onClose={closePopup}>
+                <Modal title={`${ag?.label ?? ''} — ${language === 'english' ? 'Pending Complaints' : 'लम्बित शिकायतें'}`} onClose={closePopup} isRedirecting={isRedirecting}>
                     <TabBar tabs={tabs} active={activeTab} onChange={setPopupTab} />
                     {activeTab === 'thana' && stats?.thanaAgeBreakdown && (
                         <div className="bg-white border border-slate-100 rounded-xs overflow-hidden">
@@ -495,11 +537,21 @@ export default function Home() {
                         </div>
                     )}
                     <button
-                        onClick={() => { closePopup(); handleRedirection("age", id); }}
-                        className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                        onClick={() => { handleRedirection("age", id); }}
+                        disabled={isRedirecting}
+                        className={`mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs text-[10px] font-black uppercase tracking-widest transition-all ${isRedirecting ? 'bg-orange-300 cursor-not-allowed text-orange-50' : 'bg-orange-500 hover:bg-orange-600 text-white shadow-sm hover:shadow-md'}`}
                     >
-                        {language === 'english' ? `View All ${ag?.label}` : `सभी ${ag?.label} देखें`}
-                        <IoArrowForwardCircleOutline size={16} />
+                        {isRedirecting ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                {language === 'english' ? 'Redirecting...' : 'रीडायरेक्ट किया जा रहा...'}
+                            </div>
+                        ) : (
+                            <>
+                                {language === 'english' ? `View All ${ag?.label}` : `सभी ${ag?.label} देखें`}
+                                <IoArrowForwardCircleOutline size={16} />
+                            </>
+                        )}
                     </button>
                 </Modal>
             );
@@ -523,7 +575,7 @@ export default function Home() {
             const ageTotal = ageDistForStatus.lessThan15Days + ageDistForStatus.fifteenToThirtyDays + ageDistForStatus.moreThan30Days;
 
             return (
-                <Modal title={language === 'english' ? s?.labeleng ?? '' : s?.labelhindi ?? ''} onClose={closePopup}>
+                <Modal title={language === 'english' ? s?.labeleng ?? '' : s?.labelhindi ?? ''} onClose={closePopup} isRedirecting={isRedirecting}>
                     <TabBar tabs={tabs} active={activeTab} onChange={setPopupTab} />
                     {activeTab === 'age' && (
                         <div className="grid grid-cols-3 gap-3">
@@ -573,11 +625,21 @@ export default function Home() {
                         </div>
                     )}
                     <button
-                        onClick={() => { closePopup(); handleRedirection("status", statusId); }}
-                        className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                        onClick={() => { handleRedirection("status", statusId); }}
+                        disabled={isRedirecting}
+                        className={`mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs text-[10px] font-black uppercase tracking-widest transition-all ${isRedirecting ? 'bg-indigo-400 cursor-not-allowed text-indigo-100' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md'}`}
                     >
-                        {language === 'english' ? 'View All' : 'सभी देखें'}
-                        <IoArrowForwardCircleOutline size={16} />
+                        {isRedirecting ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                {language === 'english' ? 'Redirecting...' : 'रीडायरेक्ट किया जा रहा...'}
+                            </div>
+                        ) : (
+                            <>
+                                {language === 'english' ? 'View All' : 'सभी देखें'}
+                                <IoArrowForwardCircleOutline size={16} />
+                            </>
+                        )}
                     </button>
                 </Modal>
             );
@@ -586,7 +648,7 @@ export default function Home() {
         // ── THANA AGE ───────────────────────────────────────────────────────
         if (popup === 'thana_age' && stats?.thanaAgeBreakdown) {
             return (
-                <Modal title={language === 'english' ? 'Thana-wise Duration' : 'थाना-वार अवधि'} onClose={closePopup}>
+                <Modal title={language === 'english' ? 'Thana-wise Duration' : 'थाना-वार अवधि'} onClose={closePopup} isRedirecting={isRedirecting}>
                     <ThanaAgeTable data={stats.thanaAgeBreakdown} language={language} />
                 </Modal>
             );
