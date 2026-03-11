@@ -734,7 +734,7 @@ export default function Home() {
                                     <p className='text-[12px] font-black text-orange-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Pending' : 'लंबित'}</p>
                                     <h3 className="text-2xl font-black text-white flex items-baseline gap-2">
                                         {stats?.statusCounts?.लंबित ?? 0}
-                                        <span className="text-sm font-bold opacity-80">({stats?.unallocatedPendingCount ?? 0})</span>
+                                        <span className="text-sm font-bold opacity-80">({stats?.unallocatedPendingCount ?? 0} : {language === 'english' ? 'Unallocated' : 'अनाबंटित'})</span>
                                     </h3>
                                     <span className="text-[8px] font-bold text-orange-100/70 uppercase">
                                         {stats?.totalAllocated ? `${Math.round(((stats?.statusCounts?.लंबित ?? 0) / stats.totalAllocated) * 100)}%` : '0%'}

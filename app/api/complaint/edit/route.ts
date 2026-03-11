@@ -11,6 +11,10 @@ const editComplaintSchema = z.object({
     complainant_name: z.string().min(1),
     complainant_contact: z.string().min(10),
     allocated_thana: z.string().min(1),
+    accused_details: z.string().optional(),
+    role_addressed_to: z.string().optional(),
+    recipient_address: z.string().optional(),
+    date: z.string().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -46,7 +50,7 @@ export async function PATCH(request: NextRequest) {
             );
         }
 
-        const { id, subject, message, complainant_name, complainant_contact, allocated_thana } = parsed.data;
+        const { id, subject, message, complainant_name, complainant_contact, allocated_thana, accused_details, role_addressed_to, recipient_address, date } = parsed.data;
 
         // 3. Fetch current complaint for auth and log context
         const { data: complaint, error: fetchError } = await supabase
@@ -98,6 +102,10 @@ export async function PATCH(request: NextRequest) {
                 complainant_name,
                 complainant_contact,
                 allocated_thana,
+                accused_details,
+                role_addressed_to,
+                recipient_address,
+                date,
                 updated_at: new Date().toISOString(),
             })
             .eq("id", id)

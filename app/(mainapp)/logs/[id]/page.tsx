@@ -52,7 +52,11 @@ export default function LogsPage() {
         message: "",
         complainant_name: "",
         complainant_contact: "",
-        allocated_thana: ""
+        allocated_thana: "",
+        accused_details: "",
+        role_addressed_to: "",
+        recipient_address: "",
+        date: ""
     })
     const [isEditingComplaint, setIsEditingComplaint] = useState(false)
 
@@ -289,7 +293,11 @@ export default function LogsPage() {
                                         message: currentlyViewingComplaint.message || "",
                                         complainant_name: currentlyViewingComplaint.complainant_name || "",
                                         complainant_contact: currentlyViewingComplaint.complainant_contact || "",
-                                        allocated_thana: currentlyViewingComplaint.allocated_thana || ""
+                                        allocated_thana: currentlyViewingComplaint.allocated_thana || "",
+                                        accused_details: currentlyViewingComplaint.accused_details || "",
+                                        role_addressed_to: currentlyViewingComplaint.role_addressed_to || "",
+                                        recipient_address: currentlyViewingComplaint.recipient_address || "",
+                                        date: currentlyViewingComplaint.date ? new Date(currentlyViewingComplaint.date).toISOString().split('T')[0] : ""
                                     })
                                     setIsEditModalOpen(true)
                                 }
@@ -486,6 +494,12 @@ export default function LogsPage() {
                                         <IoCallOutline className="text-blue-500" size={16} />
                                         <span className="text-sm font-medium">{currentlyViewingComplaint.complainant_contact || currentlyViewingComplaint.phone}</span>
                                     </div>
+                                    {currentlyViewingComplaint.recipient_address && (
+                                        <div className="flex items-center justify-center gap-2 text-slate-700 bg-slate-50 py-2 px-4 rounded-xs border border-slate-100">
+                                            <IoLocationOutline className="text-blue-500" size={16} />
+                                            <span className="text-sm font-medium">{currentlyViewingComplaint.recipient_address}</span>
+                                        </div>
+                                    )}
                                     <div className="text-xs text-slate-700 flex flex-col gap-1 mt-6">
                                         <p>{language === "english" ? "Submitted By" : "द्वारा जमा किया गया"}</p>
                                         <p className="text-slate-900 font-semibold text-sm uppercase">{currentlyViewingComplaint.submitted_by}</p>
@@ -726,8 +740,33 @@ export default function LogsPage() {
                                 </svg>
                             </button>
                         </div>
-                        <form onSubmit={handleEditComplaint} className="p-6 space-y-4">
+                        <form onSubmit={handleEditComplaint} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
                             <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Role Addressed To" : "किसको संबोधित"}</label>
+                                        <select
+                                            value={editForm.role_addressed_to}
+                                            onChange={(e) => setEditForm({ ...editForm, role_addressed_to: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
+                                        >
+                                            <option value="">{language === "english" ? "Select Role" : "पद चुनें"}</option>
+                                            <option value="SP">SP</option>
+                                            <option value="ASP">ASP</option>
+                                            <option value="SDOP">SDOP</option>
+                                            <option value="TI">TI</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Reporting Date" : "रिपोर्टिंग तिथि"}</label>
+                                        <input
+                                            type="date"
+                                            value={editForm.date}
+                                            onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
+                                        />
+                                    </div>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Subject" : "विषय"}</label>
                                     <input
@@ -761,18 +800,38 @@ export default function LogsPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Allocated Thana" : "आवंटित थाना"}</label>
-                                    <select
-                                        value={editForm.allocated_thana}
-                                        onChange={(e) => setEditForm({ ...editForm, allocated_thana: e.target.value })}
+                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Complainant Address" : "शिकायतकर्ता का पता"}</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.recipient_address}
+                                        onChange={(e) => setEditForm({ ...editForm, recipient_address: e.target.value })}
                                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
-                                        required
-                                    >
-                                        <option value="">{language ? "Select Thana" : "थाना चुनें"}</option>
-                                        {thana?.map((t, idx) => (
-                                            <option key={idx} value={t.name}>{t.name}</option>
-                                        ))}
-                                    </select>
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Allocated Thana" : "आवंटित थाना"}</label>
+                                        <select
+                                            value={editForm.allocated_thana}
+                                            onChange={(e) => setEditForm({ ...editForm, allocated_thana: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
+                                            required
+                                        >
+                                            <option value="">{language === "english" ? "Select Thana" : "थाना चुनें"}</option>
+                                            {thana?.map((t, idx) => (
+                                                <option key={idx} value={t.name}>{t.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Accused Details" : "आरोपी का विवरण"}</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.accused_details}
+                                            onChange={(e) => setEditForm({ ...editForm, accused_details: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-800 mb-1.5">{language === "english" ? "Description / Message" : "विवरण / संदेश"}</label>
@@ -803,13 +862,10 @@ export default function LogsPage() {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                             </svg>
-                                            {language === "english" ? "Saving..." : "सहेज रहा है..."}
+                                            {language === "english" ? "Updating..." : "अपडेट हो रहा है..."}
                                         </>
                                     ) : (
-                                        <>
-                                            <span className="max-md:hidden">{language === "english" ? "Save Changes" : "परिवर्तन सहेजें"}</span>
-                                            <span className="md:hidden">{language === "english" ? "Save" : "सहेजें"}</span>
-                                        </>
+                                        language === "english" ? "Update Details" : "विवरण अपडेट करें"
                                     )}
                                 </button>
                             </div>
@@ -818,89 +874,41 @@ export default function LogsPage() {
                 </div>
             )}
 
-            {/* Delete Confirmation Modal */}
-            {isDeleteModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xs shadow-2xl w-full max-w-sm border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="p-6">
-                            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4 mx-auto">
-                                <IoTrash className="text-red-600" size={24} />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-900 text-center mb-2">{language === "english" ? "Delete Log Entry?" : "लॉग प्रविष्टि हटाएं?"}</h3>
-                            <p className="text-slate-700 text-sm text-center mb-6">
-                                {language === "english" ? "Are you sure you want to delete this activity log? This action cannot be undone and will permanently remove it from the history." : "क्या आप सुनिश्चित हैं कि आप इस गतिविधि लॉग को हटाना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती है और इसे इतिहास से स्थायी रूप से हटा दिया जाएगा।"}
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => {
-                                        setIsDeleteModalOpen(false)
-                                        setLogToDelete(null)
-                                    }}
-                                    className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xs transition-colors"
-                                >
-                                    {language === "english" ? "Cancel" : "रद्द करें"}
-                                </button>
-                                <button
-                                    onClick={handleDeleteLog}
-                                    disabled={isDeleting}
-                                    className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xs transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    {isDeleting ? (
-                                        <>
-                                            <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                            </svg>
-                                            {language === "english" ? "Deleting..." : "हटा रहा है..."}
-                                        </>
-                                    ) : (
-                                        language === "english" ? "Confirm" : "पुष्टि करें"
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* IO Allocation Modal */}
             {isIOModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4">
                     <div className="bg-white rounded-xs shadow-2xl w-full max-w-md border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="bg-emerald-50 px-6 py-4 border-b border-emerald-100 flex items-center justify-between">
-                            <h2 className="text-lg font-bold text-emerald-900 flex items-center gap-2">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                                 <IoPersonOutline className="text-emerald-600" size={24} />
                                 {language === "english" ? "Allocate IO Officer" : "आईओ अधिकारी आवंटित करें"}
                             </h2>
                             <button
                                 onClick={() => setIsIOModalOpen(false)}
-                                className="text-emerald-400 hover:text-emerald-600 p-1 hover:bg-emerald-200 rounded-full transition-colors"
+                                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded-full transition-colors"
                             >
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
-                        <form onSubmit={handleAllocateIO} className="p-6 space-y-5">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-bold text-slate-800">
-                                    {language === "english" ? "IO Officer Name" : "आईओ अधिकारी का नाम"}
+                        <form onSubmit={handleAllocateIO} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-800 mb-2">
+                                    {language === "english" ? "Officer Name" : "अधिकारी का नाम"}
                                 </label>
                                 <input
                                     type="text"
                                     value={ioOfficerName}
                                     onChange={(e) => setIoOfficerName(e.target.value)}
-                                    placeholder={language === "english" ? "Enter officer name..." : "अधिकारी का नाम दर्ज करें..."}
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-900 font-medium"
+                                    placeholder={language === "english" ? "Enter IO officer's full name..." : "आईओ अधिकारी का पूरा नाम दर्ज करें..."}
+                                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm font-medium text-slate-900"
                                     required
                                 />
                             </div>
-                            <div className="flex items-center gap-4 bg-emerald-50 p-4 rounded-xs border border-emerald-100">
-                                <div className="p-2 bg-white rounded-lg shadow-sm">
-                                    <MdOutlineTrackChanges className="text-emerald-600" />
-                                </div>
-                                <p className="text-[11px] text-emerald-800 leading-tight font-medium">
-                                    {language === "english" ? "Allocating an IO officer will be recorded in the timeline. This helps track who is responsible for this case." : "आईओ अधिकारी को आवंटित करना टाइमलाइन में दर्ज किया जाएगा। यह ट्रैक करने में मदद करता है कि इस मामले के लिए कौन जिम्मेदार है।"}
+                            <div className="bg-emerald-50 p-4 rounded-xs border border-emerald-100">
+                                <p className="text-[11px] text-emerald-800 font-medium">
+                                    {language === "english" ? "Allocating an IO officer will allow them to start investigating this case and adding evidence logs." : "आईओ अधिकारी को आवंटित करने से वे इस मामले की जांच शुरू कर सकते हैं और साक्ष्य लॉग जोड़ सकते हैं।"}
                                 </p>
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
@@ -925,11 +933,49 @@ export default function LogsPage() {
                                             {language === "english" ? "Allocating..." : "आवंटित कर रहा है..."}
                                         </>
                                     ) : (
-                                        language === "english" ? "Allocate Officer" : "अधिकारी आवंटित करें"
+                                        language === "english" ? "Confirm Allocation" : "आवंटन की पुष्टि करें"
                                     )}
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Log Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xs shadow-2xl w-full max-w-sm border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-6 text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <IoTrash className="text-red-600" size={24} />
+                            </div>
+                            <h2 className="text-lg font-bold text-slate-900 mb-2">
+                                {language === "english" ? "Delete Action Log?" : "कार्रवाई लॉग हटाएं?"}
+                            </h2>
+                            <p className="text-sm text-slate-600 mb-6">
+                                {language === "english" ? "This action cannot be undone. This log entry will be permanently removed from the timeline." : "यह क्रिया पूर्ववत नहीं की जा सकती। यह लॉग प्रविष्टि टाइमलाइन से स्थायी रूप से हटा दी जाएगी।"}
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    className="flex-1 px-4 py-2 border border-slate-200 rounded-xs text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                >
+                                    {language === "english" ? "No, Keep it" : "नहीं, रहने दें"}
+                                </button>
+                                <button
+                                    onClick={handleDeleteLog}
+                                    disabled={isDeleting}
+                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xs text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
+                                >
+                                    {isDeleting ? (
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
+                                    ) : (
+                                        language === "english" ? "Yes, Delete" : "हाँ, हटाएँ"
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
