@@ -5,6 +5,9 @@ import supabase from "@/app/_config/supabase";
 import { z } from "zod";
 import supabaseAdmin from "@/app/_config/supabaseAdmin";
 
+// ─── Synced with frontend ───
+const DEFAULT_PAGE_SIZE = 20;
+
 // ─── Zod schemas ───
 const complaintPostSchema = z.object({
     role_addressed_to: z.enum(["SP", "TI"]),
@@ -108,7 +111,7 @@ export async function POST(request: NextRequest) {
         }
     }
 
-    // 3. Validate with Zod (was defined but never used before — now it is)
+    // 3. Validate with Zod
     const parsed = complaintPostSchema.safeParse(rawFields);
     if (!parsed.success) {
         return NextResponse.json(
@@ -140,7 +143,7 @@ export async function POST(request: NextRequest) {
         .from("thana")
         .select("name")
         .eq("name", allocated_thana)
-        .maybeSingle(); // use maybeSingle to avoid error on no rows
+        .maybeSingle();
 
     if (thanaError) {
         console.log("Thana lookup error:", thanaError.message);
@@ -264,7 +267,7 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 7. Insert log — non-fatal: complaint is already saved, log failure is recoverable
+    // 7. Insert log — non-fatal
     const { logData, logError } = await insertLog({
         complaint_id: data.id,
         action: "CREATED",
@@ -303,9 +306,15 @@ export async function GET(request: NextRequest) {
 
     const filter = request.nextUrl.searchParams.get("filter");
     const value = request.nextUrl.searchParams.get("value");
-    const thana = request.nextUrl.searchParams.get("thana"); // optional: SP modal drill-down
+    const thana = request.nextUrl.searchParams.get("thana");
     const page = parseInt(request.nextUrl.searchParams.get("page") || "1");
-    const pageSize = 20;
+
+    // ✅ Fixed: read pageSize from query params, fall back to DEFAULT_PAGE_SIZE
+    const pageSize = Math.min(
+        parseInt(request.nextUrl.searchParams.get("pageSize") || String(DEFAULT_PAGE_SIZE)),
+        100 // hard cap to prevent abuse
+    );
+
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -315,12 +324,8 @@ export async function GET(request: NextRequest) {
         query = supabase
             .from("complaints")
             .select("*", { count: "exact" })
-            .eq("allocated_thana", decodedToken.thana)
-            .order("created_at", { ascending: false });
+            .eq("allocated_thana", decodedToken.thana);
     } else if (decodedToken.role === "SP" || decodedToken.role === "ASP" || decodedToken.role === "SDOP") {
-        // ─── CHANGED: use a subquery approach instead of !inner join ───
-        // !inner silently drops complaints when the thana row is missing.
-        // Instead, fetch the SP's thana names first, then filter complaints.
         const roleColumn = decodedToken.role === "SP" ? "designated_sp" : decodedToken.role === "ASP" ? "designated_asp" : "designated_sdop";
 
         const { data: thanasForSP, error: thanaFetchError } = await supabase
@@ -343,7 +348,6 @@ export async function GET(request: NextRequest) {
         const thanaNames = (thanasForSP ?? []).map((t) => t.name);
 
         if (thanaNames.length === 0) {
-            // SP has no thanas assigned — return empty result immediately
             return NextResponse.json(
                 { message: "No thanas assigned to this SP.", success: true, data: [], totalCount: 0 },
                 { status: 200 }
@@ -353,8 +357,7 @@ export async function GET(request: NextRequest) {
         query = supabase
             .from("complaints")
             .select("*", { count: "exact" })
-            .in("allocated_thana", thanaNames)
-            .order("created_at", { ascending: false });
+            .in("allocated_thana", thanaNames);
     } else {
         return NextResponse.json(
             { message: "Role not authorised", success: false },
@@ -384,7 +387,11 @@ export async function GET(request: NextRequest) {
         query = query.eq("allocated_thana", thana);
     }
 
-    const { data, error, count } = await query.range(from, to);
+    const { data, error, count } = await query
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+    console.log(`Fetched complaints. Page: ${page}, PageSize: ${pageSize}, From: ${from}, To: ${to}, TotalCount: ${count}`);
 
     if (error) {
         console.log("Complaints fetch error:", error.message);
@@ -393,6 +400,7 @@ export async function GET(request: NextRequest) {
             { status: 500 }
         );
     }
+
     return NextResponse.json(
         { message: "Complaints fetched successfully", success: true, data, totalCount: count },
         { status: 200 }

@@ -662,12 +662,12 @@ export default function Home() {
         ? [
             { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
             { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
-            { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.unallocatedCount ?? 0), color: '#6366f1' },
+            { name: 'Others', value: (stats?.totalAllocated ?? 0) - (stats?.statusCounts?.लम्बित ?? 0), color: '#6366f1' },
         ]
         : [
             { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
-            { name: 'Nirakrit', value: stats?.nirakritCount ?? 0, color: '#10b981' },
-            { name: 'Others', value: (stats?.total ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.nirakritCount ?? 0), color: '#6366f1' },
+            { name: 'Nirakrit', value: stats?.nirakritAllocatedCount ?? 0, color: '#10b981' },
+            { name: 'Others', value: (stats?.totalAllocated ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.nirakritAllocatedCount ?? 0), color: '#6366f1' },
         ];
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -718,7 +718,7 @@ export default function Home() {
                                 </div>
                                 <div className="relative z-10">
                                     <p className='text-[12px] font-black text-indigo-200 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Total' : 'कुल'}</p>
-                                    <h3 className="text-2xl font-black text-white">{stats?.total ?? 0}</h3>
+                                    <h3 className="text-2xl font-black text-white">{stats?.totalAllocated ?? 0}</h3>
                                 </div>
                             </button>
 
@@ -732,9 +732,12 @@ export default function Home() {
                                 </div>
                                 <div className="relative z-10">
                                     <p className='text-[12px] font-black text-orange-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Pending' : 'लम्बित'}</p>
-                                    <h3 className="text-2xl font-black text-white">{stats?.statusCounts?.लम्बित ?? 0}</h3>
+                                    <h3 className="text-2xl font-black text-white flex items-baseline gap-2">
+                                        {stats?.statusCounts?.लम्बित ?? 0}
+                                        <span className="text-sm font-bold opacity-80">({stats?.unallocatedPendingCount ?? 0})</span>
+                                    </h3>
                                     <span className="text-[8px] font-bold text-orange-100/70 uppercase">
-                                        {stats?.total ? `${Math.round(((stats?.statusCounts?.लम्बित ?? 0) / stats.total) * 100)}%` : '0%'}
+                                        {stats?.totalAllocated ? `${Math.round(((stats?.statusCounts?.लम्बित ?? 0) / stats.totalAllocated) * 100)}%` : '0%'}
                                     </span>
                                 </div>
                             </button>
@@ -752,7 +755,7 @@ export default function Home() {
                                         <p className='text-[12px] font-black text-rose-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Unallocated' : 'अनाबंटित'}</p>
                                         <h3 className="text-2xl font-black text-white">{stats?.unallocatedCount ?? 0}</h3>
                                         <span className="text-[8px] font-bold text-rose-100/70 uppercase">
-                                            {stats?.total ? `${Math.round(((stats?.unallocatedCount ?? 0) / stats.total) * 100)}%` : '0%'}
+                                            {stats?.unallocatedCount && stats?.total ? `${Math.round((stats.unallocatedCount / stats.total) * 100)}%` : '0%'}
                                         </span>
                                     </div>
                                 </button>
@@ -768,9 +771,9 @@ export default function Home() {
                                 </div>
                                 <div className="relative z-10">
                                     <p className='text-[12px] font-black text-emerald-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Nirakrit' : 'निराकृत'}</p>
-                                    <h3 className="text-2xl font-black text-white">{stats?.nirakritCount ?? 0}</h3>
+                                    <h3 className="text-2xl font-black text-white">{stats?.nirakritAllocatedCount ?? 0}</h3>
                                     <span className="text-[8px] font-bold text-emerald-100/70 uppercase">
-                                        {stats?.total ? `${Math.round(((stats?.nirakritCount ?? 0) / stats.total) * 100)}%` : '0%'}
+                                        {stats?.totalAllocated ? `${Math.round(((stats?.nirakritAllocatedCount ?? 0) / stats.totalAllocated) * 100)}%` : '0%'}
                                     </span>
                                 </div>
                             </button>

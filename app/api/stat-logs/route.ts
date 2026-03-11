@@ -23,6 +23,9 @@ function zeroCounts(): StatusCounts {
 
 function aggregateCounts(rows: { id: string; status: string; created_at: string; allocated_thana?: string; complainant_name?: string; subject?: string }[]): {
     statusCounts: StatusCounts;
+    totalAllocated: number;
+    unallocatedPendingCount: number;
+    nirakritAllocatedCount: number;
     nirakritCount: number;
     thanaBreakdown: Record<string, StatusCounts>;
     ageStats: {
@@ -53,6 +56,9 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
     latestNirakritComplaints: any[];
 } {
     const statusCounts = zeroCounts();
+    let totalAllocated = 0;
+    let unallocatedPendingCount = 0;
+    let nirakritAllocatedCount = 0;
     let nirakritCount = 0;
     const thanaBreakdown: Record<string, StatusCounts> = {};
     const thanaAgeBreakdown: Record<string, {
@@ -124,11 +130,20 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
         if (isUnallocated) {
             categoryAgeStats.unallocated[currentAge]++;
             latestComplaints.unallocated.push(row);
+            if (row.status === "PENDING" || row.status === "लंबित" || row.status === "लम्बित") {
+                unallocatedPendingCount++;
+            }
         }
         if (isNirakrit) {
             categoryAgeStats.nirakrit[currentAge]++;
             latestComplaints.nirakrit.push(row);
             nirakritCount++;
+            if (hasThana) {
+                nirakritAllocatedCount++;
+            }
+        }
+        if (hasThana) {
+            totalAllocated++;
         }
         latestComplaints.total.push(row);
 
@@ -181,6 +196,9 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
 
     return {
         statusCounts,
+        totalAllocated,
+        unallocatedPendingCount,
+        nirakritAllocatedCount,
         nirakritCount,
         thanaBreakdown,
         ageStats,
@@ -229,6 +247,9 @@ export async function GET(request: NextRequest) {
         const rows = data ?? [];
         const {
             statusCounts,
+            totalAllocated,
+            unallocatedPendingCount,
+            nirakritAllocatedCount,
             nirakritCount,
             ageStats,
             categoryAgeStats,
@@ -248,6 +269,9 @@ export async function GET(request: NextRequest) {
         const response = NextResponse.json({
             role: "TI",
             total: rows.length,
+            totalAllocated,
+            unallocatedPendingCount,
+            nirakritAllocatedCount,
             statusCounts,
             nirakritCount,
             ageStats,
@@ -330,6 +354,9 @@ export async function GET(request: NextRequest) {
 
         const {
             statusCounts,
+            totalAllocated,
+            unallocatedPendingCount,
+            nirakritAllocatedCount,
             nirakritCount,
             thanaBreakdown,
             ageStats,
@@ -346,7 +373,10 @@ export async function GET(request: NextRequest) {
         const response = NextResponse.json({
             role: "SP",
             total: rows.length,
+            totalAllocated,
+            unallocatedPendingCount,
             unallocatedCount,
+            nirakritAllocatedCount,
             nirakritCount,
             statusCounts,
             thanaBreakdown,

@@ -73,7 +73,10 @@ export interface StatusCounts {
 
 export interface StatData {
     total: number;
+    totalAllocated?: number;
+    unallocatedPendingCount?: number;
     unallocatedCount?: number;
+    nirakritAllocatedCount?: number;
     nirakritCount?: number;
     statusCounts: StatusCounts;
     thanaBreakdown?: Record<string, StatusCounts>;
