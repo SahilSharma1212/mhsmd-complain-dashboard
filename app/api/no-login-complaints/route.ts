@@ -144,9 +144,9 @@ export async function POST(request: NextRequest) {
             recipient_address,
             subject,
             date,
-            status: "लम्बित", // Public complaints go straight to Pending usually, or keep "अप्रमाणित"? 
+            status: "लंबित", // Public complaints go straight to Pending usually, or keep "अप्रमाणित"? 
             // The user request said "available only if user is not signed in", but didn't specify initial status.
-            // Let's use "लम्बित" as it's a new external submission waiting for review.
+            // Let's use "लंबित" as it's a new external submission waiting for review.
             complainant_name,
             complainant_contact,
             allocated_thana,
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
         action: "CREATED",
         updated_by: "ANONYMOUS USER",
         prev_status: "NONE",
-        current_status: "लम्बित",
+        current_status: "लंबित",
         reason: "PUBLIC SUBMISSION",
     });
 

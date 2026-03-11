@@ -3,10 +3,11 @@ import { useState, useRef, useEffect } from 'react'
 import { Complaint, Thana } from '../types';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage, MdCreate, MdOutlinePublic, MdArrowBack } from 'react-icons/md';
-import { IoArrowForwardCircleOutline, IoCreateOutline } from 'react-icons/io5';
+import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage, MdCreate, MdOutlinePublic, MdArrowBack, MdCheckCircle } from 'react-icons/md';
+import { IoArrowForwardCircleOutline, IoCreateOutline, IoCopyOutline } from 'react-icons/io5';
 import Link from 'next/link';
 import { useLanguageStore } from '../_store/languageStore';
+
 export default function PublicRegistration() {
     const { language, setLanguage } = useLanguageStore();
     const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ export default function PublicRegistration() {
         recipient_address: "",
         subject: "",
         date: new Date().toISOString().split('T')[0],
-        status: "लम्बित",
+        status: "लंबित",
         complainant_name: "",
         complainant_contact: "",
         allocated_thana: "",
@@ -25,6 +26,8 @@ export default function PublicRegistration() {
         accused_details: "",
     });
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [registeredId, setRegisteredId] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -79,13 +82,14 @@ export default function PublicRegistration() {
             });
 
             if (response.data.success) {
-                toast.success("Complaint submitted successfully!");
+                setRegisteredId(response.data.data.id);
+                setShowSuccessModal(true);
                 setComplaintDetails({
                     role_addressed_to: "SP",
                     recipient_address: "",
                     subject: "",
                     date: new Date().toISOString().split('T')[0],
-                    status: "लम्बित",
+                    status: "लंबित",
                     complainant_name: "",
                     complainant_contact: "",
                     allocated_thana: "",
@@ -104,7 +108,7 @@ export default function PublicRegistration() {
     }
 
     return (
-        <div className="min-h-screen selection:bg-blue-100 p-4 md:p-8">
+        <div className="min-h-screen selection:bg-blue-100 p-4 md:p-8 relative">
 
             <div className="max-w-5xl mx-auto space-y-6">
                 {/* Header Section */}
@@ -346,6 +350,52 @@ export default function PublicRegistration() {
                     Police Department Information System • Secure Public Access
                 </p>
             </div>
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xs shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-8 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                                <MdCheckCircle className="text-emerald-500 text-4xl" />
+                            </div>
+                            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">
+                                {language === "english" ? "Registration Successful" : "पंजीकरण सफल रहा"}
+                            </h2>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-8">
+                                {language === "english" ? "Your complaint has been recorded" : "आपकी शिकायत दर्ज कर ली गई है"}
+                            </p>
+
+                            <div className="w-full bg-slate-50 border border-slate-100 rounded-xs p-4 mb-8">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                                    {language === "english" ? "Complaint Reference ID" : "शिकायत संदर्भ आईडी"}
+                                </span>
+                                <div className="flex items-center justify-center gap-3">
+                                    <code className="text-lg font-black text-blue-600 tracking-wider">
+                                        {registeredId}
+                                    </code>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(registeredId);
+                                            toast.success(language === "english" ? "ID Copied" : "आईडी कॉपी की गई");
+                                        }}
+                                        className="p-1.5 hover:bg-white hover:shadow-sm rounded transition-all text-slate-400 hover:text-blue-500"
+                                    >
+                                        <IoCopyOutline size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setShowSuccessModal(false)}
+                                className="w-full py-3 bg-slate-900 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xs hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]"
+                            >
+                                {language === "english" ? "Close Portal" : "पोर्टल बंद करें"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

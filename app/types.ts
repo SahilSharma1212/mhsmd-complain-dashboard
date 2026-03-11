@@ -13,7 +13,7 @@ export interface User {
 }
 
 // ─── Centralized Complaint Statuses ─────────────────────────────────────
-export const COMPLAINT_STATUSES = ["अपराध", "फ़ैना", "अप्रमाणित", "प्रतिबंधात्मक", "वापसी", "लम्बित", "अन्य"] as const;
+export const COMPLAINT_STATUSES = ["अपराध", "फ़ैना", "अप्रमाणित", "प्रतिबंधात्मक", "वापसी", "लंबित", "अन्य"] as const;
 export type ComplaintStatus = typeof COMPLAINT_STATUSES[number];
 
 export const COMPLAINT_STATUS_COLORS: Record<string, {
@@ -28,7 +28,7 @@ export const COMPLAINT_STATUS_COLORS: Record<string, {
     "अप्रमाणित": { indicatorColor: "#7a00b3", labeleng: "Apramanit", labelhindi: "अप्रमाणित", bg: "#7a00b320", text: "#7a00b3" },
     "प्रतिबंधात्मक": { indicatorColor: "#000000", labeleng: "Pratibandhatmak", labelhindi: "प्रतिबंधात्मक", bg: "#99999920", text: "#000" },
     "वापसी": { indicatorColor: "#ff0000", labeleng: "Vapsi", labelhindi: "वापसी", bg: "#ff000020", text: "#ff0000" },
-    "लम्बित": { indicatorColor: "#f59e0b", labeleng: "Pending", labelhindi: "लम्बित", bg: "#f59e0b20", text: "#f59e0b" },
+    "लंबित": { indicatorColor: "#f59e0b", labeleng: "Pending", labelhindi: "लंबित", bg: "#f59e0b20", text: "#f59e0b" },
     "अन्य": { indicatorColor: "#007d21", labeleng: "Anya", labelhindi: "अन्य", bg: "#00ff0020", text: "#007d21" },
 };
 

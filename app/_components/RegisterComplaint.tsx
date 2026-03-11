@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useUserStore } from '../_store/userStore';
 import { useIoStatsStore } from '../_store/ioStatsStore';
-import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage, MdCreate } from 'react-icons/md';
-import { IoArrowForwardCircleOutline, IoCreateOutline } from 'react-icons/io5';
+import { MdAttachFile, MdClose, MdPictureAsPdf, MdImage, MdCheckCircle } from 'react-icons/md';
+import { IoArrowForwardCircleOutline, IoCreateOutline, IoCopyOutline } from 'react-icons/io5';
 import { useLanguageStore } from '../_store/languageStore';
 
 export default function RegisterComplaint() {
@@ -28,6 +28,8 @@ export default function RegisterComplaint() {
         accused_details: "",
     });
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [registeredId, setRegisteredId] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Auto-fill thana and role_addressed_to for TI users
@@ -88,7 +90,8 @@ export default function RegisterComplaint() {
             });
 
             if (response.data.success) {
-                toast.success(language === "english" ? "Complaint submitted successfully" : "शिकायत सफलतापूर्वक दर्ज की गई");
+                setRegisteredId(response.data.data.id);
+                setShowSuccessModal(true);
                 setComplaintDetails({
                     role_addressed_to: user?.role === 'TI' ? 'TI' : "",
                     recipient_address: "",
@@ -366,6 +369,52 @@ export default function RegisterComplaint() {
                     </div>
                 </div>
             </div>
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xs shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-8 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                                <MdCheckCircle className="text-emerald-500 text-4xl" />
+                            </div>
+                            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">
+                                {language === "english" ? "Registration Successful" : "पंजीकरण सफल रहा"}
+                            </h2>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-8">
+                                {language === "english" ? "Your complaint has been recorded" : "आपकी शिकायत दर्ज कर ली गई है"}
+                            </p>
+
+                            <div className="w-full bg-slate-50 border border-slate-100 rounded-xs p-4 mb-8">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                                    {language === "english" ? "Complaint Reference ID" : "शिकायत संदर्भ आईडी"}
+                                </span>
+                                <div className="flex items-center justify-center gap-3">
+                                    <code className="text-lg font-black text-blue-600 tracking-wider">
+                                        {registeredId}
+                                    </code>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(registeredId);
+                                            toast.success(language === "english" ? "ID Copied" : "आईडी कॉपी की गई");
+                                        }}
+                                        className="p-1.5 hover:bg-white hover:shadow-sm rounded transition-all text-slate-400 hover:text-blue-500"
+                                    >
+                                        <IoCopyOutline size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setShowSuccessModal(false)}
+                                className="w-full py-3 bg-slate-900 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xs hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]"
+                            >
+                                {language === "english" ? "Close Dialog" : "संवाद बंद करें"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

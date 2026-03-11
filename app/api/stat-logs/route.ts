@@ -9,7 +9,7 @@ const STATUSES = [
     "अप्रमाणित",
     "प्रतिबंधात्मक",
     "वापसी",
-    "लम्बित",
+    "लंबित",
     "अन्य",
 ] as const;
 
@@ -120,8 +120,8 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
         // 2. Category identification
         const hasThana = !!row.allocated_thana;
         const isUnallocated = !hasThana;
-        const isPending = hasThana && (row.status === "PENDING" || row.status === "लंबित" || row.status === "लम्बित");
-        const isNirakrit = hasThana && !!row.status && row.status !== "PENDING" && row.status !== "लंबित" && row.status !== "लम्बित";
+        const isPending = hasThana && (row.status === "PENDING" || row.status === "लंबित" || row.status === "लंबित");
+        const isNirakrit = hasThana && !!row.status && row.status !== "PENDING" && row.status !== "लंबित" && row.status !== "लंबित";
 
         if (isPending) {
             categoryAgeStats.pending[currentAge]++;
@@ -130,7 +130,7 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
         if (isUnallocated) {
             categoryAgeStats.unallocated[currentAge]++;
             latestComplaints.unallocated.push(row);
-            if (row.status === "PENDING" || row.status === "लंबित" || row.status === "लम्बित") {
+            if (row.status === "PENDING" || row.status === "लंबित" || row.status === "लंबित") {
                 unallocatedPendingCount++;
             }
         }
@@ -152,8 +152,8 @@ function aggregateCounts(rows: { id: string; status: string; created_at: string;
         let s: StatusKey = "अन्य";
 
         // Normalize status
-        if (rawStatus === "PENDING" || rawStatus === "लंबित" || rawStatus === "लम्बित") {
-            s = "लम्बित";
+        if (rawStatus === "PENDING" || rawStatus === "लंबित" || rawStatus === "लंबित") {
+            s = "लंबित";
         } else if (STATUSES.includes(rawStatus as any)) {
             s = rawStatus as StatusKey;
         }

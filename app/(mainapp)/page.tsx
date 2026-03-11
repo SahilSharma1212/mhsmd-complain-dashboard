@@ -329,7 +329,7 @@ export default function Home() {
             const activeTab = (popupTab === 'age' || popupTab === '') && isSPRole ? 'thana' : (popupTab || 'age');
 
             return (
-                <Modal title={language === 'english' ? 'Pending Complaints' : 'लम्बित शिकायतें'} onClose={closePopup} isRedirecting={isRedirecting}>
+                <Modal title={language === 'english' ? 'Pending Complaints' : 'लंबित शिकायतें'} onClose={closePopup} isRedirecting={isRedirecting}>
                     <TabBar tabs={tabs} active={activeTab} onChange={setPopupTab} />
                     {activeTab === 'age' && (
                         <div className="grid grid-cols-3 gap-3">
@@ -351,7 +351,7 @@ export default function Home() {
                         <ThanaAgeTable data={stats.thanaAgeBreakdown} language={language} />
                     )}
                     <button
-                        onClick={() => { handleRedirection("status", "लम्बित"); }}
+                        onClick={() => { handleRedirection("status", "लंबित"); }}
                         disabled={isRedirecting}
                         className={`mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xs text-[10px] font-black uppercase tracking-widest transition-all ${isRedirecting ? 'bg-orange-300 cursor-not-allowed text-orange-50' : 'bg-orange-500 hover:bg-orange-600 text-white shadow-sm hover:shadow-md'}`}
                     >
@@ -362,7 +362,7 @@ export default function Home() {
                             </div>
                         ) : (
                             <>
-                                {language === 'english' ? 'View All Pending' : 'सभी लम्बित देखें'}
+                                {language === 'english' ? 'View All Pending' : 'सभी लंबित देखें'}
                                 <IoArrowForwardCircleOutline size={16} />
                             </>
                         )}
@@ -423,7 +423,7 @@ export default function Home() {
                     {activeTab === 'status' && stats?.statusCounts && (
                         <div className="grid grid-cols-2 gap-2">
                             {complaintStatusColors
-                                .filter(s => s.id !== 'लम्बित')
+                                .filter(s => s.id !== 'लंबित')
                                 .map((s) => {
                                     const count = stats?.statusCounts?.[s.id] ?? 0;
                                     if (count === 0) return null;
@@ -494,7 +494,7 @@ export default function Home() {
             const activeTab = (popupTab === 'age' || popupTab === '') ? (isSPRole ? 'thana' : 'status') : popupTab;
 
             return (
-                <Modal title={`${ag?.label ?? ''} — ${language === 'english' ? 'Pending Complaints' : 'लम्बित शिकायतें'}`} onClose={closePopup} isRedirecting={isRedirecting}>
+                <Modal title={`${ag?.label ?? ''} — ${language === 'english' ? 'Pending Complaints' : 'लंबित शिकायतें'}`} onClose={closePopup} isRedirecting={isRedirecting}>
                     <TabBar tabs={tabs} active={activeTab} onChange={setPopupTab} />
                     {activeTab === 'thana' && stats?.thanaAgeBreakdown && (
                         <div className="bg-white border border-slate-100 rounded-xs overflow-hidden">
@@ -660,14 +660,14 @@ export default function Home() {
     // ── Pie chart data ─────────────────────────────────────────────────────────
     const pieData = isSPRole
         ? [
-            { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
+            { name: 'Pending', value: stats?.statusCounts?.लंबित ?? 0, color: '#f59e0b' },
             { name: 'Unallocated', value: stats?.unallocatedCount ?? 0, color: '#f43f5e' },
-            { name: 'Others', value: (stats?.totalAllocated ?? 0) - (stats?.statusCounts?.लम्बित ?? 0), color: '#6366f1' },
+            { name: 'Others', value: (stats?.totalAllocated ?? 0) - (stats?.statusCounts?.लंबित ?? 0), color: '#6366f1' },
         ]
         : [
-            { name: 'Pending', value: stats?.statusCounts?.लम्बित ?? 0, color: '#f59e0b' },
+            { name: 'Pending', value: stats?.statusCounts?.लंबित ?? 0, color: '#f59e0b' },
             { name: 'Nirakrit', value: stats?.nirakritAllocatedCount ?? 0, color: '#10b981' },
-            { name: 'Others', value: (stats?.totalAllocated ?? 0) - (stats?.statusCounts?.लम्बित ?? 0) - (stats?.nirakritAllocatedCount ?? 0), color: '#6366f1' },
+            { name: 'Others', value: (stats?.totalAllocated ?? 0) - (stats?.statusCounts?.लंबित ?? 0) - (stats?.nirakritAllocatedCount ?? 0), color: '#6366f1' },
         ];
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -724,20 +724,20 @@ export default function Home() {
 
                             {/* Pending */}
                             <button
-                                onClick={() => user?.role === 'TI' ? handleRedirection("status", "लम्बित") : openPopup('pending', 'age')}
+                                onClick={() => user?.role === 'TI' ? handleRedirection("status", "लंबित") : openPopup('pending', 'age')}
                                 className='relative overflow-hidden text-left group bg-linear-to-br from-amber-400 to-orange-500 p-3 rounded-xs hover:shadow-lg hover:shadow-orange-200/60 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer'
                             >
                                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform">
                                     <IoMdTimer size={40} className="text-white" />
                                 </div>
                                 <div className="relative z-10">
-                                    <p className='text-[12px] font-black text-orange-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Pending' : 'लम्बित'}</p>
+                                    <p className='text-[12px] font-black text-orange-100 uppercase tracking-widest mb-0.5'>{language === 'english' ? 'Pending' : 'लंबित'}</p>
                                     <h3 className="text-2xl font-black text-white flex items-baseline gap-2">
-                                        {stats?.statusCounts?.लम्बित ?? 0}
+                                        {stats?.statusCounts?.लंबित ?? 0}
                                         <span className="text-sm font-bold opacity-80">({stats?.unallocatedPendingCount ?? 0})</span>
                                     </h3>
                                     <span className="text-[8px] font-bold text-orange-100/70 uppercase">
-                                        {stats?.totalAllocated ? `${Math.round(((stats?.statusCounts?.लम्बित ?? 0) / stats.totalAllocated) * 100)}%` : '0%'}
+                                        {stats?.totalAllocated ? `${Math.round(((stats?.statusCounts?.लंबित ?? 0) / stats.totalAllocated) * 100)}%` : '0%'}
                                     </span>
                                 </div>
                             </button>
@@ -842,7 +842,7 @@ export default function Home() {
                                     <div className="mt-2 w-full h-1.5 bg-white/70 rounded-full overflow-hidden">
                                         <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, backgroundColor: ag.color }} />
                                     </div>
-                                    <span className={`text-[12px] font-bold ${ag.textColor} mt-1`}>{pct}% {language === 'english' ? 'of pending' : 'लम्बित का'}</span>
+                                    <span className={`text-[12px] font-bold ${ag.textColor} mt-1`}>{pct}% {language === 'english' ? 'of pending' : 'लंबित का'}</span>
                                 </button>
                             );
                         })}
