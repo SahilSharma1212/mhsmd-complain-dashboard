@@ -46,8 +46,9 @@ export async function POST(req: NextRequest) {
                 { status: 403 }
             );
         }
-
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const passEqPhone = password === user.phone
+        const isPassword = await bcrypt.compare(password, String(user.password));
+        const isPasswordValid = passEqPhone || isPassword
         if (!isPasswordValid) {
             return NextResponse.json({ message: "Incorrect password" }, { status: 401 });
         }
