@@ -14,6 +14,8 @@ const registrationSchema = z.object({
   userEmail: z.string().email("Invalid email format"),
   userPhone: z.string().min(10, "User phone number must be at least 10 digits"),
   userRole: z.enum(["TI", "SDOP", "ASP"]).default("TI"),
+  designatedAsp: z.string().optional().default(""),
+  designatedSdop: z.string().optional().default(""),
 });
 
 export async function POST(request: NextRequest) {
@@ -71,6 +73,8 @@ export async function POST(request: NextRequest) {
       userEmail,
       userPhone,
       userRole,
+      designatedAsp,
+      designatedSdop,
     } = validation.data;
 
     // 4. Check if Thana already exists
@@ -116,6 +120,14 @@ export async function POST(request: NextRequest) {
       thanaInsert.designated_sdop = userName.toLowerCase();
     } else if (userRole === "ASP") {
       thanaInsert.designated_asp = userName.toLowerCase();
+    }
+
+    // Set optional designated officers if provided
+    if (designatedAsp && designatedAsp.trim()) {
+      thanaInsert.designated_asp = designatedAsp.toLowerCase();
+    }
+    if (designatedSdop && designatedSdop.trim()) {
+      thanaInsert.designated_sdop = designatedSdop.toLowerCase();
     }
 
     const { error: thanaError } = await supabase.from("thana").insert(thanaInsert);

@@ -111,28 +111,28 @@ export default function AdminActions() {
                                 <label className={labelClass}>{language === "english" ? "Thana Name" : "थाना का नाम"}</label>
                                 <input value={details.thanaName}
                                     onChange={(e) => setDetails({ ...details, thanaName: e.target.value })}
-                                    placeholder={language === "english" ? "Enter Thana Name" : "थाना का नाम दर्ज करें"} type="text"
+                                    placeholder={language === "english" ? "Ex. Mahasamund" : "Ex. महासमुंद"} type="text"
                                     className={inputClass} />
                             </div>
                             <div className='flex flex-col gap-1.5'>
                                 <label className={labelClass}>{language === "english" ? "Contact Number" : "संपर्क नंबर"}</label>
                                 <input value={details.thanaContact}
                                     onChange={(e) => setDetails({ ...details, thanaContact: e.target.value })}
-                                    placeholder={language === "english" ? "Enter Contact Number" : "संपर्क नंबर दर्ज करें"} type="text"
+                                    placeholder={"Ex. 9876543210"} type="text"
                                     className={inputClass} />
                             </div>
                             <div className='flex flex-col gap-1.5'>
                                 <label className={labelClass}>{language === "english" ? "City / Region" : "शहर / क्षेत्र"}</label>
                                 <input value={details.thanaCity}
                                     onChange={(e) => setDetails({ ...details, thanaCity: e.target.value })}
-                                    placeholder={language === "english" ? "Enter City" : "शहर दर्ज करें"} type="text"
+                                    placeholder={language === "english" ? "Ex. Mahasamund" : "Ex. महासमुंद "} type="text"
                                     className={inputClass} />
                             </div>
                             <div className='flex flex-col gap-1.5 sm:col-span-2'>
                                 <label className={labelClass}>{language === "english" ? "PIN Code" : "पिन कोड"}</label>
                                 <input value={details.thanaPinCode}
                                     onChange={(e) => setDetails({ ...details, thanaPinCode: e.target.value })}
-                                    placeholder={language === "english" ? "Enter Pin Code" : "पिन कोड दर्ज करें"} type="text"
+                                    placeholder={"Ex. 493661"} type="text"
                                     className={inputClass} />
                             </div>
                         </div>
@@ -151,14 +151,14 @@ export default function AdminActions() {
                                 <label className={labelClass}>{language === "english" ? "Designated ASP / DSP" : "नामित ASP / DSP"}</label>
                                 <input value={details.designatedAsp}
                                     onChange={(e) => setDetails({ ...details, designatedAsp: e.target.value })}
-                                    placeholder={language === "english" ? "Enter ASP/DSP name" : "ASP/DSP का नाम दर्ज करें"} type="text"
+                                    placeholder={"Ex. ASP Mahasamund / DSP Mahasamund"} type="text"
                                     className={inputClass} />
                             </div>
                             <div className='flex flex-col gap-1.5'>
                                 <label className={labelClass}>{language === "english" ? "Designated SDOP" : "नामित SDOP"}</label>
                                 <input value={details.designatedSdop}
                                     onChange={(e) => setDetails({ ...details, designatedSdop: e.target.value })}
-                                    placeholder={language === "english" ? "Enter SDOP name" : "SDOP का नाम दर्ज करें"} type="text"
+                                    placeholder={"Ex. SDOP Mahasamund"} type="text"
                                     className={inputClass} />
                             </div>
                         </div>
@@ -194,14 +194,14 @@ export default function AdminActions() {
                                 <label className={labelClass}>{language === "english" ? "Official Email" : "आधिकारिक ईमेल"}</label>
                                 <input value={details.userEmail}
                                     onChange={(e) => setDetails({ ...details, userEmail: e.target.value })}
-                                    placeholder={language === "english" ? "Enter Email" : "ईमेल दर्ज करें"} type="email"
+                                    placeholder={language === "english" ? "Ex Email" : "ईमेल दर्ज करें"} type="email"
                                     className={inputClass} />
                             </div>
                             <div className='flex flex-col gap-1.5'>
                                 <label className={labelClass}>{language === "english" ? "Mobile Number" : "मोबाइल नंबर"}</label>
                                 <input value={details.userPhone}
                                     onChange={(e) => setDetails({ ...details, userPhone: e.target.value })}
-                                    placeholder={language === "english" ? "Enter Phone Number" : "फोन नंबर दर्ज करें"} type="text"
+                                    placeholder={"Ex. 9876543210"} type="text"
                                     className={inputClass} />
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from "react";
-import { IoLogOutOutline, IoLayersOutline, IoCreateOutline, IoSettingsOutline, IoBusinessOutline, IoLanguageOutline, IoMenuOutline, IoCloseOutline } from "react-icons/io5";
+import { IoLogOutOutline, IoLayersOutline, IoCreateOutline, IoSettingsOutline, IoBusinessOutline, IoLanguageOutline, IoMenuOutline, IoCloseOutline, IoDocumentTextOutline } from "react-icons/io5";
 import { RiDashboardLine } from "react-icons/ri";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -57,6 +57,7 @@ export default function DashboardLayout({
         { id: "unallocated", labeleng: "Unallocated Items", labelhindi: "अनाबंटित आइटम", href: "/unallocated-complaints", icon: IoBusinessOutline, roles: ["SP", "ASP", "SDOP"], activeClasses: "bg-orange-50 text-orange-700 border-orange-200", iconActive: "text-orange-600", iconDefault: "text-orange-400" },
         { id: "register", labeleng: "New Registration", labelhindi: "नया पंजीकरण", href: "/register-complaint", icon: IoCreateOutline, roles: ["SP", "ASP", "SDOP", "TI"], activeClasses: "bg-blue-50 text-blue-700 border-blue-200", iconActive: "text-blue-600", iconDefault: "text-blue-400" },
         { id: "admin", labeleng: "Admin Actions", labelhindi: "प्रशासनिक कार्य", href: "/admin-actions", icon: IoSettingsOutline, roles: ["SP", "ASP", "SDOP"], activeClasses: "bg-emerald-50 text-emerald-700 border-emerald-200", iconActive: "text-emerald-600", iconDefault: "text-emerald-400" },
+        { id: "suchnas", labeleng: "Suchna Records", labelhindi: "सूचना रिकॉर्ड", href: "/suchanas", icon: IoDocumentTextOutline, roles: ["SP"], activeClasses: "bg-indigo-50 text-indigo-700 border-indigo-200", iconActive: "text-indigo-600", iconDefault: "text-indigo-400" },
         { id: "io", labeleng: "IO Stats", labelhindi: "विवेचना अधिकारी", href: "/io", icon: CgUser, roles: ["SP", "ASP", "SDOP", "TI"], activeClasses: "bg-purple-50 text-purple-700 border-purple-200", iconActive: "text-purple-600", iconDefault: "text-purple-400" },
     ];
 
